@@ -1,0 +1,36 @@
+{
+  "note": "Finite-N A=0.2 persistent (never-absorber) mean R_incoh over the steady window (>200s), re-traced with the shipped-identical tracer. Compare to the reduced stable-chimera fixed point r*.",
+  "beta": 0.05,
+  "Ns": [
+    8,
+    16,
+    32,
+    64
+  ],
+  "perN": 20,
+  "settleSec": 200,
+  "per_N": {
+    "8": {
+      "n": 20,
+      "mean_Rincoh": 0.6349369062662571,
+      "median_Rincoh": 0.6411434930309315
+    },
+    "16": {
+      "n": 20,
+      "mean_Rincoh": 0.6566285560786934,
+      "median_Rincoh": 0.6584205665638229
+    },
+    "32": {
+      "n": 20,
+      "mean_Rincoh": 0.6758248095787944,
+      "median_Rincoh": 0.6802304029102733
+    },
+    "64": {
+      "n": 20,
+      "mean_Rincoh": 0.6685176710678563,
+      "median_Rincoh": 0.671281263859439
+    }
+  },
+  "pooled_mean_Rincoh": 0.6589769857479002,
+  "n_runs": 80
+}

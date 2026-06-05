@@ -1,0 +1,92 @@
+{
+  "name": "reduced-ODE harness — Abrams 2008 two-population chimera vs annealMusic finite-N",
+  "version": "1.0.0",
+  "provenance": "All equations transcribed from Abrams, Mirollo, Strogatz & Wiley, PRL 101, 084103 (2008), arXiv:0806.0594v2 (Aug 26 2008, postdates the published erratum PRL 101, 129902). Eq. numbers cited inline in reduced_core.py.",
+  "conventions": {
+    "_note": "Match the shipped integrator (campaign CP0): K11=K22=mu, K12=K21=nu, mu+nu=1, A=mu-nu so mu=(1+A)/2, nu=(1-A)/2; alpha=pi/2-beta; omega=0 (rotating frame). Verified consistent with tools/chimera-campaign/integrator.mjs.",
+    "mu_of_A": "(1+A)/2",
+    "nu_of_A": "(1-A)/2",
+    "alpha_of_beta": "pi/2 - beta"
+  },
+  "beta_paper": 0.1,
+  "beta_ours": 0.05,
+  "A_ours": [0.2, 0.5],
+  "tb_point": { "beta": 0.2239, "A": 0.3372 },
+  "series": {
+    "_note": "Eq. (17) saddle-node and Eq. (18) Hopf, in powers of beta. sqrt3 = 1.7320508075688772.",
+    "A_SN_coeffs": { "b1": 2.0, "b2": -2.0, "b3": -2.3333333333333335, "b4": 6.666666666666667, "b5": 3.0166666666666666 },
+    "A_H_const": 0.2679491924311227,
+    "A_H_b2": 0.9282032302755088,
+    "A_H_b4": 5.011267873698244
+  },
+  "integrator": {
+    "method": "DOP853",
+    "rtol": 1e-10,
+    "atol": 1e-12,
+    "max_step_frac": 0.05,
+    "_note": "Adaptive Runge-Kutta (Dormand-Prince 8(5,3)) via scipy.solve_ivp. Tight tolerances: the reduced system is microseconds per run, so accuracy is free."
+  },
+  "fixed_point": {
+    "psi_grid_n": 4001,
+    "psi_min": -1.5707963267948966,
+    "psi_max": 1.5707963267948966,
+    "_note": "Eqs (13)-(14): sweep psi, get r from (14) (drop psi where the radicand is non-positive), A from (13). Gate (a) checks rdot=psidot=0 at each (r,A,beta)."
+  },
+  "classify": {
+    "beta": 0.1,
+    "A_list": [0.2, 0.28, 0.35],
+    "t_settle": 4000.0,
+    "t_window": 4000.0,
+    "r0_offset": 0.02,
+    "psi0_offset": 0.05,
+    "const_tol": 1e-4,
+    "_note": "Paper Fig. 2 regimes at beta=0.1. Integrate the 2-D system from just off the stationary-chimera fixed point; classify constant (stable FP) vs limit cycle and report the period."
+  },
+  "bifurcation_locate": {
+    "beta_list": [0.1, 0.05],
+    "_note": "Numerically locate SN (det J=0) and Hopf (tr J=0, det J>0) along the Eqs (13)-(14) fixed-point family by zero-crossing + brentq refinement."
+  },
+  "homoclinic": {
+    "A_lo": 0.27,
+    "A_hi": 0.45,
+    "bisect_tol": 1e-4,
+    "t_max": 20000.0,
+    "sync_r": 0.999,
+    "sync_hold": 50.0,
+    "_note": "At beta=0.05 increase A above Hopf; the breathing limit cycle's period diverges and it collides with the saddle (homoclinic). Bisection on A: 'cycle persists (bounded breathing)' vs 'escapes to sync (r->1)'. Reports the bracketing interval A_hc."
+  },
+  "timescale": {
+    "model_time_per_second": 1.0,
+    "dt": 0.05,
+    "sampleStride": 0.1,
+    "_note": "Campaign CP0 fact: the integrator advances 1 model-time unit per second (DRIFT_DT=0.05 control step, ω=0 rotating frame; integrator.mjs docstring: '1 unit := 1 s'). So reduced model-time equals seconds 1:1 — no fudge factor."
+  },
+  "boundary": {
+    "theta": 0.85,
+    "recoveryThreshold": 0.8,
+    "recoveryWindowSec": 5.0,
+    "_note": "Maps the finite-N absorption-grade label into the reduced flow. Capture = first time min(rho1,rho2) crosses theta=0.85 and never dips back below recoveryThreshold=0.8 for recoveryWindowSec thereafter (deterministic reduced flow => the crossing is effectively permanent at A=0.5). theta/recThresh/recWin copied from absorption.config.json."
+  },
+  "cp4": {
+    "input_features": "transient_results/cp2_features.jsonl",
+    "Ns": [4, 8, 16, 24, 32, 48, 64],
+    "t_max": 2000.0,
+    "_note": "Per A=0.5 run: rho2(0)=Rincoh0, rho1(0)=Rsync0, psi(0)=dphi0 (all precomputed from the logged seed in transient-tests CP2). Integrate the 3-D system to capture; correlate reduced capture time with measured t_abs."
+  },
+  "measured": {
+    "_note": "Read-only finite-N benchmarks from prior campaigns, for CP3/CP4 comparison. No fitting to these.",
+    "tau_abs_s": 139.0,
+    "Tb_range_s": [21.0, 25.0],
+    "spiral_slopes": { "8": -0.5479, "16": -0.4973, "32": -0.5883, "64": -0.7671 },
+    "dphi0_spearman": 0.52,
+    "collective_ic_R2": 0.23,
+    "d0_null_rho": 0.081
+  },
+  "predictions": {
+    "A_SN_05_hand": 0.095,
+    "A_H_05_hand": 0.270,
+    "P1": "A=0.2 at beta=0.05 lies in the stable stationary-chimera band (between SN and Hopf): the never-absorbers are a genuine attractor.",
+    "P2": "A=0.5 at beta=0.05 is post-homoclinic (A>A_hc): no chimera attractor, sync globally attracting, the ratcheting transient is the spiral-out along the destroyed cycle's ghost."
+  },
+  "output_dir": "reduced_results"
+}

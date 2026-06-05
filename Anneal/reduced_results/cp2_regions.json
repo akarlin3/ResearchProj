@@ -1,0 +1,144 @@
+{
+  "checkpoint": "CP2",
+  "beta": 0.05,
+  "bifurcations": {
+    "beta": 0.05,
+    "A_SN": {
+      "series_eq17": 0.09475094270833334,
+      "numeric": 0.09475060374140389
+    },
+    "A_H": {
+      "series_eq18": 0.2703010209310221,
+      "numeric": 0.27039117226517856
+    },
+    "A_hc": {
+      "numeric": 0.4096142578125,
+      "bracket": [
+        0.4095703125,
+        0.409658203125
+      ],
+      "width": 8.789062500003109e-05
+    }
+  },
+  "verdicts": {
+    "0.2": {
+      "A": 0.2,
+      "region": "stable stationary chimera",
+      "dynamical_confirmation": {
+        "kind": "fixed",
+        "r_star": 0.6780732845728197,
+        "amp": 1.7294092824471363e-09
+      },
+      "prediction": "P1",
+      "prediction_text": "A=0.2 at beta=0.05 lies in the stable stationary-chimera band (between SN and Hopf): the never-absorbers are a genuine attractor.",
+      "prediction_holds": true
+    },
+    "0.5": {
+      "A": 0.5,
+      "region": "post-homoclinic (no chimera attractor; sync attracting)",
+      "dynamical_confirmation": {
+        "kind": "sync",
+        "escaped": true,
+        "t_escape": 725.8717227067447,
+        "r_max": 0.998972878500192,
+        "r_final": 0.998972878500192
+      },
+      "prediction": "P2",
+      "prediction_text": "A=0.5 at beta=0.05 is post-homoclinic (A>A_hc): no chimera attractor, sync globally attracting, the ratcheting transient is the spiral-out along the destroyed cycle's ghost.",
+      "prediction_holds": true
+    }
+  },
+  "homoclinic_trace": [
+    {
+      "A": 0.27,
+      "escaped": false,
+      "t_escape": null,
+      "r_max": 0.581665177,
+      "r_final": 0.5800337315489481
+    },
+    {
+      "A": 0.36,
+      "escaped": false,
+      "t_escape": null,
+      "r_max": 0.9436542959329054,
+      "r_final": 0.9083611203876325
+    },
+    {
+      "A": 0.405,
+      "escaped": false,
+      "t_escape": null,
+      "r_max": 0.9833534948484433,
+      "r_final": 0.942233496322677
+    },
+    {
+      "A": 0.4078125,
+      "escaped": false,
+      "t_escape": null,
+      "r_max": 0.9856809969190986,
+      "r_final": 0.9854495728724262
+    },
+    {
+      "A": 0.40921875,
+      "escaped": false,
+      "t_escape": null,
+      "r_max": 0.9871671609601081,
+      "r_final": 0.9844358436452779
+    },
+    {
+      "A": 0.4095703125,
+      "escaped": false,
+      "t_escape": null,
+      "r_max": 0.987756645242404,
+      "r_final": 0.987490532922509
+    },
+    {
+      "A": 0.409658203125,
+      "escaped": true,
+      "t_escape": 1567.355781435913,
+      "r_max": 0.998917663352058,
+      "r_final": 0.998917663352058
+    },
+    {
+      "A": 0.40974609375,
+      "escaped": true,
+      "t_escape": 1511.6717787975508,
+      "r_max": 0.9989440390477115,
+      "r_final": 0.9989440390477115
+    },
+    {
+      "A": 0.409921875,
+      "escaped": true,
+      "t_escape": 1487.5833048479947,
+      "r_max": 0.9989083102994452,
+      "r_final": 0.9989083102994452
+    },
+    {
+      "A": 0.410625,
+      "escaped": true,
+      "t_escape": 1363.3160828488676,
+      "r_max": 0.9989759505262265,
+      "r_final": 0.9989759505262265
+    },
+    {
+      "A": 0.41625,
+      "escaped": true,
+      "t_escape": 1159.512175948842,
+      "r_max": 0.998929353758115,
+      "r_final": 0.998929353758115
+    },
+    {
+      "A": 0.4275,
+      "escaped": true,
+      "t_escape": 1006.1081262518736,
+      "r_max": 0.9989630680818601,
+      "r_final": 0.9989630680818601
+    },
+    {
+      "A": 0.45,
+      "escaped": true,
+      "t_escape": 845.4503797982084,
+      "r_max": 0.9989872901368392,
+      "r_final": 0.9989872901368392
+    }
+  ]
+}
