@@ -1,0 +1,93 @@
+{
+  "checkpoint": "CP1",
+  "purpose": "validation gate against Abrams et al. 2008 (the paper itself)",
+  "beta_paper": 0.1,
+  "gate_a_fixed_point_consistency": {
+    "beta": 0.1,
+    "n_points": 1240,
+    "A_range": [
+      0.17834876980303413,
+      253.9537127639285
+    ],
+    "max_rhs_residual": 3.8864839309072035e-16,
+    "tol": 1e-09,
+    "pass": true
+  },
+  "gate_b_fig2_regimes": {
+    "beta": 0.1,
+    "regimes": {
+      "0.2": {
+        "kind": "fixed",
+        "r_star": 0.7291470818324822,
+        "amp": 1.1850470604812813e-09,
+        "A": 0.2,
+        "r_star_eq13_14": 0.729147123,
+        "fp_stable": true,
+        "fp_eig": [
+          "(-0.014454562497126953+0.10217033038538978j)",
+          "(-0.014454562497126953-0.10217033038538978j)"
+        ],
+        "expected": "fixed",
+        "match": true
+      },
+      "0.28": {
+        "kind": "cycle",
+        "amp": 0.15231116085766094,
+        "r_min": 0.5109123005947173,
+        "r_max": 0.6632234614523782,
+        "period": 33.852540084631364,
+        "n_peaks": 118,
+        "A": 0.28,
+        "r_star_eq13_14": 0.586230579,
+        "fp_stable": false,
+        "fp_eig": [
+          "(0.0003359481155691922+0.19036224340690902j)",
+          "(0.0003359481155691922-0.19036224340690902j)"
+        ],
+        "expected": "cycle",
+        "match": true
+      },
+      "0.35": {
+        "kind": "cycle",
+        "amp": 0.8267990041679472,
+        "r_min": 0.1076612901134047,
+        "r_max": 0.9344602942813518,
+        "period": 90.44088568064767,
+        "n_peaks": 44,
+        "A": 0.35,
+        "r_star_eq13_14": 0.49389941,
+        "fp_stable": false,
+        "fp_eig": [
+          "(0.00977706469626951+0.2415705992693703j)",
+          "(0.00977706469626951-0.2415705992693703j)"
+        ],
+        "expected": "cycle",
+        "match": true
+      }
+    },
+    "period_order_028_lt_035": true,
+    "pass": true
+  },
+  "gate_c_bifurcation_series": {
+    "beta": 0.1,
+    "saddle_node": {
+      "numeric_A": 0.17834090849559003,
+      "numeric_r": 0.8206822832917832,
+      "numeric_psi": -0.21777000000000002,
+      "series_A_eq17": 0.1783635,
+      "abs_err": 2.2591504409974483e-05,
+      "tol": 0.005,
+      "pass": true
+    },
+    "hopf": {
+      "numeric_A": 0.2777800963940394,
+      "numeric_psi": -0.20430903021181301,
+      "series_A_eq18": 0.2777323515212476,
+      "abs_err": 4.774487279179951e-05,
+      "tol": 0.005,
+      "pass": true
+    },
+    "pass": true
+  },
+  "overall_pass": true
+}

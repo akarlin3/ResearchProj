@@ -1,0 +1,92 @@
+{
+  "checkpoint": "CP3",
+  "beta": 0.05,
+  "timescale": {
+    "model_time_per_second": 1.0,
+    "dt": 0.05,
+    "sampleStride": 0.1,
+    "statement": "The shipped integrator advances 1 model-time unit per second of the drone (omega=0 rotating frame; DRIFT_DT=0.05 control step, sampleStride=0.1). integrator.mjs documents '1 unit := 1 s'. So reduced model-time equals seconds 1:1 \u2014 every reduced quantity below is in seconds with NO fudge factor."
+  },
+  "A05_eigen": {
+    "r_star": 0.334200907,
+    "sigma_per_time": 0.012428143694635211,
+    "omega": 0.3276754767514011,
+    "T_breath_linear_s": 19.175024537910346,
+    "per_cycle_growth": 1.2691025032658265
+  },
+  "A05_matches": {
+    "i_breath_period": {
+      "reduced_pooled_s": 25.0,
+      "reduced_linear_theory_s": 19.175024537910346,
+      "measured_s": [
+        21.0,
+        25.0
+      ],
+      "ratio_pooled_to_mid": 1.0869565217391304,
+      "per_N": {
+        "4": 24.333333333333332,
+        "8": 24.533333333333335,
+        "16": 24.975,
+        "24": 24.700000000000003,
+        "32": 24.800000000000004,
+        "48": 25.6,
+        "64": 25.25
+      }
+    },
+    "ii_spiral_slope": {
+      "reduced_pooled": -0.6736230863164041,
+      "measured_range": [
+        -0.77,
+        -0.55
+      ],
+      "per_N_reduced_vs_measured": {
+        "8": {
+          "reduced": -0.6165808614554896,
+          "measured": -0.5479
+        },
+        "16": {
+          "reduced": -0.6634367044719689,
+          "measured": -0.4973
+        },
+        "32": {
+          "reduced": -0.6628212412195427,
+          "measured": -0.5883
+        },
+        "64": {
+          "reduced": -0.7343213081088994,
+          "measured": -0.7671
+        }
+      }
+    },
+    "iii_capture_time": {
+      "reduced_pooled_median_s": 42.650000000000006,
+      "measured_tau_abs_s": 139.0,
+      "ratio": 0.30683453237410074,
+      "per_N_reduced_median": {
+        "4": 12.200000000000001,
+        "8": 41.650000000000006,
+        "16": 42.050000000000004,
+        "24": 43.25,
+        "32": 43.05,
+        "48": 64.0,
+        "64": 64.0
+      },
+      "note": "Reduced captures faster than finite-N; ratio < 1 reported straight."
+    }
+  },
+  "A02_matches": {
+    "reduced_r_star": 0.678073406,
+    "reduced_relaxation_sigma_per_time": -0.005394344433879697,
+    "reduced_per_cycle_decay": 0.803200569420847,
+    "measured_mean_Rincoh_pooled": 0.6589769857479002,
+    "measured_mean_Rincoh_per_N": {
+      "8": 0.6349369062662571,
+      "16": 0.6566285560786934,
+      "32": 0.6758248095787944,
+      "64": 0.6685176710678563
+    },
+    "r_star_minus_measured_pooled": 0.01909642025209979,
+    "measured_dM_drift_per_cycle": -0.00108,
+    "sign_match": "both negative: reduced stable spiral relaxes (maxima drift DOWN to r*), measured <dM><0 \u2014 opposite to A=0.5's positive ratchet"
+  }
+}
