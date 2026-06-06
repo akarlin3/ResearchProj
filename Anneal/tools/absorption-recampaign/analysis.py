@@ -497,7 +497,7 @@ def fig_tau_old_vs_new():
         ax.set_title(f"A={A} ({LAB[A]})")
         ax.grid(True, which="both", alpha=0.3)
         ax.legend(fontsize=8)
-    fig.suptitle("CP3a — τ(N): legacy graze vs absorption-grade label\n"
+    fig.suptitle("τ(N): legacy graze vs absorption-grade label\n"
                  "(A=0.2 τ_abs exp-MLE is censoring-inflated; KM median is the robust readout)")
     fig.tight_layout(rect=[0, 0, 1, 0.93])
     fig.savefig(OUT / "tau_old_vs_new.png", dpi=140)
@@ -519,7 +519,7 @@ def fig_k_vs_N():
                     capsize=3, label=f"k_abs A={A}")
     ax.axhline(1.0, color="k", ls=":", lw=1, label="k=1 (memoryless)")
     ax.set_xlabel("N"); ax.set_ylabel("Weibull shape k")
-    ax.set_title("CP3b — aging: Weibull shape k(N), graze vs absorption-grade\n(k>1 ⇒ increasing hazard / aging)")
+    ax.set_title("Aging: Weibull shape k(N), graze vs absorption-grade\n(k>1 ⇒ increasing hazard / aging)")
     ax.grid(True, alpha=0.3); ax.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(OUT / "k_abs_vs_N.png", dpi=140); fig.savefig(OUT / "k_abs_vs_N.pdf")
@@ -540,7 +540,7 @@ def fig_geometric():
         hi = [r["p_hi"] - r["p_hat"] for r in rs]
         ax.errorbar(Ns, p, yerr=[lo, hi], fmt=mk + "-", color=col, capsize=3, label=f"A={A}")
     ax.set_xlabel("N"); ax.set_ylabel("per-pass absorption probability p")
-    ax.set_title("CP3c — Bernoulli p(N, A) from n_grazes")
+    ax.set_title("Bernoulli p(N, A) from n_grazes")
     ax.grid(True, alpha=0.3); ax.legend()
     # right: n_grazes histogram + geometric overlay for a well-sampled point
     ax = axes[1]
@@ -555,7 +555,7 @@ def fig_geometric():
     ax.plot(ks, (1 - p) ** ks * p, "o-", color=RED, label=f"Geom(p={p:.2f}), χ²p={gr['chi2_p']:.2f}")
     ax.set_xlabel("n_grazes before absorption")
     ax.set_ylabel("probability")
-    ax.set_title(f"CP3c — geometric fit, N={target[1]} A={target[0]}\n(k_cyc={gr['k_cyc']:.2f}; ≈1 ⇒ memoryless per-pass)")
+    ax.set_title(f"Geometric fit, N={target[1]} A={target[0]}\n(k_cyc={gr['k_cyc']:.2f}; ≈1 ⇒ memoryless per-pass)")
     ax.legend()
     fig.tight_layout()
     fig.savefig(OUT / "geometric_p.png", dpi=140); fig.savefig(OUT / "geometric_p.pdf")
@@ -585,7 +585,7 @@ def fig_phase_rose():
     ax = fig.add_subplot(2, 5, (5, 10), projection="polar")
     rose(ax, phase_pooled05["phis"],
          f"POOLED A=0.5\nn={phase_pooled05['n']} p={phase_pooled05['p']:.1e}")
-    fig.suptitle("CP3d — phase φ of TRUE absorptions relative to preceding breath peak (φ=0)", fontsize=12)
+    fig.suptitle("Phase φ of TRUE absorptions relative to preceding breath peak (φ=0)", fontsize=12)
     fig.tight_layout(rect=[0, 0, 1, 0.94])
     fig.savefig(OUT / "absorption_phase_rose.png", dpi=130)
     fig.savefig(OUT / "absorption_phase_rose.pdf")
@@ -601,7 +601,7 @@ def fig_graze_stats():
         gs = [r["graze_survival_frac"] for r in rs]
         ax.plot(Ns, gs, mk + "-", color=col, label=f"A={A}")
     ax.set_xlabel("N"); ax.set_ylabel("never-absorb fraction (t_abs censored at t_max)")
-    ax.set_title("CP3e — graze-survival fraction vs N\n(fraction that grazes but never truly absorbs)")
+    ax.set_title("Graze-survival fraction vs N\n(fraction that grazes but never truly absorbs)")
     ax.grid(True, alpha=0.3); ax.legend(); ax.set_ylim(-0.02, 1.02)
     ax = axes[1]
     for A, col in ((0.5, RED), (0.2, BLUE)):
@@ -612,7 +612,7 @@ def fig_graze_stats():
             ax.hist(ng, bins=np.arange(-0.5, min(mx, 20) + 1.5, 1), density=True,
                     color=col, alpha=0.55, label=f"A={A} (n={len(ng)})")
     ax.set_xlabel("n_grazes before absorption"); ax.set_ylabel("probability")
-    ax.set_title("CP3e — grazes before a true absorption\n(absorbed runs only)")
+    ax.set_title("Grazes before a true absorption\n(absorbed runs only)")
     ax.legend()
     fig.tight_layout()
     fig.savefig(OUT / "graze_stats.png", dpi=140); fig.savefig(OUT / "graze_stats.pdf")

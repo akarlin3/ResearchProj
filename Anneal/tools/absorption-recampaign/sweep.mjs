@@ -58,7 +58,7 @@ function labelOf(cfg) {
 // Worker
 // --------------------------------------------------------------------------- //
 if (!isMainThread) {
-  const { label, breath } = workerData;
+  const { label, breath, campaign } = workerData;
   parentPort.on('message', (job) => {
     if (job === null) process.exit(0);
     const t0 = Date.now();
@@ -95,6 +95,7 @@ if (!isMainThread) {
         recThresh: label.recThresh,
         recWin: label.recWin,
         t_max: job.t_max,
+        ...(campaign ? { campaign } : {}),
         git_hash: workerData.gitHash,
         runner_version: RUNNER_VERSION,
         wall_ms: Date.now() - t0,
@@ -190,6 +191,7 @@ async function main() {
   const gh = gitHash();
   const label = labelOf(cfg);
   const breath = cfg.breath;
+  const campaign = cfg.campaign ?? null;
 
   const allJobs = buildJobs(cfg, args.seedsCap, args.tmax);
   const done = loadDoneKeys(outPath);
@@ -227,7 +229,7 @@ async function main() {
     };
     for (let i = 0; i < Math.min(nWorkers, total); i++) {
       const w = new Worker(fileURLToPath(import.meta.url), {
-        workerData: { gitHash: gh, label, breath },
+        workerData: { gitHash: gh, label, breath, campaign },
       });
       w.on('message', (msg) => {
         appendFileSync(fd, JSON.stringify(msg.row) + '\n');

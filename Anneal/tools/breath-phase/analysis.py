@@ -334,11 +334,11 @@ fig = plt.figure(figsize=(15, 8))
 for i, pt in enumerate(POINTS):
     ax = fig.add_subplot(3, 4, i + 1, projection="polar")
     a = agg[pt]
-    rose(ax, a["phis"], f"N={pt[0]} A={pt[1]}\nn={a['n_eligible']} p={a['rayleigh_p']:.1e}" if a["rayleigh_p"] is not None else f"N={pt[0]} A={pt[1]}")
+    rose(ax, a["phis"], f"N={pt[0]} A={pt[1]}\nn={a['n_eligible']} p={a['rayleigh_p']:.1e}" if a["rayleigh_p"] is not None else f"N={pt[0]} A={pt[1]}\nn={a['n_eligible']}")
 ax = fig.add_subplot(3, 4, (9, 12), projection="polar")
 rose(ax, pooled["phis"], f"POOLED  n={pooled['n_eligible']}  p={pooled['rayleigh_p']:.2e}")
 fig.suptitle(
-    "CP2 — collapse phase φ_c relative to preceding breath peak (φ=0). "
+    "Collapse phase φ_c relative to preceding breath peak (φ=0). "
     "Red radial = circular mean (length ∝ R̄).",
     fontsize=11,
 )
@@ -389,7 +389,7 @@ for ax, pt in zip(axes.ravel(), POINTS):
 axes[0, 0].legend(fontsize=7)
 for ax in axes[1]:
     ax.set_xlabel("post-crossing min R_incoh")
-fig.suptitle("CP3 — post-crossing minimum R_incoh over the ≥60s tail "
+fig.suptitle("Post-crossing minimum R_incoh over the ≥60s tail "
              "(mass near 1.0 ⇒ absorbed; any mass below 0.80 ⇒ recovery)", fontsize=11)
 fig.tight_layout(rect=[0, 0, 1, 0.95])
 fig.savefig(OUT / "cp3_absorption.png", dpi=130)

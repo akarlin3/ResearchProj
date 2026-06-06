@@ -19,9 +19,17 @@ import { fileURLToPath } from 'node:url';
 import { traceRun } from './tracer.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const cfg = JSON.parse(
-  readFileSync(resolve(__dirname, 'absorption.config.json'), 'utf8'),
-);
+
+// Optional CLI: --config <path> --out <path>. Defaults reproduce the original
+// beta=0.05 behaviour byte-for-byte.
+const argv = process.argv;
+let cfgPath = resolve(__dirname, 'absorption.config.json');
+let outOverride = null;
+for (let i = 2; i < argv.length; i++) {
+  if (argv[i] === '--config') cfgPath = resolve(argv[++i]);
+  else if (argv[i] === '--out') outOverride = resolve(argv[++i]);
+}
+const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
 const ROOT = process.cwd();
 
 const { beta, dt, sampleStride, t_max } = cfg.model;
@@ -33,22 +41,36 @@ const label = {
   recWin: cfg.absorption_criterion.recoveryWindowSec,
 };
 const breath = cfg.breath;
-const points = [
-  { Np: 8, A: 0.5 },
-  { Np: 16, A: 0.5 },
-  { Np: 32, A: 0.5 },
-  { Np: 64, A: 0.5 },
-  { Np: 8, A: 0.2 },
-  { Np: 16, A: 0.2 },
-  { Np: 32, A: 0.2 },
-  { Np: 64, A: 0.2 },
-];
+
+// Points + per-A seed0: derive from cfg.sweeps when the config opts in
+// (phase_subset.fromSweeps), else use the original hardcoded beta=0.05 set.
+let points;
+let seed0;
+if (cfg.phase_subset && cfg.phase_subset.fromSweeps) {
+  points = [];
+  seed0 = {};
+  for (const sw of cfg.sweeps) {
+    seed0[sw.A] = sw.seed0;
+    for (const Np of sw.Ns) points.push({ Np, A: sw.A });
+  }
+} else {
+  points = [
+    { Np: 8, A: 0.5 },
+    { Np: 16, A: 0.5 },
+    { Np: 32, A: 0.5 },
+    { Np: 64, A: 0.5 },
+    { Np: 8, A: 0.2 },
+    { Np: 16, A: 0.2 },
+    { Np: 32, A: 0.2 },
+    { Np: 64, A: 0.2 },
+  ];
+  seed0 = { 0.5: 100000, 0.2: 200000 };
+}
 const nSeeds = cfg.phase_subset.nSeedsPerPoint;
-const seed0 = { 0.5: 100000, 0.2: 200000 };
 
 const outDir = resolve(ROOT, cfg.output_dir);
 mkdirSync(outDir, { recursive: true });
-const outPath = resolve(outDir, 'phase_traces.jsonl');
+const outPath = outOverride ?? resolve(outDir, 'phase_traces.jsonl');
 
 const round4 = (x) => Number(x.toFixed(4));
 const lines = [];

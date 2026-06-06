@@ -140,7 +140,7 @@ def main():
     ax.set_xscale("log"); ax.set_yscale("log")
     ax.set_xlabel("reduced 3-D capture time (s)")
     ax.set_ylabel("measured t_abs (s)")
-    ax.set_title(f"CP4 — reduced-predicted vs measured lifetime (A=0.5, β=0.05)\n"
+    ax.set_title(f"Reduced-predicted vs measured lifetime (A=0.5, β=0.05)\n"
                  f"pooled Spearman ρ={pooled['spearman_reduced_vs_tabs']:.3f} "
                  f"(|Δφ₀| benchmark ρ≈{MEAS['dphi0_spearman']})")
     ax.legend(fontsize=8, ncol=2)
