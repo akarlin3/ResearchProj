@@ -27,14 +27,14 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 OUT = os.path.join(ROOT, "paper_figures")
 
 # Paper figure <- source result figure (stem, no extension). Figures 1, 7, A and
-# B are generated directly into paper_figures/ by their own scripts; the rest are
-# produced by the per-tool analysis pipelines and assembled here (previously a
-# manual copy step). All source titles are CP-codename-free (publication style).
+# B are generated directly into paper_figures/ by their own scripts; the
+# single-panel figures below are produced by the per-tool analysis pipelines and
+# assembled here (previously a manual copy step). The two-panel composites
+# (fig3, fig5, fig8) are built by compose.py — see compose.PAIR_MAP. All source
+# titles are CP-codename-free (publication style).
 FIG_MAP = {
     "fig2": "absorption_results/tau_old_vs_new",
-    "fig3": "absorption_results/k_abs_vs_N",
     "fig4": "absorption_results/geometric_p",
-    "fig5": "absorption_results/absorption_phase_rose",
     "fig6": "transient_results/transient_decider",
     "fig9": "reduced_results/cp4_scatter",
 }
@@ -83,8 +83,14 @@ def main():
     run([sys.executable, os.path.join(HERE, "figA.py")])
     run([sys.executable, os.path.join(HERE, "figB.py")])
 
-    # Assemble Figures 2-6, 9 from their source pipelines (scripted copy step).
+    # Assemble single-panel Figures 2, 4, 6, 9 from their source pipelines.
     assemble_figs()
+
+    # Compose the two-panel Figures 3, 5, 8 from their committed source panels.
+    sys.path.insert(0, HERE)
+    import compose
+
+    compose.compose_all()
 
     run([sys.executable, os.path.join(HERE, "make_report.py")])
     print("\nDone. Artifacts in paper_figures/.")
