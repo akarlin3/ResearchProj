@@ -497,8 +497,8 @@ def fig_tau_old_vs_new():
         ax.set_title(f"A={A} ({LAB[A]})")
         ax.grid(True, which="both", alpha=0.3)
         ax.legend(fontsize=8)
-    fig.suptitle("τ(N): legacy graze vs absorption-grade label\n"
-                 "(A=0.2 τ_abs exp-MLE is censoring-inflated; KM median is the robust readout)")
+    fig.suptitle(r"$\tau(N)$: legacy graze vs absorption-grade label" "\n"
+                 r"(A=0.2 $\tau_{\mathrm{abs}}$ exp-MLE is censoring-inflated; KM median is the robust readout)")
     fig.tight_layout(rect=[0, 0, 1, 0.93])
     fig.savefig(OUT / "tau_old_vs_new.png", dpi=140)
     fig.savefig(OUT / "tau_old_vs_new.pdf")

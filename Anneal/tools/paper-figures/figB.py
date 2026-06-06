@@ -50,9 +50,10 @@ ax.annotate(rf"measured scale $c\approx{cphys:g}$", xy=(cphys, ax.get_ylim()[1])
 ax.set_xlabel(r"noise amplitude $c$  (with $\sigma_{\mathrm{noise}}=c/\sqrt{N}$)")
 ax.set_ylabel(r"prolongation factor  (median capture / deterministic)")
 ax.set_title("Additive $1/\\sqrt{N}$ noise: prolongation is N-dependent")
-ax.legend(loc="upper left", fontsize=7)
+ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=7,
+          frameon=True, borderaxespad=0.0)
 ax.set_ylim(0.5, max(3.4, max(M[f"c{c}_N8"]["ratio_to_det"] for c in CS) + 0.2))
 
 fig.tight_layout()
-paths = style.savefig(fig, "figB")
+paths = style.savefig(fig, "figB", tight=True)
 print("wrote", *paths)

@@ -87,14 +87,16 @@ def apply_style():
     })
 
 
-def savefig(fig, stem):
+def savefig(fig, stem, tight=False):
     """Save `fig` to <output_dir>/<stem>.{pdf,png} at the configured dpi.
-    Returns the list of written paths (absolute)."""
+    Pass tight=True to use bbox_inches='tight' (e.g. for a legend placed outside
+    the axes). Returns the list of written paths (absolute)."""
     out_dir = os.path.join(ROOT, _CFG["output_dir"])
     os.makedirs(out_dir, exist_ok=True)
+    kw = {"bbox_inches": "tight"} if tight else {}
     paths = []
     for ext in _CFG["formats"]:
         p = os.path.join(out_dir, f"{stem}.{ext}")
-        fig.savefig(p)
+        fig.savefig(p, **kw)
         paths.append(p)
     return paths

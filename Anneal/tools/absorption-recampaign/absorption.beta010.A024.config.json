@@ -1,0 +1,44 @@
+{
+  "name": "beta=0.10 A=0.24 mid-band stable-chimera control (absorption-grade)",
+  "version": "1.0.0",
+  "campaign": "beta010-A024-v1",
+  "description": "Deferred mid-band control for the beta=0.10 robustness slice. A=0.24 sits well inside the stable stationary-chimera band (A_SN=0.178 < 0.24 < A_H=0.278), further from the saddle-node than the A=0.2 secondary control (which sits close to A_SN and was only 28-60% persistent). This run converts the marginal never-absorber control into a clean one. Same integrator, labels, and tracer as absorption.beta010.config.json; only the sweep changes. Rows carry campaign='beta010-A024-v1'.",
+  "model": {
+    "beta": 0.1,
+    "dt": 0.05,
+    "sampleStride": 0.1,
+    "t_max": 2000,
+    "_note": "Identical to absorption.beta010.config.json so labels reproduce by the same cadence."
+  },
+  "graze_criterion": {
+    "theta": 0.85,
+    "W": 5.0
+  },
+  "absorption_criterion": {
+    "T_v": 120.0,
+    "recoveryThreshold": 0.8,
+    "recoveryWindowSec": 5.0
+  },
+  "breath": {
+    "smoothWindowSec": 2.0,
+    "minProminenceFrac": 0.1,
+    "minPeakSepFrac": 0.5,
+    "minCyclesForPhase": 2,
+    "autoPeriodFloorSec": 8.0
+  },
+  "sweeps": [
+    {
+      "label": "A_midband",
+      "A": 0.24,
+      "Ns": [8, 64],
+      "seeds": 50,
+      "seed0": 240000,
+      "_note": "Mid-band stable-chimera control (deferred item 3). 50 seeds x {8,64} at beta=0.10."
+    }
+  ],
+  "inputs": {
+    "campaign_jsonl": "campaign_results/collapse_campaign.jsonl"
+  },
+  "output_dir": "absorption_results",
+  "output": "absorption_results/absorption_campaign_beta010_A024.jsonl"
+}

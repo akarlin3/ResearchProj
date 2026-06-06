@@ -1,0 +1,46 @@
+{
+  "campaign": "beta010-A024-v1",
+  "beta": 0.1,
+  "A": 0.24,
+  "band": "A_SN=0.178 < 0.24 < A_H=0.278 (stable stationary-chimera band)",
+  "by_N": {
+    "8": {
+      "n": 50,
+      "persistent_n": 22,
+      "persistent_frac": 0.44,
+      "absorbers_n": 28,
+      "t_abs_median": 26.6,
+      "t_abs_min": 3.9000000000000004,
+      "t_abs_max": 95.10000000000001
+    },
+    "64": {
+      "n": 50,
+      "persistent_n": 26,
+      "persistent_frac": 0.52,
+      "absorbers_n": 24,
+      "t_abs_median": 8.5,
+      "t_abs_min": 6.7,
+      "t_abs_max": 52.7
+    }
+  },
+  "compare_A0.2": {
+    "8": {
+      "n": 50,
+      "persistent_n": 14,
+      "persistent_frac": 0.28,
+      "absorbers_n": 36,
+      "t_abs_median": 13.850000000000001,
+      "t_abs_min": 3.2,
+      "t_abs_max": 46.1
+    },
+    "64": {
+      "n": 50,
+      "persistent_n": 30,
+      "persistent_frac": 0.6,
+      "absorbers_n": 20,
+      "t_abs_median": 9.0,
+      "t_abs_min": 6.5,
+      "t_abs_max": 54.2
+    }
+  }
+}
