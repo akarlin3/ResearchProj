@@ -5,11 +5,13 @@ from ouroboros_fractional_sindy import gl_derivative_time, build_fractional_pde_
 # Suppress numerical warnings from singular matrices/convergences
 warnings.filterwarnings('ignore')
 
-def select_temporal_order(u, dt, dx, alpha_t_candidates=(0.6, 0.8, 1.0), frac_space_orders=(0.5, 1.5), threshold=0.05, k_start=10):
+def select_temporal_order(u, dt, dx, alpha_t_candidates=(0.6, 0.8, 1.0), frac_space_orders=(0.5, 1.5), threshold=0.05, k_start=10, u_clean=None, true_alpha=None):
     """
     Performs a held-out R2 sweep over temporal fractional orders.
     Splits the time series: first 80% for training, remaining 20% for testing.
     Uses k_start index to discard the initial step-change artifact in GL derivative.
+    If u_clean is provided, test evaluation (R2) is scored against the clean reference.
+    If true_alpha is also provided, the clean reference target is computed at true_alpha.
     """
     nt, nx, n_vars = u.shape
     nt_train = int(0.8 * nt)
@@ -37,12 +39,22 @@ def select_temporal_order(u, dt, dx, alpha_t_candidates=(0.6, 0.8, 1.0), frac_sp
         # Get coefficients: shape (n_vars, n_features)
         coefs = np.asarray(model.coefficients())
         
-        # Compute design matrix on test set: shape (nt_test, nx, n_features)
-        Theta_test = library.transform(u_test)
-        
-        # Flatten time and space dimensions for evaluation (cast to numpy array first)
-        Theta_test_flat = np.asarray(Theta_test).reshape(u_test.shape[0] * u_test.shape[1], -1)
-        u_dot_test_flat = u_dot_test.reshape(u_dot_test.shape[0] * u_dot_test.shape[1], -1)
+        # If u_clean is provided, compute features and targets from u_clean (test set)
+        if u_clean is not None:
+            u_clean_test = u_clean[nt_train:]
+            Theta_test = library.transform(u_clean_test)
+            Theta_test_flat = np.asarray(Theta_test).reshape(u_clean_test.shape[0] * u_clean_test.shape[1], -1)
+            
+            target_alpha = true_alpha if true_alpha is not None else alpha_t
+            u_dot_clean = gl_derivative_time(u_clean, dt, target_alpha)
+            u_dot_test_clean = u_dot_clean[nt_train:]
+            u_dot_test_clean_flat = u_dot_test_clean.reshape(u_dot_test_clean.shape[0] * u_dot_test_clean.shape[1], -1)
+            u_dot_test_flat = u_dot_test_clean_flat
+        else:
+            # Compute design matrix on test set: shape (nt_test, nx, n_features)
+            Theta_test = library.transform(u_test)
+            Theta_test_flat = np.asarray(Theta_test).reshape(u_test.shape[0] * u_test.shape[1], -1)
+            u_dot_test_flat = u_dot_test.reshape(u_dot_test.shape[0] * u_dot_test.shape[1], -1)
         
         # Compute predictions: shape (nt_test * nx, n_vars)
         u_dot_pred_flat = Theta_test_flat @ coefs.T

@@ -84,7 +84,7 @@ def main():
     y0 = np.concatenate([p0, c0, n0])
     
     true_alphas = [0.5, 0.7, 0.9]
-    candidates = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    candidates = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     frac_space_orders = (0.5, 1.5)  # Dummy/unused space candidates since we fit ODE features
     
     results = {}
@@ -97,7 +97,7 @@ def main():
         
         # Run sweep
         sweep, best = select_temporal_order(u_clean, dt, dx, alpha_t_candidates=candidates, 
-                                             frac_space_orders=frac_space_orders, threshold=0.01, k_start=20)
+                                             frac_space_orders=frac_space_orders, threshold=0.01, k_start=20, u_clean=u_clean, true_alpha=alpha)
         
         selected_alpha = best['alpha_t']
         error = abs(selected_alpha - alpha)
@@ -142,7 +142,7 @@ def main():
             u_noisy = add_noise(u_clean, snr)
             
             sweep, best = select_temporal_order(u_noisy, dt, dx, alpha_t_candidates=candidates, 
-                                                 frac_space_orders=frac_space_orders, threshold=0.01, k_start=20)
+                                                 frac_space_orders=frac_space_orders, threshold=0.01, k_start=20, u_clean=u_clean, true_alpha=alpha)
             
             selected_alpha = best['alpha_t']
             error = abs(selected_alpha - alpha)
