@@ -1,0 +1,510 @@
+{
+  "num_cases": 12,
+  "base_seed": 1000,
+  "cases": [
+    {
+      "case_id": 1,
+      "seed": 1001,
+      "bin_file": "case_1.bin",
+      "deck_file": "case_1.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          21,
+          30,
+          48
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_LUNG_ICRP",
+          "G4_BONE_COMPACT_ICRU"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "gamma",
+        "energy_mev": 4.094202806921989,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 2,
+      "seed": 1002,
+      "bin_file": "case_2.bin",
+      "deck_file": "case_2.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          19,
+          27,
+          47
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_WATER",
+          "G4_BONE_COMPACT_ICRU"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 141.4313602602568,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 3,
+      "seed": 1003,
+      "bin_file": "case_3.bin",
+      "deck_file": "case_3.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          17,
+          24,
+          43
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_LUNG_ICRP",
+          "G4_LUNG_ICRP"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 135.40234861312933,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 4,
+      "seed": 1004,
+      "bin_file": "case_4.bin",
+      "deck_file": "case_4.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          20,
+          26,
+          37
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_LUNG_ICRP",
+          "G4_LUNG_ICRP"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 127.80907872765789,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 5,
+      "seed": 1005,
+      "bin_file": "case_5.bin",
+      "deck_file": "case_5.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          18,
+          24,
+          49
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_BONE_COMPACT_ICRU",
+          "G4_BONE_COMPACT_ICRU"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 175.8337225433162,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 6,
+      "seed": 1006,
+      "bin_file": "case_6.bin",
+      "deck_file": "case_6.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          18,
+          26,
+          38
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_WATER",
+          "G4_BONE_COMPACT_ICRU"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 156.05141662797928,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 7,
+      "seed": 1007,
+      "bin_file": "case_7.bin",
+      "deck_file": "case_7.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          15,
+          21,
+          44
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_BONE_COMPACT_ICRU",
+          "G4_BONE_COMPACT_ICRU"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 168.9588207106766,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 8,
+      "seed": 1008,
+      "bin_file": "case_8.bin",
+      "deck_file": "case_8.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          17,
+          24,
+          41
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_BONE_COMPACT_ICRU",
+          "G4_BONE_COMPACT_ICRU"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 168.78304486372676,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 9,
+      "seed": 1009,
+      "bin_file": "case_9.bin",
+      "deck_file": "case_9.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          20,
+          26,
+          44
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_LUNG_ICRP",
+          "G4_LUNG_ICRP"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 139.6149352603717,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 10,
+      "seed": 1010,
+      "bin_file": "case_10.bin",
+      "deck_file": "case_10.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          19,
+          25,
+          45
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_WATER",
+          "G4_LUNG_ICRP"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 152.1483438742106,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 11,
+      "seed": 1011,
+      "bin_file": "case_11.bin",
+      "deck_file": "case_11.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          17,
+          24,
+          35
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_WATER",
+          "G4_LUNG_ICRP"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 153.79941213056372,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "case_id": 12,
+      "seed": 1012,
+      "bin_file": "case_12.bin",
+      "deck_file": "case_12.txt",
+      "phantom_meta": {
+        "slab_boundaries_z": [
+          20,
+          27,
+          38
+        ],
+        "materials": [
+          "G4_WATER",
+          "G4_AIR",
+          "G4_BONE_COMPACT_ICRU",
+          "G4_LUNG_ICRP"
+        ]
+      },
+      "magnetic_field": {
+        "strength_tesla": 1.5,
+        "direction": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "source": {
+        "particle": "proton",
+        "energy_mev": 166.83880106267955,
+        "histories": 5000
+      },
+      "dimensions": [
+        60,
+        60,
+        60
+      ],
+      "voxel_sizes_mm": [
+        2.5,
+        2.5,
+        2.5
+      ]
+    }
+  ]
+}
