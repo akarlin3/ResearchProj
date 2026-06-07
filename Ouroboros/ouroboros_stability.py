@@ -227,6 +227,82 @@ def main():
     plt.savefig('figures/stability_map.png', dpi=150, bbox_inches='tight')
     plt.close()
     print("Saved stability map plot to figures/stability_map.png")
+
+    # Checkpoint 2: Hardened stability edge checks
+    print("\n" + "="*60)
+    print("CHECKPOINT 2: HARDENING STABILITY CLAIM")
+    print("="*60)
+    
+    # 1. Past-the-corner points
+    past_points = [
+        {'rho': 0.05, 'gam_n': 5.0, 'Dn': 0.001, 'label': 'Lower growth rate (rho=0.05)'},
+        {'rho': 0.1,  'gam_n': 6.0, 'Dn': 0.001, 'label': 'Higher regression rate (gam_n=6.0)'},
+        {'rho': 0.1,  'gam_n': 5.0, 'Dn': 0.0005, 'label': 'Lower vessel diffusion (Dn=0.0005)'},
+        {'rho': 0.05, 'gam_n': 6.0, 'Dn': 0.0005, 'label': 'Extrapolated corner (rho=0.05, gam_n=6.0, Dn=0.0005)'}
+    ]
+    
+    print("\nEvaluating linear stability just past the swept-box corner:")
+    hardened_results = []
+    for pt in past_points:
+        res = analyze_stability(pt['rho'], pt['gam_n'], pt['Dn'])
+        print(f"  {pt['label']}:")
+        print(f"    Leading Re(lambda) = {res['max_re']:.6f} | status: {res['status']}")
+        if res['hss']:
+            print(f"    HSS (n*, p*, c*): ({res['hss'][0]:.4f}, {res['hss'][1]:.4f}, {res['hss'][2]:.4f})")
+        hardened_results.append({
+            'rho': pt['rho'],
+            'gam_n': pt['gam_n'],
+            'Dn': pt['Dn'],
+            'label': pt['label'],
+            'max_re': res['max_re'],
+            'status': res['status']
+        })
+
+    # 2. Non-swept parameters variations
+    # Baseline: gam_c = 0.2, Sc = 0.3
+    # We test variations of gam_c in [0.05, 0.5] and Sc in [0.1, 0.6]
+    gam_c_vals = [0.05, 0.5]
+    Sc_vals = [0.1, 0.6]
+    
+    # We test these variations at two physical regimes: 
+    # (i) baseline swept params (rho=0.2, gam_n=0.1, Dn=0.01)
+    # (ii) corner swept params (rho=0.1, gam_n=5.0, Dn=0.001)
+    regimes = [
+        {'rho': 0.2, 'gam_n': 0.1, 'Dn': 0.01, 'name': 'Baseline Swept Params'},
+        {'rho': 0.1, 'gam_n': 5.0, 'Dn': 0.001, 'name': 'Corner Swept Params'}
+    ]
+    
+    print("\nVarying non-swept parameters (gam_c, Sc):")
+    nonswept_results = []
+    for regime in regimes:
+        print(f"  In {regime['name']} (rho={regime['rho']}, gam_n={regime['gam_n']}, Dn={regime['Dn']}):")
+        for gc in gam_c_vals:
+            for sc in Sc_vals:
+                res = analyze_stability(
+                    regime['rho'], regime['gam_n'], regime['Dn'],
+                    gam_c=gc, Sc=sc
+                )
+                print(f"    gam_c={gc:.2f}, Sc={sc:.2f} -> Leading Re(lambda) = {res['max_re']:.6f} | status: {res['status']}")
+                nonswept_results.append({
+                    'regime': regime['name'],
+                    'rho': regime['rho'],
+                    'gam_n': regime['gam_n'],
+                    'Dn': regime['Dn'],
+                    'gam_c': gc,
+                    'Sc': sc,
+                    'max_re': res['max_re'],
+                    'status': res['status']
+                })
+                
+    # Save the hardened results to stability_hardened.json
+    hardened_data = {
+        'past_corner_points': hardened_results,
+        'non_swept_variations': nonswept_results
+    }
+    with open('data/stability_hardened.json', 'w') as f:
+        json.dump(hardened_data, f, indent=2)
+    print("\nSaved hardened stability results to data/stability_hardened.json")
     
 if __name__ == '__main__':
     main()
+
