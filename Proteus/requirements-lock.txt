@@ -1,60 +1,28 @@
-# Proteus resolved Python deps — GENERATED, DO NOT HAND-EDIT.
-# Source: pip freeze in CPU best-effort venv (.venv) on 2026-06-08T14:15:22Z
-# HOST HAS NO GPU/CUDA: torch is the CPU build; ESMFold/CUDA-torch NOT validated here.
-# Regenerate on the RTX 4080 host for the real CUDA-matched lock. See envlog/recon-report.md.
+# Proteus — resolved Python deps lock. GENERATED, DO NOT HAND-EDIT.
 #
-annotated-doc==0.0.4
-anyio==4.13.0
-biopython==1.87
-biotite==1.6.0
-biotraj==1.2.2
-certifi==2026.5.20
-charset-normalizer==3.4.7
-click==8.4.1
-fair-esm==2.0.0
-filelock==3.29.0
-fsspec==2026.4.0
-gemmi==0.7.5
-h11==0.16.0
-hf-xet==1.5.0
-httpcore==1.0.9
-httpx==0.28.1
-huggingface_hub==1.18.0
-idna==3.18
-iniconfig==2.3.0
-Jinja2==3.1.6
-markdown-it-py==4.2.0
-MarkupSafe==3.0.3
-mdurl==0.1.2
-meeko==0.7.1
-mpmath==1.3.0
-msgpack==1.1.2
-networkx==3.6.1
-numpy==2.4.6
-packaging==26.2
-pandas==3.0.3
-pillow==12.2.0
-pluggy==1.6.0
-Pygments==2.20.0
-pytest==9.0.3
-python-dateutil==2.9.0.post0
-PyYAML==6.0.3
-rdkit==2026.3.3
-regex==2026.5.9
-requests==2.34.2
-rich==15.0.0
-safetensors==0.7.0
-scipy==1.17.1
-sentencepiece==0.2.1
-shellingham==1.5.4
-six==1.17.0
-sympy==1.14.0
-tiktoken==0.13.0
-tokenizers==0.22.2
-torch==2.12.0+cpu
-tqdm==4.68.1
-transformers==5.10.2
-typer==0.25.1
-typing_extensions==4.15.0
-urllib3==2.7.0
-vina==1.2.7
+# ┌─ STATUS: PENDING GENERATION ON THE M4 ──────────────────────────────────────┐
+# │ This lockfile must be a `pip freeze` of the resolved osx-arm64 env. It was   │
+# │ NOT generated here: the scaffolding session ran in a Linux x86_64 container  │
+# │ (no Apple Silicon, no MPS), so any freeze produced here would pin the WRONG  │
+# │ platform wheels (e.g. a linux torch build instead of the arm64 MPS build).   │
+# │ Fabricating arm64 pins would be dishonest, so this file is intentionally     │
+# │ empty of pins. See envlog/env-failures.md for the full reason.               │
+# └─────────────────────────────────────────────────────────────────────────────┘
+#
+# Generate the REAL lock on the M4 MacBook Air after a clean install:
+#
+#   CONDA_SUBDIR=osx-arm64 mamba env create -f environment.yml
+#   conda activate proteus
+#   # verify imports/runs (Checkpoint 2) and pass the smoke suite (Checkpoint 3):
+#   pytest tests/test_smoke.py -v
+#   # then freeze:
+#   pip freeze > requirements-lock.txt
+#   conda env export > envlog/conda-env-resolved.yml
+#
+# Expected top-level packages once resolved (versions filled by the freeze, not by hand):
+#   torch (arm64, MPS)  transformers  sentencepiece  meeko
+#   numpy  pandas  biopython  biotite  pyyaml  tqdm  pytest
+#   (foldseek / mmseqs2 / fpocket / vina are conda/Homebrew tools, not pip — see
+#    environment.yml and envlog/conda-env-resolved.yml)
+#
+# DO NOT add esmfold / fair-esm / chai_lab / gnina — those are Vast-only (vast/).

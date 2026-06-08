@@ -1,0 +1,50 @@
+# Proteus — Vast.ai BURST fold image (S3). ESMFold batch fold (+ optional Chai-1
+# refinement). Build/push ONLY when bursting; this is NOT part of the local M4 env
+# and must NOT be built on the Mac. The local pipeline narrows S0–S2 and ships only
+# the S2 shortlist up here for folding (see vast/sync.md).
+#
+# Pin the toolchain on the FIRST real build and record the resolved versions next
+# to the local lockfiles in envlog/. The base image below is pinned; the Python
+# packages carry __PIN_ON_FIRST_BUILD__ markers rather than guessed versions.
+
+# Pinned CUDA runtime base (CUDA 12.4 + cuDNN). Verify it matches the Vast
+# instance's driver at launch (driver >= R550 for CUDA 12.4).
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/data/hf-cache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3.11 python3-pip git wget ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/proteus
+
+RUN python3 -m pip install --upgrade pip
+
+# --- ESMFold (S3 — the reason this box exists) ---------------------------------
+# fair-esm provides ESMFold (esmfold_v1). It pulls a CUDA torch build matched to
+# the base image. Pin all three on first build, e.g.:
+#   torch==__PIN__ (the +cu124 wheel)   fair-esm==__PIN__   and the OpenFold deps
+#   ESMFold needs (dllogger, openfold). Capture exact versions into envlog/.
+# RUN pip3 install "torch==__PIN_ON_FIRST_BUILD__" --index-url https://download.pytorch.org/whl/cu124
+# RUN pip3 install "fair-esm[esmfold]==__PIN_ON_FIRST_BUILD__"
+# RUN pip3 install 'dllogger @ git+https://github.com/NVIDIA/dllogger.git' \
+#                  'openfold @ git+https://github.com/aqlaboratory/openfold.git@__PIN__'
+
+# --- Chai-1 refinement (optional, commented — enable when running S3b) ----------
+# Chai-1 ships its own torch build; do NOT mix it with the ESMFold torch above —
+# use a separate stage/venv if both are needed in one image.
+# RUN pip3 install "chai_lab==__PIN_ON_FIRST_BUILD__"
+
+# --- GPU docking (GNINA / DiffDock) lives in the P4 burst, kept out of this image.
+
+# The burst runner: read the S3 job manifest, fold the shortlist on CUDA, write
+# PDBs + per-model pLDDT to a MOUNTED/persistent volume (interruptible instances
+# can die mid-job — checkpoint per sequence). See vast/sync.md.
+# TODO(P3): COPY the runner in and set ENTRYPOINT, e.g.
+#   COPY vast/run_fold.py /opt/proteus/run_fold.py
+#   ENTRYPOINT ["python3", "/opt/proteus/run_fold.py"]
+CMD ["python3", "-c", "print('proteus Vast fold image — set the ESMFold pins + ENTRYPOINT, see vast/sync.md')"]
