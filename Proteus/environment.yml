@@ -1,25 +1,31 @@
-# Proteus — local conda/mamba environment (CPU + RTX 4080 folding env).
+# Proteus — LOCAL conda/mamba environment for the M4 MacBook Air (osx-arm64).
 #
-# Build with:  mamba env create -f environment.yml   (or conda)
+# Target: Apple Silicon (arm64), MPS or CPU. NO CUDA. This is the cheap-triage +
+# analysis env (S0–S2 narrowing, S4–S5 geometry/cleft, small Vina docking).
+# Heavy folding (ESMFold/Chai-1, S3) is NOT here — it runs on the Vast.ai burst
+# box; see vast/Dockerfile.fold. Do NOT add esmfold / chai_lab / gnina to this file.
 #
-# IMPORTANT — versions are intentionally NOT hard-pinned here. Resolve the
-# CUDA-matched PyTorch build against the host's actual CUDA/driver (see
-# envlog/recon-report.md), then capture the resolved set into:
-#   - requirements-lock.txt          (pip freeze)
-#   - envlog/conda-env-resolved.yml  (conda env export)
+# Build on the Mac (Miniforge, osx-arm64):
+#   CONDA_SUBDIR=osx-arm64 mamba env create -f environment.yml
+#   conda activate proteus
+# Then resolve + lock (see Checkpoint 2):
+#   pip freeze            > requirements-lock.txt
+#   conda env export      > envlog/conda-env-resolved.yml
 #
-# The pytorch-cuda line below MUST match the recon CUDA version. It is left as
-# a TODO marker rather than a guessed number — do not invent a CUDA version.
+# Versions are intentionally left UNPINNED here — resolve against the actual
+# osx-arm64 host at install time, then capture the resolved set into the lockfiles.
+# Do not invent versions. Per-tool resolution order:
+#   native osx-arm64 conda  ->  Homebrew (arm64)  ->  x86 via CONDA_SUBDIR=osx-64
+#   under Rosetta 2 (last resort; note it in envlog/env-failures.md).
 name: proteus
 channels:
-  - pytorch
-  - nvidia
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - python=3.11
 
-  # --- Core scientific stack ---
+  # --- Core scientific stack (all have osx-arm64 conda-forge builds) ---
   - numpy
   - pandas
   - biopython
@@ -28,27 +34,36 @@ dependencies:
   - tqdm
   - pytest
 
-  # --- PyTorch + CUDA (RESOLVE against recon CUDA; do not guess) ---
-  - pytorch
-  - pytorch-cuda=__SET_TO_RECON_CUDA__   # e.g. 12.1 / 12.4 — set from `nvcc`/driver
-  # NOTE: on this scaffold host there is NO GPU/CUDA, so this line cannot resolve.
-  #       On the RTX 4080 host, set the value and uncomment cleanly.
+  # --- PyTorch: arm64 build, MPS-capable. CPU/MPS ONLY — no CUDA extras. ---
+  # conda-forge ships an osx-arm64 pytorch with the MPS backend. If the conda
+  # solve is slow/contradictory, fall back to: pip install torch  (arm64 wheel).
+  - pytorch>=2.2          # MPS backend; verify torch.backends.mps.is_available()
 
-  # --- Structure search / clustering (bioconda) ---
+  # --- Structure search / clustering ---
+  # Try bioconda osx-arm64 first; if unavailable for arm, install via Homebrew
+  #   brew install foldseek mmseqs2
+  # (record which source resolved in envlog/env-failures.md).
   - foldseek
   - mmseqs2
+
+  # --- Pocket detection ---
+  # fpocket may lack an osx-arm64 conda build -> Homebrew (`brew install fpocket`)
+  # or a source build. Record the source used.
   - fpocket
 
-  # --- CPU docking (P4) ---
-  - vina            # AutoDock Vina
-  - openbabel       # ligand/receptor prep helper for Meeko/ADFR flows
+  # --- CPU docking (P4, small local runs) ---
+  - vina                  # AutoDock Vina (osx-arm64 conda build available)
+  - openbabel             # ligand/receptor prep helper used by Meeko flows
 
-  # --- pip-only deps ---
+  # --- pip-only deps (no weights downloaded at install time) ---
   - pip
   - pip:
-      - fair-esm                 # ESMFold / ESM-2 (GPU in practice)
-      - transformers             # ProstT5 (Rostlab/ProstT5) seq -> 3Di
-      - sentencepiece            # ProstT5 tokenizer dependency
-      - meeko                    # AutoDock ligand prep
-      # ADFR suite (receptor prep) is installed separately from the Scripps
-      # distribution; it is not pip/conda installable. See README.
+      - transformers      # ProstT5 (Rostlab/ProstT5) seq -> 3Di; weights fetched later
+      - sentencepiece     # ProstT5 tokenizer asset (spiece.model)
+      - meeko             # AutoDock ligand/receptor prep (Meeko preferred over ADFR)
+      # NOTE: ADFRsuite (alternative receptor prep) is x86-only — NOT installable on
+      #       arm64. If you must use it, run it under Rosetta 2 (CONDA_SUBDIR=osx-64)
+      #       or prefer Meeko. See envlog/env-failures.md.
+      #
+      # DO NOT add esmfold / fair-esm / chai_lab / gnina here — those are Vast.ai
+      # burst-only (vast/Dockerfile.fold). Local S3 is dry-run/manifest only.

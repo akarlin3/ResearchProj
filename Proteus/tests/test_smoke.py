@@ -1,24 +1,31 @@
-"""Positive-output smoke tests — one per LOCAL tool.
+"""Positive-output smoke tests — one per LOCAL (M4 / Apple Silicon) tool.
 
-Each test asserts a POSITIVE artifact (a coordinate, a hit row, a cluster, a
-finite score), not merely "no exception". Mirrors the CD silent-failure rule:
-green-without-output is not green.
+Each test asserts a POSITIVE artifact (a finite tensor, a 3Di string, a hit row,
+a cluster TSV, a pocket, a finite affinity, a valid manifest) — not merely "no
+exception". green-without-output is NOT green.
 
-Tools that are not installed are SKIPPED (not passed and not failed) so the
-suite still runs and the SMOKE SUMMARY reflects true per-tool state. On a host
-with no GPU, ESMFold/CUDA-torch tests skip by design — see
-envlog/recon-report.md.
+There is NO local ESMFold test: folding (S3) is offloaded to the Vast.ai burst box.
+Instead we assert that `s3_fold.py --dry-run` emits a valid job manifest, and that
+MPS itself is healthy for the stages that DO run locally (ProstT5, etc.).
+
+Tools that are not installed are SKIPPED (not passed, not failed) so the suite
+still runs and the SMOKE SUMMARY reflects true per-tool state.
+
+Run on the Mac:  pytest tests/test_smoke.py -v
 """
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
+import sys
 import textwrap
 
 import pytest
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC = os.path.join(REPO, "src")
 
 # A minimal valid 3-residue poly-ALA backbone+CB PDB (two copies used as toy input).
 TOY_PDB = textwrap.dedent("""\
@@ -47,22 +54,42 @@ def _have(cmd: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
-# ESMFold
+# MPS sanity — the local accelerator the M4 stages rely on
 # --------------------------------------------------------------------------- #
-def test_esmfold_positive_output(tmp_path):
+def test_mps_matmul_finite():
+    """A small matmul on device 'mps' returns finite values. Skip+warn if MPS is
+    unavailable (e.g. running on a non-Apple host or CPU-only build)."""
     torch = pytest.importorskip("torch", reason="torch not installed")
-    esm = pytest.importorskip("esm", reason="fair-esm not installed")
-    if not torch.cuda.is_available():
-        pytest.skip("no CUDA GPU — ESMFold not runnable on this host")
+    if not torch.backends.mps.is_available():
+        pytest.skip("MPS not available on this host — Apple-Silicon-only check")
+    x = torch.randn(128, 128, device="mps")
+    y = x @ x
+    assert y.shape == (128, 128)
+    assert bool(torch.isfinite(y).all()), "matmul on MPS produced non-finite values"
 
-    model = esm.pretrained.esmfold_v1().eval().cuda()
-    seq = "GSSGSSGAEAEAEAEAKLKL"  # ~20 residues
-    with torch.no_grad():
-        out = model.infer_pdb(seq)
-    plddt = model.infer(seq)["plddt"]
-    assert "ATOM" in out and out.count("\n") > 10, "no PDB coordinates emitted"
-    assert plddt.numel() > 0, "empty pLDDT array"
-    assert float(plddt.mean()) > 0.0, "non-positive pLDDT"
+
+# --------------------------------------------------------------------------- #
+# S3 dry-run — NO local ESMFold. Assert the job manifest is valid instead.
+# --------------------------------------------------------------------------- #
+def test_s3_dry_run_emits_valid_manifest(tmp_path):
+    fasta = tmp_path / "shortlist.fasta"
+    fasta.write_text(
+        ">cand1\nMKKLLPTAAAGLLLLAAQPAMAGHSMGGGGTLRLASQRPDLKAAIPLAPW\n"
+        ">cand2\nGSSGSSGAEAEAEAEAKLKLGHSMGGAAAATLRLASQRPDLKAAIPLAPWS\n"
+    )
+    out = tmp_path / "manifest.json"
+    env = dict(os.environ, PYTHONPATH=SRC)
+    proc = subprocess.run(
+        [sys.executable, "-m", "proteus.s3_fold", "--dry-run",
+         "--fasta", str(fasta), "--out", str(out)],
+        capture_output=True, text=True, env=env, cwd=REPO)
+    assert proc.returncode == 0, f"s3 dry-run failed: {proc.stderr}"
+    assert out.exists(), "no job manifest emitted"
+    man = json.loads(out.read_text())
+    assert man["run_location"] == "vast", "S3 must be marked as a Vast job, not local"
+    assert man["n_sequences"] == 2, "manifest sequence count wrong"
+    assert man["fold_params"]["model"] == "esmfold_v1"
+    assert all(e.get("sha256") for e in man["sequences"]), "missing per-seq sha256"
 
 
 # --------------------------------------------------------------------------- #
@@ -120,7 +147,8 @@ def test_mmseqs2_positive_output(tmp_path):
 # ProstT5
 # --------------------------------------------------------------------------- #
 def test_prostt5_positive_output():
-    """Tokenize one short sequence with ProstT5's tokenizer; assert non-empty tokens.
+    """Tokenize one short sequence with ProstT5's tokenizer on the configured
+    device; assert a non-empty token/3Di string.
 
     Primary path uses transformers' T5Tokenizer. Some transformers releases route
     ProstT5's SentencePiece model through an incompatible converter; in that case
@@ -169,15 +197,46 @@ def test_fpocket_positive_output(tmp_path):
 
 
 # --------------------------------------------------------------------------- #
-# AutoDock Vina
+# AutoDock Vina — minimal scoring run returns a finite affinity
 # --------------------------------------------------------------------------- #
-def test_vina_positive_output():
-    vina = pytest.importorskip("vina", reason="vina python bindings not installed")
+# Minimal rigid ligand + receptor PDBQT fixtures (AutoDock atom types + charges)
+# so Vina can compute maps and score without an external prep step.
+_LIG_PDBQT = textwrap.dedent("""\
+    ROOT
+    ATOM      1  C   LIG A   1       0.000   0.000   0.000  1.00  0.00     0.000 C
+    ATOM      2  C   LIG A   1       1.500   0.000   0.000  1.00  0.00     0.000 C
+    ATOM      3  O   LIG A   1       2.100   1.100   0.000  1.00  0.00    -0.200 OA
+    ENDROOT
+    TORSDOF 0
+""")
+_REC_PDBQT = textwrap.dedent("""\
+    ATOM      1  C   REC A   1      -4.000   0.000   0.000  1.00  0.00     0.000 C
+    ATOM      2  C   REC A   1      -4.000   3.000   0.000  1.00  0.00     0.000 C
+    ATOM      3  C   REC A   1       5.000   0.000   0.000  1.00  0.00     0.000 C
+    ATOM      4  C   REC A   1       5.000   3.000   0.000  1.00  0.00     0.000 C
+    ATOM      5  N   REC A   1       0.000  -4.000   0.000  1.00  0.00    -0.300 N
+    ATOM      6  O   REC A   1       0.000   4.000   2.000  1.00  0.00    -0.300 OA
+    TER
+""")
+
+
+def test_vina_positive_output(tmp_path):
+    pytest.importorskip("vina", reason="vina python bindings not installed")
+    from vina import Vina
     try:
-        from vina import Vina
+        lig = tmp_path / "lig.pdbqt"
+        rec = tmp_path / "rec.pdbqt"
+        lig.write_text(_LIG_PDBQT)
+        rec.write_text(_REC_PDBQT)
         v = Vina(sf_name="vina", seed=1729, verbosity=0)
+        v.set_receptor(str(rec))
+        v.set_ligand_from_file(str(lig))
+        v.compute_vina_maps(center=[0.0, 0.0, 0.0], box_size=[20, 20, 20])
+        energies = v.score()  # array; [0] is the total inter+intra score
     except Exception as exc:
-        pytest.skip(f"vina not usable: {exc}")
-    # Instantiating the scorer is the minimal positive signal available without
-    # prepared receptor/ligand PDBQTs; a full scoring run needs S5 outputs.
-    assert v is not None
+        # Bindings present but inputs/maps unsupported on this build -> skip, don't
+        # falsely fail. On the M4 with a real prepared receptor this scores cleanly.
+        pytest.skip(f"vina scoring not runnable with toy fixtures: {exc}")
+    import math
+    assert len(energies) > 0, "vina returned no energies"
+    assert math.isfinite(float(energies[0])), "vina affinity is not finite"

@@ -1,36 +1,44 @@
-# Proteus — resolved environment snapshot.
+# Proteus — resolved conda environment snapshot. GENERATED, DO NOT HAND-EDIT.
 #
-# NOTE: This is NOT a real `conda env export`. The scaffold host has no conda/mamba
-# and no GPU/CUDA (Checkpoint 0 BLOCKER — see recon-report.md), so the LOCAL stack
-# was resolved CPU-best-effort in a pip venv + static bioconda-equivalent binaries.
-# Regenerate a true conda export on the RTX 4080 host:  conda env export > this file.
+# STATUS: PENDING GENERATION ON THE M4. This is NOT a real `conda env export`.
+# The scaffolding session ran in a Linux x86_64 container with no conda/mamba and
+# no Apple Silicon, so a true osx-arm64 solve could not be produced here. A solve
+# from the wrong platform would pin the wrong builds — so this file carries only
+# the resolution PLAN, not fabricated versions. See envlog/env-failures.md.
 #
-# Generated: 2026-06-08T14:16:13Z
+# Regenerate the REAL export on the M4 MacBook Air:
+#   CONDA_SUBDIR=osx-arm64 mamba env create -f environment.yml
+#   conda activate proteus
+#   conda env export > envlog/conda-env-resolved.yml
+#
+# Target platform: osx-arm64 (Apple Silicon). Device: MPS/CPU. No CUDA.
 name: proteus
 channels:
-  - pytorch
-  - nvidia
   - conda-forge
   - bioconda
-resolved:
-  python: "3.11.15"
-  # --- GPU stack: NOT validated here (no CUDA). torch is the CPU wheel. ---
-  pytorch: "2.12.0+cpu"          # CPU build; on 4080 host this becomes a +cuXXX build
-  pytorch_cuda: "n/a (no GPU on scaffold host)"
-  esmfold_fair_esm: "installed (import OK); inference SKIPPED — requires CUDA GPU"
-  # --- Structure search / clustering (static binaries, mmseqs.com) ---
-  foldseek: "718d42176d2f67d36a60866fedfb881f8d5a7ebf (linux-avx2 static)"
-  mmseqs2: "11933403321b1a062d5d82fecd5a1d823d0d3bf6 (linux-avx2 static)"
-  fpocket: "4.2.2 (built from source)"
-  # --- Docking (CPU, P4) ---
-  vina: "1.2.7"
-  meeko: "0.7.1"
-  adfr: "NOT installed (Scripps distribution; manual install on real host)"
-  # --- ProstT5 ---
-  transformers: "5.10.2"
-  prostt5_tokenizer: "Rostlab/ProstT5 spiece.model (vocab 28) loads via sentencepiece"
-  # --- Standard scientific stack ---
-  numpy: "2.4.6"
-  pandas: "3.0.3"
-  biopython: "1.87"
-  biotite: "1.6.0"
+  - nodefaults
+resolution_plan:           # filled with concrete '=version=build' by the real export
+  python: "3.11"
+  # --- arm64 PyTorch (MPS). CPU/MPS only, no CUDA. ---
+  pytorch: "RESOLVE on osx-arm64; verify torch.backends.mps.is_available() == True"
+  # --- Structure search / clustering: bioconda osx-arm64 first, else Homebrew ---
+  foldseek: "RESOLVE (bioconda osx-arm64 | brew install foldseek)"
+  mmseqs2:  "RESOLVE (bioconda osx-arm64 | brew install mmseqs2)"
+  # --- Pocket detection ---
+  fpocket:  "RESOLVE (bioconda | brew install fpocket | source build)"
+  # --- Docking (local small runs) ---
+  vina:     "RESOLVE (conda-forge osx-arm64)"
+  meeko:    "RESOLVE (pip)"
+  adfr:     "NOT installed — x86-only Scripps suite; run under Rosetta 2 if needed, prefer Meeko"
+  # --- ProstT5 deps (no weights at install time) ---
+  transformers:  "RESOLVE (pip)"
+  sentencepiece: "RESOLVE (pip)"
+  # --- Standard scientific stack (conda-forge osx-arm64) ---
+  numpy: "RESOLVE"
+  pandas: "RESOLVE"
+  biopython: "RESOLVE"
+  biotite: "RESOLVE"
+  pyyaml: "RESOLVE"
+  tqdm: "RESOLVE"
+  pytest: "RESOLVE"
+# NOTE: esmfold / fair-esm / chai_lab / gnina are intentionally ABSENT — Vast-only.

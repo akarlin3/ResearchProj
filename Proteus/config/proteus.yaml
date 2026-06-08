@@ -1,11 +1,18 @@
 # Proteus — central config
 # Structure-first dark-proteome mining for divergent PET-hydrolase candidates.
-# Every stochastic step (MMseqs2, ESMFold, docking) MUST read random_seed from here.
+# Target LOCAL host: M4 MacBook Air (Apple Silicon, MPS/CPU, no CUDA).
+# Every stochastic step (S0 MMseqs2, S3 ESMFold/torch on Vast, docking) MUST read
+# random_seed from here — never hardcode a seed in stage code.
 
 # ---------------------------------------------------------------------------
 # Global reproducibility
 # ---------------------------------------------------------------------------
 random_seed: 1729            # referenced by every stochastic stage (S0, S3, docking)
+
+# ---------------------------------------------------------------------------
+# Device — LOCAL Apple Silicon. mps when available, else cpu. Never cuda locally.
+# ---------------------------------------------------------------------------
+device: mps                  # mps | cpu  (auto-fallback to cpu if MPS unavailable)
 
 # ---------------------------------------------------------------------------
 # Paths (relative to repo root unless absolute)
@@ -14,13 +21,13 @@ paths:
   data_raw:        data/raw
   data_interim:    data/interim
   data_processed:  data/processed
-  structures:      structures          # gitignored; fetched/folded PDBs
-  models:          models              # gitignored; downloaded weights (ESMFold, ProstT5)
+  structures:      structures          # gitignored; fetched controls + folded PDBs returned from Vast
+  models:          models              # gitignored; downloaded weights (ProstT5 local; ESMFold lives on Vast)
   controls:        controls
   envlog:          envlog
   # external weight locations (populated when downloaded; left blank to avoid guessing)
-  prostt5_weights: ""                  # e.g. Rostlab/ProstT5 (HF) or local path
-  esmfold_weights: ""                  # e.g. facebook/esmfold_v1 cache dir
+  prostt5_weights: ""                  # e.g. "Rostlab/ProstT5" (HF id) or a local cache path
+  # NOTE: no esmfold_weights here — ESMFold runs on the Vast burst box, not locally.
 
 # ---------------------------------------------------------------------------
 # Corpus selection — which dark-proteome sources to mine
@@ -28,7 +35,7 @@ paths:
 corpus:
   sources: []                          # e.g. ["mgnify_peptide_db", "gtdb_reps"] — fill per run
   min_length: 80                       # residues; below this, skip
-  max_length: 1000                     # length-chunk threshold handled in S3
+  max_length: 1000                     # length cap; longer seqs chunked on Vast (S3)
   fasta_glob: "data/raw/*.fasta.gz"
 
 # ---------------------------------------------------------------------------
@@ -36,32 +43,39 @@ corpus:
 # ---------------------------------------------------------------------------
 # S0 — dereplicate (MMseqs2). This is dereplication, NOT a homology gate:
 #      we collapse near-identical sequences only; we do NOT filter by similarity
-#      to known PETases (that would defeat dark-tail mining).
+#      to known PETases (that would defeat dark-tail mining).  [LOCAL]
 s0_dereplicate:
   min_seq_id: 0.95                     # cluster members at >=95% identity collapse
   coverage: 0.90
   cov_mode: 1
 
-# S1 — ProstT5 sequence -> 3Di tokenization
+# S1 — ProstT5 sequence -> 3Di tokenization.  [LOCAL]
 s1_tokenize:
-  batch_size: 16
-  device: auto                         # cpu | cuda | auto
+  batch_size: 16                       # modest: 16 GB unified RAM on the M4 Air is tight
+  device: auto                         # auto -> mps if available else cpu (see top-level `device`)
 
-# S2 — Foldseek fold-CLASS triage against alpha/beta-hydrolase fold (UNSEEDED:
-#      we match the fold class, not specific PETase templates)
+# S2 — Foldseek fold-CLASS triage against the alpha/beta-hydrolase fold (UNSEEDED:
+#      we match the fold class, not specific PETase templates).  [LOCAL]
 s2_foldclass_triage:
   target_fold: alpha_beta_hydrolase
   evalue: 0.01
   min_bits: 50
+  # The output of S2 is the shortlist FASTA shipped UP to Vast.ai for folding.
+  shortlist_fasta: data/interim/s2_shortlist.fasta
 
-# S3 — ESMFold batch (LOCAL GPU). pLDDT filter + length chunking.
+# S3 — ESMFold batch. RUNS ON VAST.AI (Linux+CUDA), NOT locally. On the Mac this
+#      stage is DRY-RUN ONLY: validate the input FASTA and emit a job manifest.
+#      NEVER fold on MPS.  [VAST.AI]
 s3_fold:
-  device: cuda                         # GPU-only in practice; see envlog/recon-report.md
-  plddt_min: 70.0                      # mean pLDDT cutoff to keep a model
-  chunk_size: 400                      # residue chunk for long sequences
+  run_location: vast                   # vast | local-dry-run. Local execution is dry-run only.
+  device: cuda                         # the *Vast* device; the Mac never sets this to run
+  plddt_min: 70.0                      # mean pLDDT cutoff to keep a returned model
+  chunk_size: 400                      # residue chunk for long sequences (applied on Vast)
   max_recycles: 3
+  manifest_out: data/interim/s3_job_manifest.json
 
-# S4 — catalytic geometry gate: Ser-His-Asp triad + oxyanion hole
+# S4 — catalytic geometry gate: Ser-His-Asp triad + oxyanion hole, on the
+#      structures RETURNED from Vast.  [LOCAL]
 s4_geometry:
   triad_serine_resname: SER
   triad_his_resname: HIS
@@ -72,20 +86,20 @@ s4_geometry:
   oxyanion_hole_max: 3.5               # backbone-NH donors to oxyanion position
 
 # S5 — cleft metrics A-E, control-anchored scoring (scored relative to the
-#      positive controls in controls/references.csv, not to absolute cutoffs)
+#      positive controls in controls/references.csv, not to absolute cutoffs).  [LOCAL]
 s5_cleft_filter:
   fpocket_min_pockets: 1
   metrics: [volume, hydrophobicity, depth, polarity, druggability]   # A-E
   control_anchor: IsPETase             # reference for relative cleft scoring
 
 # ---------------------------------------------------------------------------
-# Compute split
+# Compute split — LOCAL Mac (triage/analysis) vs VAST.AI burst (folding/GPU dock)
 # ---------------------------------------------------------------------------
 compute:
   local:
-    description: "CPU + single RTX 4080 (16GB). ESMFold, Foldseek, MMseqs2, fpocket, Vina."
-    cuda_device: 0
+    description: "M4 MacBook Air (Apple Silicon, MPS/CPU, no CUDA, 16 GB unified). Runs S0–S2 narrowing, S4–S5 geometry/cleft, small Vina docking."
+    device: mps                        # mps | cpu
   vast_burst:
-    description: "Vast.ai P3/P4 burst for Chai-1 cofolding + GPU docking (GNINA/DiffDock)."
-    image: vast/Dockerfile.chai1
-    instance_pref: interruptible        # prefer interruptible; fall back to on-demand
+    description: "Vast.ai Linux+CUDA burst: ESMFold batch fold (S3), Chai-1 refinement, GPU docking (GNINA/DiffDock). Only the S2 shortlist is shipped up."
+    image: vast/Dockerfile.fold
+    instance_pref: interruptible        # prefer interruptible; checkpoint outputs; fall back to on-demand
