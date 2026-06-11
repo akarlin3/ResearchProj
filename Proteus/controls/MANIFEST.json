@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-08T14:07:14.089915+00:00",
+  "generated": "2026-06-11T07:14:22.355842+00:00",
   "source": "RCSB files.rcsb.org",
   "format": "pdb",
   "structures": [
@@ -42,7 +42,7 @@
     {
       "id": "CalB",
       "role": "negative",
-      "note": "Candida antarctica lipase B \u2014 VERIFY PDB; lid-bearing lipase",
+      "note": "Candida antarctica lipase B; lid-bearing lipase; alpha/beta-hydrolase; no PET activity",
       "accession": "1TCA",
       "format": "pdb",
       "url": "https://files.rcsb.org/download/1TCA.pdb",
@@ -50,6 +50,42 @@
       "path": "../structures/1TCA.pdb",
       "bytes": 244863,
       "sha256": "8950b5f7a08c6e8be8506de6af728ec7c28583aa28362cb7886726f757d70d56"
+    },
+    {
+      "id": "AChE_Tc",
+      "role": "negative",
+      "note": "Torpedo californica acetylcholinesterase; deep-gorge serine hydrolase S200/H440/E327; no PET activity",
+      "accession": "1EA5",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/1EA5.pdb",
+      "status": "ok",
+      "path": "../structures/1EA5.pdb",
+      "bytes": 480330,
+      "sha256": "7a8f3683fe879e44edb82e80dc9d3cdac213fa573818131fafd80cf9945f8d81"
+    },
+    {
+      "id": "CRL",
+      "role": "negative",
+      "note": "Candida rugosa lipase 1; lid-bearing alpha/beta-hydrolase S209/H449/E341; no PET activity",
+      "accession": "1CRL",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/1CRL.pdb",
+      "status": "ok",
+      "path": "../structures/1CRL.pdb",
+      "bytes": 394308,
+      "sha256": "7bf7f0216241960496e09e83038d7d0baa8bc79a56fc1c3173ed9437f26ad7b8"
+    },
+    {
+      "id": "Est2",
+      "role": "negative",
+      "note": "Alicyclobacillus acidocaldarius esterase-2 Est2; bacterial carboxylesterase; alpha/beta-hydrolase; no PET activity",
+      "accession": "1EVQ",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/1EVQ.pdb",
+      "status": "ok",
+      "path": "../structures/1EVQ.pdb",
+      "bytes": 247374,
+      "sha256": "b56aead84190b0074f07a97993c151aa06631a15f498b66e7f2a3de0cf286722"
     }
   ],
   "sequences": [

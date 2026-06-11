@@ -83,14 +83,60 @@ s4_geometry:
   # distance windows (Angstrom) — catalytic triad hydrogen-bonding geometry
   ser_og_his_ne2_max: 3.5              # Ser OG -- His NE2
   his_nd1_acid_max: 3.5                # His ND1 -- Asp/Glu carboxylate O
-  oxyanion_hole_max: 3.5               # backbone-NH donors to oxyanion position
+  oxyanion_hole_max: 3.5               # backbone-NH donor distance to oxyanion position
+  # Oxyanion-hole probe: the anion sits in the hemisphere AWAY from the His, in the
+  # region ~2.5-3.5 A from Ser OG. We search that shell for the point with the most
+  # backbone amide N within oxyanion_hole_max, and require >= oxyanion_min_donors that
+  # co-localize there (scattered amides near OG do not count — they must share a point).
+  oxyanion_probe_min: 2.5              # Angstrom from Ser OG (near edge of the region)
+  oxyanion_probe_max: 3.5             # Angstrom from Ser OG (far edge of the region)
+  oxyanion_min_donors: 2               # distinct backbone-NH donors required
 
-# S5 — cleft metrics A-E, control-anchored scoring (scored relative to the
-#      positive controls in controls/references.csv, not to absolute cutoffs).  [LOCAL]
+# S5 — cleft metrics A-E + two discriminators, control-anchored scoring (scored
+#      RELATIVE to the positive controls, not to absolute cutoffs).  [LOCAL]
 s5_cleft_filter:
   fpocket_min_pockets: 1
-  metrics: [volume, hydrophobicity, depth, polarity, druggability]   # A-E
+  metrics: [volume, hydrophobicity, depth, polarity, druggability]   # A-E base set
   control_anchor: IsPETase             # reference for relative cleft scoring
+  # Positive anchor set for z-scoring (LCC_WT=4EB0 is the LCC positive; 6THS is the
+  # S165A trap and is NOT a positive). Calibration centres metrics on these.
+  positive_controls: [IsPETase, LCC_WT]
+  # Catalytic-pocket selection: pick the fpocket pocket whose centre is nearest the
+  # catalytic Ser OG; skip the model if none is within this distance.
+  catalytic_pocket_max_dist: 12.0      # Angstrom
+  # Added discriminator 1 — active-site EXPOSURE / lid-absence (primary).
+  # Robust proxy: peripherality of the catalytic Ser = distance from Ser OG to the
+  # protein CA centroid. Lid-less PET hydrolases sit on a surface groove (Ser far
+  # from the core); lid/gorge enzymes bury the Ser near the core. This avoids the
+  # confound that raw OG SASA is dominated by open-vs-closed crystal lid state.
+  exposure_metric: peripherality       # peripherality | og_sasa
+  sasa_probe_radius: 1.4               # for the reported (diagnostic) OG SASA
+  # Added discriminator 2 — aromatic subsites (Trp/Tyr/Phe) flanking the cleft.
+  aromatic_resnames: [TRP, TYR, PHE]
+  aromatic_shell_min: 6.0              # Angstrom from Ser OG
+  aromatic_shell_max: 10.0             # Angstrom from Ser OG
+  # Composite weights (sum to 1). Exposure dominates (the lid-absence signal);
+  # druggability/volume separate the big-pocket lipases; aromatics down-weighted
+  # because raw aromatic count is noisy and can favour aromatic-gorge esterases.
+  weights:
+    exposure: 0.40
+    druggability: 0.20
+    depth: 0.10
+    volume: 0.10
+    hydrophobicity: 0.075
+    polarity: 0.075
+    aromatics: 0.05
+  # PETase-favourable orientation per metric, set from biology (NOT tuned to the 6
+  # controls): +1 higher is more PETase-like, -1 lower is, 0 penalise deviation from
+  # the positive profile (|z|). depth = pocket buriedness (1 - solvent access).
+  orientation:
+    exposure: 1
+    druggability: -1
+    depth: -1
+    aromatics: 1
+    volume: 0
+    hydrophobicity: 0
+    polarity: 0
 
 # ---------------------------------------------------------------------------
 # Compute split — LOCAL Mac (triage/analysis) vs VAST.AI burst (folding/GPU dock)
