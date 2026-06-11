@@ -105,11 +105,23 @@ s5_cleft_filter:
   # catalytic Ser OG; skip the model if none is within this distance.
   catalytic_pocket_max_dist: 12.0      # Angstrom
   # Added discriminator 1 — active-site EXPOSURE / lid-absence (primary).
-  # Robust proxy: peripherality of the catalytic Ser = distance from Ser OG to the
-  # protein CA centroid. Lid-less PET hydrolases sit on a surface groove (Ser far
-  # from the core); lid/gorge enzymes bury the Ser near the core. This avoids the
-  # confound that raw OG SASA is dominated by open-vs-closed crystal lid state.
+  # Robust proxy: peripherality of the catalytic Ser relative to the protein CA
+  # centroid. Lid-less PET hydrolases sit on a surface groove (Ser far from the
+  # core); lid/gorge enzymes bury the Ser near the core. This avoids the confound
+  # that raw OG SASA is dominated by open-vs-closed crystal lid state.
   exposure_metric: peripherality       # peripherality | og_sasa
+  # How to express that peripherality. The dark proteome spans all sizes, so the
+  # PRODUCTION metric must be size-invariant — an absolute Angstrom distance cannot
+  # transfer across proteins of different size. Chosen a priori on principle, NOT
+  # tuned to the 6 controls (see the normalization section of calibration-report.md).
+  #   percentile : fraction of CA atoms closer to the CA centroid than the catalytic
+  #                Ser CA is (0 = dead centre, 1 = most peripheral). Size- AND
+  #                shape-invariant. PRODUCTION default.
+  #   rg_norm    : (Ser OG -> CA centroid) / Rg, Rg = sqrt(mean_i ||CA_i-centroid||^2).
+  #                Dimensionless; size-invariant continuous cross-check.
+  #   absolute   : Ser OG -> CA centroid in Angstrom. Size-DEPENDENT; kept for
+  #                comparison only — do NOT use in production.
+  peripherality_mode: percentile       # percentile | rg_norm | absolute
   sasa_probe_radius: 1.4               # for the reported (diagnostic) OG SASA
   # Added discriminator 2 — aromatic subsites (Trp/Tyr/Phe) flanking the cleft.
   aromatic_resnames: [TRP, TYR, PHE]

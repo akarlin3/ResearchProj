@@ -7,11 +7,16 @@ triad:
 
   1. EXPOSURE / lid-absence (primary). PET hydrolases present the catalytic serine on
      an open surface groove; lipases bury it under a mobile lid and esterases/AChE
-     down a deep gorge. The robust proxy is the catalytic-Ser *peripherality* — the
-     distance from Ser OG to the protein CA centroid (large = surface, small = core).
-     This is preferred over raw OG SASA, which on crystal controls is dominated by the
-     open-vs-closed lid state (an open-lid lipase crystal shows a deceptively exposed
-     Ser). Raw OG SASA is still computed and reported as a diagnostic column.
+     down a deep gorge. The robust proxy is the catalytic-Ser *peripherality* relative
+     to the protein CA centroid (large = surface, small = core). This is preferred over
+     raw OG SASA, which on crystal controls is dominated by the open-vs-closed lid state
+     (an open-lid lipase crystal shows a deceptively exposed Ser). Raw OG SASA is still
+     computed and reported as a diagnostic column.
+     Peripherality is expressed via `peripherality_mode` (config): `percentile` (rank of
+     the Ser among its own residues; PRODUCTION default), `rg_norm` (OG->centroid over
+     Rg), or `absolute` (raw Angstrom; size-dependent, comparison only). The first two
+     are size-invariant so the metric transfers across the size-heterogeneous dark
+     proteome; `absolute` cannot. See _peripherality_modes.
   2. AROMATIC subsites. Count Trp/Tyr/Phe within a shell of the Ser OG (PET binds via
      aromatic stacking, e.g. IsPETase Trp185). Down-weighted: raw counts are noisy and
      aromatic-gorge esterases inflate them; on folded models the rotamers are noisy too.
@@ -121,10 +126,50 @@ def _catalytic_og(protein, ser_res_id: int):
     return np.asarray(protein.coord[mask][0], dtype=float)
 
 
-def _peripherality(protein, og) -> float:
-    """Distance from catalytic Ser OG to the protein CA centroid (exposure proxy)."""
+PERIPHERALITY_MODES = ("percentile", "rg_norm", "absolute")
+
+
+def _peripherality_modes(protein, og, ser_res_id: int) -> dict:
+    """Catalytic-Ser peripherality (exposure proxy) in all three forms, against ONE
+    shared CA centroid. Deterministic — pure geometry, no seed.
+
+    - absolute:   ||OG - centroid||, Angstrom. Size-DEPENDENT (kept for comparison).
+    - rg_norm:    ||OG - centroid|| / Rg, where Rg = sqrt(mean_i ||CA_i - centroid||^2).
+                  Numerator and denominator both scale with size -> size-invariant.
+    - percentile: fraction of CA atoms whose centroid-distance is < the catalytic-Ser
+                  CA centroid-distance (0 = dead centre, 1 = most peripheral). Compares
+                  the Ser to its OWN protein's residues -> size- and shape-invariant.
+
+    Under a uniform coordinate scaling (all coords x k): absolute scales by k, while
+    rg_norm and percentile are unchanged (ratio / rank order are scale-free)."""
     ca = protein.coord[protein.atom_name == "CA"]
-    return euclidean(og, ca.mean(axis=0))
+    centroid = ca.mean(axis=0)
+    d_og = euclidean(og, centroid)
+    d_ca = np.linalg.norm(ca - centroid, axis=1)
+    rg = float(np.sqrt(np.mean(d_ca ** 2)))
+
+    ser_ca_mask = (protein.res_id == ser_res_id) & (protein.atom_name == "CA")
+    if ser_ca_mask.any():
+        d_ser_ca = euclidean(np.asarray(protein.coord[ser_ca_mask][0], dtype=float),
+                             centroid)
+        percentile = float(np.mean(d_ca < d_ser_ca))
+    else:
+        percentile = float("nan")
+
+    return {
+        "absolute": d_og,
+        "rg_norm": (d_og / rg) if rg > 0 else float("nan"),
+        "percentile": percentile,
+    }
+
+
+def _peripherality(protein, og, ser_res_id: int, mode: str) -> float:
+    """Catalytic-Ser peripherality in the requested `mode` (see _peripherality_modes)."""
+    modes = _peripherality_modes(protein, og, ser_res_id)
+    if mode not in modes:
+        raise ValueError(f"unknown peripherality_mode {mode!r}; "
+                         f"expected one of {PERIPHERALITY_MODES}")
+    return modes[mode]
 
 
 def _og_sasa(protein, ser_res_id: int, probe: float) -> float:
@@ -160,9 +205,11 @@ def analyze_cleft(pdb_path: str, ser_res_id: int, cfg: dict) -> dict:
     max_dist = float(s5["catalytic_pocket_max_dist"])
     protein = protein_atoms(load_structure(pdb_path))
     og = _catalytic_og(protein, ser_res_id)
+    mode = s5.get("peripherality_mode", "percentile")
     result = {"model": os.path.basename(pdb_path), "ser_res_id": ser_res_id,
               "pocket_id": None, "dist_og_pocket": None, "n_pockets": 0,
-              "metrics": {}, "raw_og_sasa": None}
+              "metrics": {}, "raw_og_sasa": None,
+              "peripherality_mode": mode, "peripherality": None}
     if og is None:
         result["error"] = f"no Ser OG at residue {ser_res_id}"
         return result
@@ -176,9 +223,12 @@ def analyze_cleft(pdb_path: str, ser_res_id: int, cfg: dict) -> dict:
         if best_d is None or d < best_d:
             best_pid, best_d = pid, d
 
-    exposure = (_peripherality(protein, og)
-                if s5.get("exposure_metric", "peripherality") == "peripherality"
-                else _og_sasa(protein, ser_res_id, float(s5["sasa_probe_radius"])))
+    if s5.get("exposure_metric", "peripherality") == "peripherality":
+        periph = _peripherality_modes(protein, og, ser_res_id)
+        result["peripherality"] = {k: round(v, 5) for k, v in periph.items()}
+        exposure = periph[mode]
+    else:
+        exposure = _og_sasa(protein, ser_res_id, float(s5["sasa_probe_radius"]))
     aromatics = _aromatic_count(protein, og, s5["aromatic_resnames"],
                                 float(s5["aromatic_shell_min"]),
                                 float(s5["aromatic_shell_max"]))
@@ -270,7 +320,8 @@ def main(argv=None) -> int:
         return 1
     m = r["metrics"]
     print(f"[s5] {r['model']} Ser{args.ser}: pocket {r['pocket_id']} "
-          f"@{r['dist_og_pocket']}A  exposure={m['exposure']} aromatics={m['aromatics']:.0f} "
+          f"@{r['dist_og_pocket']}A  exposure={m['exposure']} "
+          f"(mode={r['peripherality_mode']}) aromatics={m['aromatics']:.0f} "
           f"vol={m['volume']} drug={m['druggability']} depth={m['depth']} "
           f"(raw OG SASA={r['raw_og_sasa']:.2f})")
     return 0
