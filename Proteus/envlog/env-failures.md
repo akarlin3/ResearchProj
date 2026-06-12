@@ -40,6 +40,38 @@ Silicon / MPS. So the lockfiles (`requirements-lock.txt`,
 - `controls/fetch_controls.py` reachability: RCSB download of 6EQE returned the
   exact byte count recorded in `controls/MANIFEST.json` (614952 bytes). ✅
 
+## S0/S1 stage decisions (CP0 audit for the dereplicate + tokenize PR)
+
+These were resolved while implementing S0 (dereplicate) and S1 (tokenize). They
+are recorded here because the stage code comments point back to this file.
+
+### S1 backend — Foldseek-native ProstT5 (CHOSEN), transformers as fallback
+`foldseek createdb --help` exposes **`--prostt5-model STR`** (and
+`foldseek databases ProstT5` to fetch the weights), i.e. this Foldseek build does
+native AA→3Di generation. We use it as the **primary S1 backend**:
+
+- It runs the ProstT5 translation on **CPU**, so on the M4 it sidesteps both the
+  MPS question and the arm64 `transformers`/`sentencepiece` fragility noted above.
+- Its output is already a **valid Foldseek query DB** (the `_ss` 3Di sub-DB),
+  which S2 consumes directly — no separate DB-build step.
+- We also export an inspectable 3Di FASTA from the DB (`lndb` the headers onto
+  `_ss`, then `convert2fasta`).
+
+The `transformers` ProstT5 path (`s1_tokenize.tokenize_transformers`) is kept as a
+**fallback for older Foldseek builds without the flag**; it honours
+`s1_tokenize.{batch_size,device}` with a cpu fallback. Weights resolve from
+`paths.prostt5_weights` → `PROTEUS_PROSTT5_MODEL` → auto-download via
+`foldseek databases ProstT5` cached under `paths.models` (gitignored; ~2.4 GB
+`prostt5-f16.gguf`). The 3Di model itself is logged on each run.
+
+### MMseqs2 has no clustering RNG seed
+`mmseqs easy-cluster --help` exposes **no `--seed`** — clustering is a
+deterministic greedy set-cover, and the only stochastic knob is `--shuffle`
+(input-order shuffle of the DB). So S0 does **not** fabricate a nonexistent seed
+flag: it pins determinism with **`--shuffle 0`** and still reads + logs the single
+global `random_seed` from config for provenance. (If a future seedable MMseqs2
+step is added, it reads the same `random_seed`.)
+
 ## Net env status (on this Linux container): YELLOW — scaffold only
 
 Not GREEN, and cannot be from here: no Apple Silicon to exercise MPS, no osx-arm64
