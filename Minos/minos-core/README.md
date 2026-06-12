@@ -47,6 +47,46 @@ is promoted to a first-class number. New code: `minos/calibration.py`
 python experiments/run_b.py      # prints the 4 v2 gate blocks, writes figures/fig_gap_*.pdf
 ```
 
+## v3 — a deployment-validity monitor for a stale loss-calibration correction (headline)
+
+A prior-art sweep found that the *prescriptive* move v2 implies — "tune the error bar so the
+**decision** is optimal" — is an existing field: **loss-calibrated Bayesian inference** and
+**decision calibration**. So v3 does **not** introduce a calibration method. It treats the
+decision-calibrated scale as a **cited baseline** `tau_hat_cal` and contributes the thing that line
+does not address: those methods all assume the **calibration set represents deployment**.
+
+The novel object is a **deployment-validity monitor** `M(D_dep)` — a **label-free** statistic that
+detects when the learned loss-calibration correction has gone **stale** under distribution shift —
+plus a gated-recovery policy that acts on it.
+
+- **`tau_hat_cal`** — the cited loss-calibration baseline, `argmax_tau E[U]` on a labeled
+  calibration set (= v2's decision-calibrated scale).
+- **stale-correction regret `R`** — utility the stale correction strands vs the deployment-optimal
+  scale (oracle, simulation-only).
+- **validity monitor `M`** — a utility-weighted divergence between the deployment and calibration
+  reported-posterior shape, **regret-targeted** (weighted by the cost stakes near the decision
+  threshold), computed from **unlabeled** deployment data. Behind a one-function swappable interface.
+- **gated recovery** — where `M > m*`, override the decision-fragile voxels to the conservative arm.
+
+**The honesty constraint is the heart of the build.** A label-free monitor sees only observable
+reported summaries. The shift generator exposes two knobs that induce the **same** regret two ways:
+`delta_obs` biases the reported point (observable → detectable) and `delta_hid` biases the truth with
+the observable summaries held fixed (hidden → **undetectable by construction**). v3 measures detection
+separately and **reports the hidden-staleness fraction as a result**: the monitor catches
+observable-driven staleness (AUC ≫ 0.5) and is **at chance** on the hidden fraction (AUC ≈ 0.5),
+which is what motivates periodic **labeled repeatability spot-checks**.
+
+Two boundaries (see `POSITIONING.md`): (1) **not a calibration method** — that line is cited and
+benchmarked; (2) **not a generic OOD detector** — `M` is regret-targeted (utility stakes), not
+density-targeted. New code: `minos/correction.py` (`fit_loss_calibration`, `oracle_deploy_scale`,
+`stale_regret`), `minos/monitor.py` (`monitor`, `calibrate_threshold`, `gated_recovery_actions`),
+`generative.realise_deploy`; driver `experiments/run_c.py`; see `DESIGN_C.md`, `RESULTS_C.md`. v1/v2
+are retained verbatim.
+
+```bash
+python experiments/run_c.py      # prints the 4 v3 gate blocks, writes figures/fig_c_*.pdf
+```
+
 ## The math (condensed; full derivation in `DESIGN.md`)
 
 **Actions & utility.** `A = {spare, treat, escalate}`, thresholds `t1 < t2`, under-treatment
