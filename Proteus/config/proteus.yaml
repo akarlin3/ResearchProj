@@ -93,12 +93,11 @@ s2_foldclass_triage:
       post_filter:
         fold_class_allowlist: ""
 
-# S3 — ESMFold batch. RUNS ON GCE (Linux+CUDA), NOT locally. On the Mac this
-#      stage is DRY-RUN ONLY: validate the input FASTA and emit a job manifest.
-#      NEVER fold on MPS.  [GCE]
+# S3 — ESMFold batch. RUNS ON GCE, NOT locally. On the Mac this stage is DRY-RUN
+#      ONLY: validate the input FASTA and emit a job manifest. NEVER fold on MPS.  [GCE]
 s3_fold:
   run_location: gce                   # gce | local-dry-run. Local execution is dry-run only.
-  device: cuda                         # the *GCE* device; the Mac never sets this to run
+  device: cpu                          # the *GCE* device — cpu (no GPU quota) | cuda (when GPU)
   plddt_min: 70.0                      # mean pLDDT cutoff to keep a returned model
   chunk_size: 400                      # residue chunk for long sequences (applied on GCE)
   max_recycles: 3
@@ -201,15 +200,20 @@ compute:
     description: "M4 MacBook Air (Apple Silicon, MPS/CPU, no CUDA, 16 GB unified). Runs S0–S2 narrowing, S4–S5 geometry/cleft, small Vina docking."
     device: mps                        # mps | cpu
   gce_burst:
-    description: "Google Compute Engine Linux+CUDA burst: ESMFold batch fold (S3), Chai-1 refinement, GPU docking (GNINA/DiffDock). Only the S2 shortlist is shipped up."
+    description: "Google Compute Engine burst: ESMFold batch fold (S3). CPU fold (no GPU quota in this project) on a C4 VM; the narrowed S2 shortlist is small enough to fold on CPU. Only the shortlist is shipped up."
     dockerfile: gce/Dockerfile.fold     # build context for the fold image (push to Artifact Registry)
     # Burst launch parameters (proteus.launch plans the up-fold-down cycle from these).
-    project: ""                         # GCP project id (set per host)
-    zone: us-central1-a                 # a zone with the chosen GPU available
+    project: "projProteus"              # GCP project id
+    zone: us-central1-a
     instance_name: proteus-fold
-    machine_type: g2-standard-8         # L4 GPU machine family (n1-standard-* for T4/V100)
-    accelerator: nvidia-l4              # nvidia-l4 | nvidia-tesla-t4 | nvidia-tesla-a100
-    accelerator_count: 1
+    # CPU fold: ESMFold runs fp32 on CPU, so RAM is the binding constraint (~30-40 GB for
+    # typical lengths, more for long seqs). c4-highmem-8 = 8 vCPU / 62 GB gives headroom.
+    machine_type: c4-highmem-8          # bump to c4-highmem-16 if OOM on long sequences
+    # GPU is OFF (empty accelerator => proteus.launch builds the CPU plan: COS image, no
+    # --gpus). To switch to GPU once quota is granted: set accelerator (e.g. nvidia-tesla-t4
+    # on n1-standard-4, or nvidia-l4 on g2-standard-4) and accelerator_count: 1.
+    accelerator: ""
+    accelerator_count: 0
     image: ""                           # Artifact Registry fold image (e.g. REGION-docker.pkg.dev/PROJ/REPO/proteus-fold:cu124); blank => set per host
     boot_disk_gb: 100
     spot: true                          # SPOT/preemptible for cost; outputs staged to the bucket survive preemption

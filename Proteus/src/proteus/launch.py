@@ -112,6 +112,8 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
     zone = vb["zone"]
     remote_in, remote_out, local_out = vb["remote_in"], vb["remote_out"], vb["local_out"]
     spot = bool(vb["spot"])
+    accel = (str(vb.get("accelerator") or "")).strip()
+    gpu = bool(accel) and accel.lower() not in ("none", "") and int(vb.get("accelerator_count", 0) or 0) > 0
 
     man_name = os.path.basename(manifest_path)
     fa_name = os.path.basename(shortlist_path)
@@ -122,14 +124,24 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
         "gcloud", "compute", "instances", "create", name,
         "--project", project, "--zone", zone,
         "--machine-type", vb["machine_type"],
-        "--accelerator", f"type={vb['accelerator']},count={vb['accelerator_count']}",
-        "--image-family", vb["vm_image_family"],
-        "--image-project", vb["vm_image_project"],
-        "--maintenance-policy", "TERMINATE",
         "--boot-disk-size", f"{vb['boot_disk_gb']}GB",
-        "--metadata", "install-nvidia-driver=True",
-        "--scopes", "storage-rw",  # so the VM can gsutil the bucket
+        "--scopes", "cloud-platform",  # gsutil (GCS) + docker pull (Artifact Registry)
     ]
+    if gpu:
+        # GPU fold: attach the accelerator on a Deep Learning (CUDA + docker) image.
+        create += ["--accelerator", f"type={accel},count={vb['accelerator_count']}",
+                   "--maintenance-policy", "TERMINATE",
+                   "--image-family", vb.get("vm_image_family", "common-cu123"),
+                   "--image-project", vb.get("vm_image_project", "deeplearning-platform-release"),
+                   "--metadata", "install-nvidia-driver=True"]
+        create_note = "SPOT GPU VM (Deep Learning image: CUDA + docker)"
+        gpu_flag, device = "--gpus all ", "cuda"
+    else:
+        # CPU fold: Container-Optimized OS ships docker; no GPU, no driver. ESMFold on
+        # CPU is slow + RAM-heavy but fine for the small narrowed shortlist.
+        create += ["--image-family", "cos-stable", "--image-project", "cos-cloud"]
+        create_note = "SPOT CPU VM (Container-Optimized OS: docker); ESMFold on CPU"
+        gpu_flag, device = "", "cpu"
     if spot:
         create += ["--provisioning-model", "SPOT",
                    "--instance-termination-action", "DELETE"]
@@ -138,9 +150,9 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
     remote = (
         f"mkdir -p {remote_in} {remote_out} && "
         f"gsutil -m cp {bucket}/in/* {remote_in}/ && "
-        f"docker run --gpus all -v /data/proteus:/data/proteus {image} "
+        f"docker run {gpu_flag}-v /data/proteus:/data/proteus {image} "
         f"--manifest {remote_in}/{man_name} --fasta {remote_in}/{fa_name} "
-        f"--out {remote_out}/ && "
+        f"--out {remote_out}/ --device {device} && "
         f"gsutil -m cp -r {remote_out}/* {bucket}/out/"
     )
     fold = ["gcloud", "compute", "ssh", name, "--project", project, "--zone", zone,
@@ -153,8 +165,7 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
     return [
         {"name": "stage_up", "cmd": stage_up,
          "note": "ship ONLY the shortlist + manifest up to the GCS staging bucket"},
-        {"name": "create_instance", "cmd": create,
-         "note": "SPOT GPU VM (Deep Learning image: CUDA + docker)"},
+        {"name": "create_instance", "cmd": create, "note": create_note},
         {"name": "fold", "cmd": fold,
          "note": "on the VM: pull inputs, docker-run ESMFold (resumable + pLDDT-gated), push out"},
         {"name": "stage_down", "cmd": stage_down,

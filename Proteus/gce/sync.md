@@ -1,9 +1,11 @@
 # GCE burst — ship S2 shortlist up, fold (S3), pull structures back
 
-ESMFold (S3) and any Chai-1 refinement / GPU docking are GPU-heavy and run as a
-**burst** on a Google Compute Engine Linux+CUDA VM, **not** on the M4 MacBook Air.
-The local pipeline (S0–S2) narrows the corpus first, so only the **S2 shortlist**
-is shipped up. Nothing here installs into the local conda env.
+ESMFold (S3) runs as a **burst** on a Google Compute Engine VM, **not** on the M4
+MacBook Air. This project has **no GPU quota**, so we fold on **CPU** (a C4 VM) —
+ESMFold on CPU is slow + RAM-heavy but the narrowed shortlist is small. The local
+pipeline (S0–S2) narrows the corpus first, so only the **S2 shortlist** is shipped
+up. (To move to GPU once quota is granted: set `compute.gce_burst.accelerator` and
+rebuild the image on a CUDA base — `proteus.launch` then builds the GPU plan.)
 
 > **One-command option:** `proteus.launch` automates the steps below — it validates
 > the manifest/shortlist, then plans/runs **stage_up → create → fold → stage_down →
@@ -20,7 +22,7 @@ is shipped up. Nothing here installs into the local conda env.
 ## What moves, in which direction
 
 ```
-   LOCAL (M4 Air)                         GCE burst (Linux + CUDA, SPOT)
+   LOCAL (M4 Air)                         GCE burst (C4 CPU VM, SPOT)
    ──────────────                         ──────────────────────────────
    S0 dereplicate ─┐
    S1 ProstT5 3Di  ├─ narrow locally
@@ -39,11 +41,12 @@ never loses finished models.
 ## 0. Build & push the image to Artifact Registry (once)
 
 ```bash
-# On a Linux/CUDA box or CI — NOT on the Mac. Pin the ESMFold toolchain on this
-# first real build (see the __PIN_ON_FIRST_BUILD__ markers in gce/Dockerfile.fold).
-REGION=us-central1; PROJ=<PROJECT>; REPO=proteus
+# On a Linux box or CI — NOT on the Mac. Pin the ESMFold toolchain on this first
+# real build (see the __PIN_ON_FIRST_BUILD__ markers in gce/Dockerfile.fold — it is
+# a CPU torch build, no CUDA).
+REGION=us-central1; PROJ=projProteus; REPO=proteus
 gcloud artifacts repositories create $REPO --repository-format=docker --location=$REGION
-IMAGE=$REGION-docker.pkg.dev/$PROJ/$REPO/proteus-fold:cu124
+IMAGE=$REGION-docker.pkg.dev/$PROJ/$REPO/proteus-fold:cpu
 docker build -t "$IMAGE" -f gce/Dockerfile.fold .
 docker push "$IMAGE"          # put $IMAGE in compute.gce_burst.image
 ```
@@ -67,26 +70,25 @@ BUCKET=gs://<BUCKET>
 gsutil -m cp data/interim/s2_shortlist.fasta data/interim/s3_job_manifest.json $BUCKET/in/
 ```
 
-## 3. Create the SPOT GPU VM and fold on it
+## 3. Create the SPOT CPU VM and fold on it
 
 ```bash
 gcloud compute instances create proteus-fold \
-  --project <PROJECT> --zone us-central1-a \
-  --machine-type g2-standard-8 \
-  --accelerator type=nvidia-l4,count=1 \
-  --image-family common-cu123 --image-project deeplearning-platform-release \
-  --maintenance-policy TERMINATE --boot-disk-size 100GB \
-  --metadata install-nvidia-driver=True --scopes storage-rw \
+  --project projProteus --zone us-central1-a \
+  --machine-type c4-highmem-8 \
+  --image-family cos-stable --image-project cos-cloud \
+  --boot-disk-size 100GB --scopes cloud-platform \
   --provisioning-model SPOT --instance-termination-action DELETE
 
-# On the VM: pull inputs, run the fold container, push outputs back to the bucket.
-gcloud compute ssh proteus-fold --project <PROJECT> --zone us-central1-a --command "
+# On the VM (Container-Optimized OS has docker): pull inputs, run the fold container
+# on CPU, push outputs back to the bucket.
+gcloud compute ssh proteus-fold --project projProteus --zone us-central1-a --command "
   mkdir -p /data/proteus/in /data/proteus/out &&
   gsutil -m cp $BUCKET/in/* /data/proteus/in/ &&
-  docker run --gpus all -v /data/proteus:/data/proteus $IMAGE \
+  docker run -v /data/proteus:/data/proteus $IMAGE \
     --manifest /data/proteus/in/s3_job_manifest.json \
     --fasta    /data/proteus/in/s2_shortlist.fasta \
-    --out      /data/proteus/out/ &&
+    --out      /data/proteus/out/ --device cpu &&
   gsutil -m cp -r /data/proteus/out/* $BUCKET/out/"
 ```
 
@@ -97,7 +99,7 @@ so a preempt costs only the single in-flight sequence (skipped-already-done on r
 
 ```bash
 gsutil -m cp -r $BUCKET/out/* structures/folded/
-gcloud compute instances delete proteus-fold --project <PROJECT> --zone us-central1-a --quiet
+gcloud compute instances delete proteus-fold --project projProteus --zone us-central1-a --quiet
 
 # resume locally — screen the returned models through S4 (triad geometry) + S5
 # (cleft), scored against the positive-control anchor at the calibrated operating

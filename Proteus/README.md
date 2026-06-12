@@ -18,12 +18,14 @@ time, so only the S2 shortlist is ever folded.
   triage + analysis half. MMseqs2 dereplication (S0), ProstT5 seq→3Di (S1),
   Foldseek fold-class triage (S2), catalytic-geometry and cleft analysis (S4–S5),
   fpocket, and small AutoDock Vina runs.
-- **GCE burst (Linux + CUDA — scaffolded in [`gce/`](gce/), NOT installed
-  here):** the GPU-heavy half. ESMFold batch folding (S3), Chai-1 refinement, and
-  GPU docking (GNINA/DiffDock). Only the **S2 shortlist FASTA** is shipped up;
-  folded structures are pulled back for S4–S5. See [`gce/sync.md`](gce/sync.md).
+- **GCE burst (scaffolded in [`gce/`](gce/), NOT installed here):** the heavy fold
+  half. ESMFold batch folding (S3). This project has **no GPU quota**, so the fold
+  runs on **CPU** (a C4 VM) — slow + RAM-heavy, but the narrowed shortlist is small;
+  flip `compute.gce_burst.accelerator` to move to GPU once quota is granted. Only the
+  **S2 shortlist FASTA** is shipped up; folded structures are pulled back for S4–S5.
+  See [`gce/sync.md`](gce/sync.md).
 
-There is **no hard local GPU blocker** precisely because folding is offloaded.
+Folding is offloaded, so there is **no hard local compute blocker**.
 
 ## Pipeline stages (S0–S5)
 
@@ -32,7 +34,7 @@ There is **no hard local GPU blocker** precisely because folding is offloaded.
 | **S0** | `src/proteus/s0_dereplicate.py` | LOCAL | MMseqs2 clustering to **dereplicate** (collapse near-identical seqs). NOT a homology gate. |
 | **S1** | `src/proteus/s1_tokenize.py` | LOCAL | ProstT5 translates sequence → Foldseek 3Di alphabet (cheap structural proxy; MPS, cpu fallback). |
 | **S2** | `src/proteus/s2_foldclass_triage.py` | LOCAL | Foldseek triage vs the **α/β-hydrolase fold CLASS** (unseeded — fold, not template). Emits the shortlist FASTA. |
-| **S3** | `src/proteus/s3_fold.py` (local dry-run) + `gce/run_fold.py` (on-box) | **GCE** | ESMFold batch fold; mean-pLDDT filter; length-chunk long seqs. **Local = dry-run only** (validate FASTA + emit job manifest; never fold on MPS). The on-box runner folds on CUDA, resumable + pLDDT-gated. |
+| **S3** | `src/proteus/s3_fold.py` (local dry-run) + `gce/run_fold.py` (on-box) | **GCE** | ESMFold batch fold; mean-pLDDT filter; length-chunk long seqs. **Local = dry-run only** (validate FASTA + emit job manifest; never fold on MPS). The on-box runner folds on **CPU** (no GPU quota), resumable + pLDDT-gated. |
 | **S4** | `src/proteus/s4_geometry.py` | LOCAL | Catalytic geometry gate on returned models: Ser-His-Asp triad + oxyanion hole. |
 | **S5** | `src/proteus/s5_cleft_filter.py` | LOCAL | Cleft metrics A–E (fpocket), scored **anchored to the positive controls**. |
 | P4 | `src/proteus/docking/` | LOCAL (small) | AutoDock Vina docking of the PET-mimic BHET into the catalytic cleft (box on the S4 Ser OG). Large/GPU docking bursts to GCE. |
@@ -185,7 +187,7 @@ data/{raw,interim,processed}/   gitignored corpora/artifacts
 2. **ADFRsuite** — x86-only; install separately (Scripps) under Rosetta 2 if needed
    for receptor prep, or prefer Open Babel / Meeko. Not pip/conda installable on arm64.
 3. **Provision a GCE box for S3** — build/push `gce/Dockerfile.fold` (pin the
-   ESMFold toolchain on the first CUDA build), then drive the burst with
+   ESMFold toolchain on the first build — CPU torch, no CUDA), then drive the burst with
    `proteus.launch` (or the manual steps in `gce/sync.md`).
 4. Run install + `pytest` **on the M4** to reach a GREEN env and generate the real
    lockfiles (`requirements-lock.txt`, `envlog/conda-env-resolved.yml`).

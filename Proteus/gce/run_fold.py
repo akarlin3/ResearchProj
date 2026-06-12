@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
-"""Proteus S3 — GCE BURST ESMFold runner (runs ON the CUDA box, NOT the Mac).
+"""Proteus S3 — GCE BURST ESMFold runner (runs ON the GCE box, NOT the Mac).
 
 The local pipeline (S0–S2) narrows the corpus and emits, via
 `python -m proteus.s3_fold --dry-run`, a job manifest + the S2 shortlist FASTA.
 This script is the *contract consumer* on the GCE side (see gce/sync.md): it
-loads ESMFold (esmfold_v1) on CUDA, folds each shortlisted sequence, writes a PDB
-+ per-residue pLDDT, and keeps only models whose mean pLDDT >= the manifest's
-plddt_min. It is intentionally a SINGLE self-contained file so the fold image only
-needs to COPY this one runner (plus ESMFold) — it does NOT import the `proteus`
-package.
+loads ESMFold (esmfold_v1) on the configured device (`--device cpu` here, since
+this project has no GPU quota; `cuda` when a GPU is available), folds each
+shortlisted sequence, writes a PDB + per-residue pLDDT, and keeps only models
+whose mean pLDDT >= the manifest's plddt_min. It is intentionally a SINGLE
+self-contained file so the fold image only needs to COPY this one runner (plus
+ESMFold) — it does NOT import the `proteus` package.
 
 Interruptible-safe: each finished model is written atomically to the output dir
-(which MUST be a mounted/persistent volume), and a completed id is SKIPPED on
-restart — so a reclaim costs only the single in-flight sequence, never the batch.
+(staged to the GCS bucket), and a completed id is SKIPPED on restart — so a
+preempt costs only the single in-flight sequence, never the batch.
 
 The ESMFold model is loaded LAZILY (only when a real fold is requested), so the
 orchestration — manifest integrity, resume/checkpoint, pLDDT gating, the run
-summary — is exercised by tests on a CPU-only host with an injected fake folder,
-exactly the way the rest of the pipeline keeps its GPU step GCE-only.
+summary — is exercised by tests on any host with an injected fake folder, exactly
+the way the rest of the pipeline keeps its fold step GCE-only.
 
 Usage (inside the GCE instance):
     python3 run_fold.py \
@@ -95,16 +96,18 @@ def mean_plddt_from_pdb(pdb_str: str) -> float:
 # --------------------------------------------------------------------------- #
 # ESMFold backend (lazy — imported only when a real fold runs)
 # --------------------------------------------------------------------------- #
-def load_esmfold(device: str = "cuda", seed: int | None = None):
-    """Load esmfold_v1 onto `device`. Imports torch/esm lazily (GCE-only)."""
+def load_esmfold(device: str = "cpu", seed: int | None = None):
+    """Load esmfold_v1 onto `device` ('cpu' or 'cuda'). Imports torch/esm lazily
+    (GCE-only). On CPU, ESMFold runs fp32 — slow + RAM-heavy but fine for the small
+    narrowed shortlist; never fold on the Mac's MPS."""
     import torch  # noqa: PLC0415
     import esm  # noqa: PLC0415
     if seed is not None:
         torch.manual_seed(seed)
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError(
-            "run_fold.py expects a CUDA box (this is the GCE S3 burst). Use "
-            "--device cpu only for a tiny smoke; never fold the real batch on CPU/MPS.")
+            "run_fold.py was asked for --device cuda but this box has no GPU. Use "
+            "--device cpu (the default GCE fold here), or launch a GPU VM.")
     model = esm.pretrained.esmfold_v1().eval().to(device)
     return model
 
@@ -253,8 +256,8 @@ def main(argv=None) -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--manifest", required=True, help="S3 job manifest (from s3_fold --dry-run)")
     ap.add_argument("--fasta", required=True, help="S2 shortlist FASTA to fold")
-    ap.add_argument("--out", required=True, help="output dir (MOUNT a persistent volume)")
-    ap.add_argument("--device", default=None, help="cuda (default) | cpu (tiny smoke only)")
+    ap.add_argument("--out", required=True, help="output dir (staged to the GCS bucket)")
+    ap.add_argument("--device", default=None, help="cpu (default here) | cuda (GPU VM)")
     args = ap.parse_args(argv)
 
     for p in (args.manifest, args.fasta):
@@ -264,7 +267,7 @@ def main(argv=None) -> int:
     with open(args.manifest) as fh:
         manifest = json.load(fh)
 
-    device = args.device or manifest.get("fold_params", {}).get("device", "cuda")
+    device = args.device or manifest.get("fold_params", {}).get("device", "cpu")
     try:
         summary = fold_batch(manifest, args.fasta, args.out, device=device)
     except RuntimeError as exc:
