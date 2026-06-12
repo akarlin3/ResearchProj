@@ -218,6 +218,7 @@ compute:
     boot_disk_gb: 100
     spot: true                          # SPOT/preemptible for cost; outputs staged to the bucket survive preemption
     bucket: ""                          # gs://BUCKET staging for in/out (set per host); survives a preempted VM
+    vm_workdir: /tmp/proteus            # WRITABLE on-VM dir (COS root fs is read-only); bind-mounted into the containers at /data/proteus
     remote_in: /data/proteus/in         # on-VM dir inputs are pulled (gcloud storage) before folding
     remote_out: /data/proteus/out       # on-VM dir folded PDBs + pLDDT land in (pushed to the bucket via gcloud storage)
     local_out: structures/folded        # where the returned models are pulled DOWN to

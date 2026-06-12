@@ -90,6 +90,7 @@ def _burst_cfg(cfg: dict) -> dict:
     vb.setdefault("boot_disk_gb", 100)
     vb.setdefault("spot", True)
     vb.setdefault("bucket", "")
+    vb.setdefault("vm_workdir", "/tmp/proteus")  # writable host dir (COS root fs is read-only)
     vb.setdefault("remote_in", "/data/proteus/in")
     vb.setdefault("remote_out", "/data/proteus/out")
     vb.setdefault("local_out", "structures/folded")
@@ -111,6 +112,7 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
     name = vb["instance_name"]
     zone = vb["zone"]
     remote_in, remote_out, local_out = vb["remote_in"], vb["remote_out"], vb["local_out"]
+    vm_workdir = vb.get("vm_workdir") or "/tmp/proteus"  # host dir mounted to /data/proteus
     spot = bool(vb["spot"])
     prov = "SPOT" if spot else "on-demand"
     accel = (str(vb.get("accelerator") or "")).strip()
@@ -153,14 +155,18 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
     # On the VM: pull inputs from the bucket (via the cloud-sdk container, since COS has
     # no gcloud), fold in the container, push outputs back (same container). The VM's
     # service account (--scopes cloud-platform) authenticates these automatically.
+    # The on-VM working dir lives on a WRITABLE path (COS mounts / read-only); it is
+    # bind-mounted into every container at /data/proteus, so the in-container paths
+    # (remote_in/remote_out) stay /data/proteus/{in,out}.
+    mount = f"-v {vm_workdir}:/data/proteus"
     remote = (
-        f"mkdir -p {remote_in} {remote_out} && "
-        f"docker run --rm -v /data/proteus:/data/proteus {sdk} "
+        f"mkdir -p {vm_workdir}/in {vm_workdir}/out && "
+        f"docker run --rm {mount} {sdk} "
         f"gcloud storage cp {bucket}/in/* {remote_in}/ && "
-        f"docker run {gpu_flag}-v /data/proteus:/data/proteus {image} "
+        f"docker run {gpu_flag}{mount} {image} "
         f"--manifest {remote_in}/{man_name} --fasta {remote_in}/{fa_name} "
         f"--out {remote_out}/ --device {device} && "
-        f"docker run --rm -v /data/proteus:/data/proteus {sdk} "
+        f"docker run --rm {mount} {sdk} "
         f"gcloud storage cp --recursive {remote_out}/* {bucket}/out/"
     )
     fold = ["gcloud", "compute", "ssh", name, "--project", project, "--zone", zone,

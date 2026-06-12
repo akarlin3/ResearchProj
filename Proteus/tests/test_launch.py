@@ -90,6 +90,9 @@ def test_build_plan_orders_the_burst_cycle(tmp_path):
     assert "docker run --gpus all" in remote
     assert "us-docker.pkg.dev/p/r/fold:cu124" in remote
     assert "/data/proteus/in/s3_job_manifest.json" in remote
+    # the on-VM dir is a writable path (COS root is read-only) bind-mounted to /data/proteus
+    assert "mkdir -p /tmp/proteus/in /tmp/proteus/out" in remote
+    assert "-v /tmp/proteus:/data/proteus" in remote
     assert "google/cloud-sdk" in remote and "gcloud storage cp" in remote
     assert "gs://my-bucket/in/*" in remote and "gs://my-bucket/out/" in remote
     # stage_down runs LOCALLY via gcloud storage; delete cleans up
@@ -113,7 +116,7 @@ def test_build_plan_cpu_when_no_accelerator(tmp_path):
     assert "install-nvidia-driver=True" not in create
     remote = by["fold"][-1]
     assert "--gpus all" not in remote
-    assert "--device cpu" in remote and "docker run -v /data/proteus" in remote
+    assert "--device cpu" in remote and "docker run -v /tmp/proteus:/data/proteus" in remote
 
 
 def test_build_plan_uses_placeholders_when_unset(tmp_path):
