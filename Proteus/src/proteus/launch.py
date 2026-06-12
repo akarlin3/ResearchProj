@@ -247,6 +247,17 @@ def main(argv=None) -> int:
               "re-run with --execute to burst.")
         return 0
 
+    # Fail fast: refuse to --execute with unresolved config, so we never create a VM
+    # only to skip the fold (and leave a half-run). build_plan leaves <…> placeholders
+    # when project/bucket/image are unset.
+    vb = _burst_cfg(cfg)
+    missing = [k for k in ("project", "bucket", "image") if not str(vb.get(k) or "").strip()]
+    if missing:
+        print(f"[launch] refusing to --execute: set compute.gce_burst.{{{', '.join(missing)}}} "
+              "in config first (they show as <…> placeholders in the dry-run above).",
+              file=sys.stderr)
+        return 2
+
     only = set(args.only.split(",")) if args.only else None
     return execute_plan(plan, only=only)
 

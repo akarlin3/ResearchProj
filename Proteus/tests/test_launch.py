@@ -150,3 +150,13 @@ def test_main_returns_error_on_bad_inputs(tmp_path):
     rc = launch.main(["--manifest", _manifest(tmp_path, 5),
                       "--shortlist", _shortlist(tmp_path, 3)])
     assert rc == 2
+
+
+def test_main_execute_refuses_when_config_unset(tmp_path, capsys, monkeypatch):
+    # the shipped config leaves bucket/image blank -> --execute must NOT create a VM
+    monkeypatch.setattr(launch.subprocess, "run",
+                        lambda *a, **k: pytest.fail("must not execute with unset config"))
+    rc = launch.main(["--manifest", _manifest(tmp_path), "--shortlist", _shortlist(tmp_path),
+                      "--execute"])
+    assert rc == 2
+    assert "refusing to --execute" in capsys.readouterr().err
