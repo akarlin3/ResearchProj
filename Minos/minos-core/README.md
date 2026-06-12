@@ -19,6 +19,34 @@ This build is **100% synthetic** — a toy decision model with a scalar latent s
 `theta`. A real IVIM parameter map + Fashion posterior can later replace the synthetic source
 through one marked seam (`minos/generative.py`) without touching the decision / VoI / gate core.
 
+## v2 — the decision–calibration gap (headline)
+
+`v1` proved a calibrated error bar carries positive decision value, but under a **symmetric prior
+the value-optimum coincides with `tau=1` by construction**. `v2` asks what happens under a
+**misspecified (skewed) posterior** and finds that the two ways to calibrate an error bar
+**diverge**:
+
+- **`tau_stat`** — the scale with nominal interval **coverage** (statistical calibration), by a
+  coverage root-find.
+- **`tau*`** — the scale that maximises **expected decision utility** (decision calibration),
+  `argmax_tau E[U]`.
+- **decision–calibration gap** `G = tau* − tau_stat` — the quantity none of the neighbours
+  computes.
+
+Under a right-skewed posterior with asymmetric cost, statistical calibration says *shrink* the bar
+(`tau_stat<1`) while the decision says *widen* it (`tau*>1`): a deliberately under-confident bar
+beats the statistically-calibrated one. `G` vanishes in the well-specified / symmetric corner
+(recovering v1 at `tau=1`) and grows with posterior skew `kappa`, cost asymmetry `lambda`, and
+threshold proximity. The break-even trust-gate shift `delta_be` (when turning the gate on pays off)
+is promoted to a first-class number. New code: `minos/calibration.py`
+(`tau_stat`, `tau_star`, `gap`, `break_even_shift`); driver `experiments/run_b.py`; see
+`DESIGN_B.md`, `RESULTS_B.md`. The v1 symmetric model is retained verbatim (`BASELINE_V1`,
+`experiments/run_all.py`) as the degenerate `G≈0` baseline.
+
+```bash
+python experiments/run_b.py      # prints the 4 v2 gate blocks, writes figures/fig_gap_*.pdf
+```
+
 ## The math (condensed; full derivation in `DESIGN.md`)
 
 **Actions & utility.** `A = {spare, treat, escalate}`, thresholds `t1 < t2`, under-treatment
