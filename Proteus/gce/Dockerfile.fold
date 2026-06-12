@@ -1,13 +1,13 @@
-# Proteus — Vast.ai BURST fold image (S3). ESMFold batch fold (+ optional Chai-1
+# Proteus — GCE BURST fold image (S3). ESMFold batch fold (+ optional Chai-1
 # refinement). Build/push ONLY when bursting; this is NOT part of the local M4 env
 # and must NOT be built on the Mac. The local pipeline narrows S0–S2 and ships only
-# the S2 shortlist up here for folding (see vast/sync.md).
+# the S2 shortlist up here for folding (see gce/sync.md).
 #
 # Pin the toolchain on the FIRST real build and record the resolved versions next
 # to the local lockfiles in envlog/. The base image below is pinned; the Python
 # packages carry __PIN_ON_FIRST_BUILD__ markers rather than guessed versions.
 
-# Pinned CUDA runtime base (CUDA 12.4 + cuDNN). Verify it matches the Vast
+# Pinned CUDA runtime base (CUDA 12.4 + cuDNN). Verify it matches the GCE
 # instance's driver at launch (driver >= R550 for CUDA 12.4).
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
 
@@ -43,8 +43,8 @@ RUN python3 -m pip install --upgrade pip
 
 # The burst runner: read the S3 job manifest, fold the shortlist on CUDA, write
 # PDBs + per-model pLDDT to a MOUNTED/persistent volume (interruptible instances
-# can die mid-job — the runner checkpoints per sequence and resumes). See vast/sync.md.
-COPY vast/run_fold.py /opt/proteus/run_fold.py
+# can die mid-job — the runner checkpoints per sequence and resumes). See gce/sync.md.
+COPY gce/run_fold.py /opt/proteus/run_fold.py
 ENTRYPOINT ["python3", "/opt/proteus/run_fold.py"]
-# Default args (override at `docker run` / `vastai` time):
+# Default args (override at `docker run` / `gcloud` time):
 CMD ["--help"]

@@ -9,7 +9,7 @@ oxyanion hole, a suitable substrate cleft). Sequence clustering is used only to
 **dereplicate** the input corpus, never to homology-gate it: **dereplicate ≠
 homology-gate**, so the divergent tail we actually care about stays in play.
 
-## Compute split: LOCAL (M4 Air) vs VAST.AI burst
+## Compute split: LOCAL (M4 Air) vs GCE burst
 
 The pipeline narrows the corpus **locally and cheaply** before spending any GPU
 time, so only the S2 shortlist is ever folded.
@@ -18,10 +18,10 @@ time, so only the S2 shortlist is ever folded.
   triage + analysis half. MMseqs2 dereplication (S0), ProstT5 seq→3Di (S1),
   Foldseek fold-class triage (S2), catalytic-geometry and cleft analysis (S4–S5),
   fpocket, and small AutoDock Vina runs.
-- **VAST.AI burst (Linux + CUDA — scaffolded in [`vast/`](vast/), NOT installed
+- **GCE burst (Linux + CUDA — scaffolded in [`gce/`](gce/), NOT installed
   here):** the GPU-heavy half. ESMFold batch folding (S3), Chai-1 refinement, and
   GPU docking (GNINA/DiffDock). Only the **S2 shortlist FASTA** is shipped up;
-  folded structures are pulled back for S4–S5. See [`vast/sync.md`](vast/sync.md).
+  folded structures are pulled back for S4–S5. See [`gce/sync.md`](gce/sync.md).
 
 There is **no hard local GPU blocker** precisely because folding is offloaded.
 
@@ -32,10 +32,10 @@ There is **no hard local GPU blocker** precisely because folding is offloaded.
 | **S0** | `src/proteus/s0_dereplicate.py` | LOCAL | MMseqs2 clustering to **dereplicate** (collapse near-identical seqs). NOT a homology gate. |
 | **S1** | `src/proteus/s1_tokenize.py` | LOCAL | ProstT5 translates sequence → Foldseek 3Di alphabet (cheap structural proxy; MPS, cpu fallback). |
 | **S2** | `src/proteus/s2_foldclass_triage.py` | LOCAL | Foldseek triage vs the **α/β-hydrolase fold CLASS** (unseeded — fold, not template). Emits the shortlist FASTA. |
-| **S3** | `src/proteus/s3_fold.py` (local dry-run) + `vast/run_fold.py` (on-box) | **VAST** | ESMFold batch fold; mean-pLDDT filter; length-chunk long seqs. **Local = dry-run only** (validate FASTA + emit job manifest; never fold on MPS). The on-box runner folds on CUDA, resumable + pLDDT-gated. |
+| **S3** | `src/proteus/s3_fold.py` (local dry-run) + `gce/run_fold.py` (on-box) | **GCE** | ESMFold batch fold; mean-pLDDT filter; length-chunk long seqs. **Local = dry-run only** (validate FASTA + emit job manifest; never fold on MPS). The on-box runner folds on CUDA, resumable + pLDDT-gated. |
 | **S4** | `src/proteus/s4_geometry.py` | LOCAL | Catalytic geometry gate on returned models: Ser-His-Asp triad + oxyanion hole. |
 | **S5** | `src/proteus/s5_cleft_filter.py` | LOCAL | Cleft metrics A–E (fpocket), scored **anchored to the positive controls**. |
-| P4 | `src/proteus/docking/` | LOCAL (small) | AutoDock Vina docking of the PET-mimic BHET into the catalytic cleft (box on the S4 Ser OG). Large/GPU docking bursts to Vast. |
+| P4 | `src/proteus/docking/` | LOCAL (small) | AutoDock Vina docking of the PET-mimic BHET into the catalytic cleft (box on the S4 Ser OG). Large/GPU docking bursts to GCE. |
 
 ### Ingestion & orchestration
 
@@ -44,7 +44,7 @@ There is **no hard local GPU blocker** precisely because folding is offloaded.
 | `proteus.fetch_corpus` | Resolve `corpus.sources` (UniProt queries / URLs) into `data/raw` shards + a provenance manifest. |
 | `proteus.corpus` | Assemble + length-filter the raw shards into one corpus FASTA (the S0 input); sanitises ids so MMseqs2/Foldseek and the parsers agree. |
 | `proteus.pipeline` | One command: corpus → S0 → S1 → S2 → S3 manifest, with the narrowing-funnel report. |
-| `proteus.launch` | Drive the Vast burst (validate manifest → search/create/up/fold/down/destroy). **Dry-run by default.** |
+| `proteus.launch` | Drive the GCE burst (validate manifest → stage-up → create → fold → stage-down → delete). **Dry-run by default.** |
 | `proteus.screen` | Resume after folding: S4 geometry → S5 cleft → control-anchored score → ranked PETase-like hits. |
 | `proteus.calibrate` | Calibrate S4+S5 on the controls (separation verdict, operating point) + held-out divergent-positive recovery. |
 
@@ -60,10 +60,10 @@ PYTHONPATH=src python -m proteus.fetch_corpus
 # ...or drop dark-proteome FASTA(.gz) shards in data/raw/ (corpus.fasta_glob) directly, then:
 PYTHONPATH=src python -m proteus.pipeline --out data/interim
 #   corpus N (length-filtered) → S0 reps → S2 shortlist → S3 manifest
-# ship data/interim/s2_shortlist.fasta + s3_job_manifest.json to Vast (vast/sync.md)
+# ship data/interim/s2_shortlist.fasta + s3_job_manifest.json to GCE (gce/sync.md)
 ```
 
-S3 folds on the Vast burst box. When the models come back, **resume locally**:
+S3 folds on the GCE burst box. When the models come back, **resume locally**:
 
 ```bash
 PYTHONPATH=src python -m proteus.screen \
@@ -86,7 +86,7 @@ PYTHONPATH=src python -m proteus.docking \
   CRL (1CRL), Est2 (1EVQ).
 - **Recovery** — held-out **divergent positives** that test generalization without
   re-anchoring: PET46 (8B4U, archaeal), Cut190 (4WFI), TfCut2 (4CG1). GuaPA and MG8
-  remain **unresolved** (no reachable sequence/structure) and need a Vast fold to
+  remain **unresolved** (no reachable sequence/structure) and need a GCE fold to
   enter calibration — the three structures above stand in for them.
 
 ```bash
@@ -135,7 +135,7 @@ hand-edited**:
 The global `random_seed` lives in [`config/proteus.yaml`](config/proteus.yaml)
 (`random_seed: 1729`) alongside paths, device (`mps|cpu`), corpus selection, and
 per-stage thresholds. **Every stochastic step** (S0 MMseqs2, S3 ESMFold/torch on
-Vast, docking search) must read the seed from there — do not hardcode seeds in
+GCE, docking search) must read the seed from there — do not hardcode seeds in
 stage code.
 
 ## Tests & CI
@@ -165,7 +165,7 @@ python -m pytest -q
 config/proteus.yaml      paths, corpus (+ sources), thresholds, device (mps|cpu), RANDOM SEED
 controls/                locked control set + fetch script + MANIFEST (+sha256); ligands/bhet.pdbqt
 src/proteus/             stages s0–s5; corpus, fetch_corpus, pipeline, screen, launch, calibrate; docking/, utils/
-vast/                    burst fold image (Dockerfile.fold), on-box run_fold.py, sync notes (sync.md)
+gce/                    burst fold image (Dockerfile.fold), on-box run_fold.py, sync notes (sync.md)
 tests/                   positive-output tests per stage + smoke (per-tool) + end-to-end funnel
 scripts/setup_tools.sh   shared toolchain installer (CI + SessionStart hook)
 .github/workflows/ci.yml ruff + pytest on PRs
@@ -180,12 +180,12 @@ data/{raw,interim,processed}/   gitignored corpora/artifacts
    2025) repo `marcottelab/GuaPA` is unreachable; MG8 (saliva-metagenome PETase,
    Eiamthong et al., *Angew. Chem.* 2022) has no PDB and its SI accession is not
    located. If you obtain either sequence, drop the FASTA in `data/raw/`, fold it on
-   Vast, and add the structure to calibration. Until then the divergent-positive
+   GCE, and add the structure to calibration. Until then the divergent-positive
    structures PET46/Cut190/TfCut2 stand in (see Controls).
 2. **ADFRsuite** — x86-only; install separately (Scripps) under Rosetta 2 if needed
    for receptor prep, or prefer Open Babel / Meeko. Not pip/conda installable on arm64.
-3. **Provision a Vast.ai box for S3** — build/push `vast/Dockerfile.fold` (pin the
+3. **Provision a GCE box for S3** — build/push `gce/Dockerfile.fold` (pin the
    ESMFold toolchain on the first CUDA build), then drive the burst with
-   `proteus.launch` (or the manual steps in `vast/sync.md`).
+   `proteus.launch` (or the manual steps in `gce/sync.md`).
 4. Run install + `pytest` **on the M4** to reach a GREEN env and generate the real
    lockfiles (`requirements-lock.txt`, `envlog/conda-env-resolved.yml`).

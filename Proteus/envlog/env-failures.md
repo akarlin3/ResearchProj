@@ -28,12 +28,12 @@ Silicon / MPS. So the lockfiles (`requirements-lock.txt`,
 | **AutoDock Vina** | conda-forge osx-arm64 (`vina`) + `meeko` (pip) | Meeko preferred for ligand/receptor prep. |
 | **ADFRsuite** | **NOT installed — x86-only** | Scripps distribution has no arm64 build. If required, run under Rosetta 2 (`CONDA_SUBDIR=osx-64`) or prefer Meeko. Flagged, not blocking. |
 | **numpy/pandas/biopython/biotite/pyyaml/tqdm/pytest** | conda-forge osx-arm64 | standard, expected clean. |
-| **ESMFold / fair-esm / Chai-1 / GNINA / DiffDock** | **n/a locally — Vast-only** | Intentionally absent from the local env. Live in `vast/Dockerfile.fold`; pinned there on first build. |
+| **ESMFold / fair-esm / Chai-1 / GNINA / DiffDock** | **n/a locally — GCE-only** | Intentionally absent from the local env. Live in `gce/Dockerfile.fold`; pinned there on first build. |
 
 ## What WAS validated here (host-agnostic, pure-Python)
 
 - `s3_fold.py --dry-run` — validates a FASTA and emits a valid job manifest
-  (`run_location: vast`, per-seq sha256, fold params from config). ✅ runs & passes.
+  (`run_location: gce`, per-seq sha256, fold params from config). ✅ runs & passes.
 - Smoke suite **collects and runs**; the S3 dry-run test passes; every
   tool-dependent test SKIPS cleanly (tools absent on this container) rather than
   erroring. ✅
@@ -107,4 +107,4 @@ Not GREEN, and cannot be from here: no Apple Silicon to exercise MPS, no osx-arm
 conda solve. GREEN is reachable **only on the M4** after `mamba env create`, a
 clean import/run of each LOCAL tool, and a smoke suite where every LOCAL tool shows
 positive output. There is **no hard GPU blocker** — folding (S3) is offloaded to
-Vast.ai by design (`vast/Dockerfile.fold`), so MPS/CPU is sufficient locally.
+GCE by design (`gce/Dockerfile.fold`), so MPS/CPU is sufficient locally.

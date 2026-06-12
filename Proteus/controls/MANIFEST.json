@@ -130,14 +130,14 @@
       "type": "sequence",
       "accession": "marcottelab/GuaPA",
       "status": "manual",
-      "note": "archaeal PETase (Acosta 2025); UNRESOLVED \u2014 GitHub repo not reachable; needs Vast fold to enter S4/S5 calibration"
+      "note": "archaeal PETase (Acosta 2025); UNRESOLVED \u2014 GitHub repo not reachable; needs GCE fold to enter S4/S5 calibration"
     },
     {
       "id": "MG8",
       "type": "sequence",
       "accession": "EIAMTHONG_2022_SI",
       "status": "manual",
-      "note": "saliva-metagenome PETase (Angew Chem 2022); UNRESOLVED \u2014 no PDB and SI accession not located; needs Vast fold"
+      "note": "saliva-metagenome PETase (Angew Chem 2022); UNRESOLVED \u2014 no PDB and SI accession not located; needs GCE fold"
     }
   ]
 }

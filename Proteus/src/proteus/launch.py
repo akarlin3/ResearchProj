@@ -1,20 +1,20 @@
-"""Drive the Vast.ai S3 burst from the Mac: up -> fold -> down, in one command.
+"""Drive the GCE S3 burst from the Mac: up -> fold -> down, in one command.
 
-This is the LOCAL orchestrator that automates the manual steps in vast/sync.md. It
+This is the LOCAL orchestrator that automates the manual steps in gce/sync.md. It
 validates the S3 job manifest + shortlist (the contract from `proteus.s3_fold`),
-then plans the burst cycle from `compute.vast_burst` in config:
+then plans the burst cycle from `compute.gce_burst` in config:
 
-  1. search interruptible CUDA offers (vastai)
-  2. create the instance from the pushed fold image
-  3. rsync the shortlist + manifest UP to the mounted input volume
-  4. ssh-run the on-box runner (vast/run_fold.py) — ESMFold, pLDDT gate, resumable
-  5. rsync the folded PDBs + pLDDT DOWN to structures/folded/
-  6. destroy the instance (stop billing)
+  1. gsutil the shortlist + manifest UP to the staging bucket
+  2. gcloud create a SPOT GPU VM (Deep Learning image; CUDA + docker)
+  3. gcloud ssh -> on the VM: pull inputs from the bucket, `docker run` the fold image
+     (gce/run_fold.py — ESMFold, pLDDT gate, resumable), push outputs to the bucket
+  4. gsutil the folded PDBs + pLDDT DOWN to structures/folded/
+  5. gcloud delete the VM (stop billing)
 
-DRY-RUN BY DEFAULT: it prints the exact command plan and never touches Vast unless
-`--execute` is passed (and even then the create/offer steps need an --offer and the
-fold/sync steps need --ssh). The plan builder + input validation are pure and
-unit-tested; the actual `vastai`/`rsync`/`ssh` calls are LOCAL-on-the-Mac.
+Outputs are staged to a GCS bucket, so a preempted SPOT VM doesn't lose finished
+models. DRY-RUN BY DEFAULT: it prints the exact command plan and never touches GCP
+unless `--execute` is passed. The plan builder + input validation are pure and
+unit-tested; the actual `gcloud`/`gsutil` calls are LOCAL-on-the-Mac.
 
 ESMFold itself never runs here — this just ships the narrowed shortlist up and
 pulls the models back so S4/S5 (proteus.screen) can resume locally.
@@ -24,8 +24,8 @@ Usage (from the repo root):
     PYTHONPATH=src python -m proteus.launch \
         --manifest data/interim/s3_job_manifest.json \
         --shortlist data/interim/s2_shortlist.fasta
-    # after picking an offer + the instance is up, run the data round-trip:
-    PYTHONPATH=src python -m proteus.launch ... --ssh root@<host> --execute
+    # once project / bucket / image are set in config, run the burst:
+    PYTHONPATH=src python -m proteus.launch ... --execute
 """
 from __future__ import annotations
 
@@ -64,9 +64,9 @@ def validate_inputs(manifest_path: str, shortlist_path: str) -> dict:
         return {"ok": False, "errors": errors + [f"manifest unreadable: {exc}"],
                 "manifest": None}
 
-    if manifest.get("run_location") != "vast":
-        errors.append("manifest run_location != 'vast' — refusing to launch a burst "
-                      "for a non-Vast job")
+    if manifest.get("run_location") != "gce":
+        errors.append("manifest run_location != 'gce' — refusing to launch a burst "
+                      "for a non-GCE job")
     n_man = manifest.get("n_sequences")
     if not n_man:
         errors.append("manifest has 0 sequences — nothing to fold")
@@ -79,97 +79,108 @@ def validate_inputs(manifest_path: str, shortlist_path: str) -> dict:
 
 
 def _burst_cfg(cfg: dict) -> dict:
-    vb = dict(cfg.get("compute", {}).get("vast_burst", {}))
-    vb.setdefault("gpu", "RTX_4090")
-    vb.setdefault("num_gpus", 1)
-    vb.setdefault("cuda_min", "12.4")
-    vb.setdefault("disk_gb", 60)
+    vb = dict(cfg.get("compute", {}).get("gce_burst", {}))
+    vb.setdefault("project", "")
+    vb.setdefault("zone", "us-central1-a")
+    vb.setdefault("instance_name", "proteus-fold")
+    vb.setdefault("machine_type", "g2-standard-8")
+    vb.setdefault("accelerator", "nvidia-l4")
+    vb.setdefault("accelerator_count", 1)
+    vb.setdefault("image", "")
+    vb.setdefault("boot_disk_gb", 100)
+    vb.setdefault("spot", True)
+    vb.setdefault("bucket", "")
     vb.setdefault("remote_in", "/data/proteus/in")
     vb.setdefault("remote_out", "/data/proteus/out")
     vb.setdefault("local_out", "structures/folded")
-    vb.setdefault("registry_image", "")
-    vb.setdefault("instance_pref", "interruptible")
+    # Host VM the fold container runs on — a Deep Learning image with CUDA + docker.
+    vb.setdefault("vm_image_family", "common-cu123")
+    vb.setdefault("vm_image_project", "deeplearning-platform-release")
     return vb
 
 
-def build_plan(cfg: dict, manifest_path: str, shortlist_path: str,
-               offer_id: str | None = None, instance_id: str | None = None,
-               ssh: str | None = None, bid: str | None = None) -> list[dict]:
-    """Build the ordered burst command plan. Unknown runtime ids appear as
-    <OFFER_ID>/<INSTANCE_ID> placeholders. Each step: {name, cmd (argv list),
-    note}. Pure — no side effects; this is what --dry-run prints and tests assert."""
+def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]:
+    """Build the ordered GCE burst command plan. Unset config (project/bucket/image)
+    appears as <PROJECT>/<gs://BUCKET>/<IMAGE> placeholders. Each step: {name, cmd
+    (argv list), note}. Pure — no side effects; this is what --dry-run prints and
+    tests assert."""
     vb = _burst_cfg(cfg)
-    image = vb["registry_image"] or "<REGISTRY_IMAGE — set compute.vast_burst.registry_image>"
-    offer = offer_id or "<OFFER_ID>"
-    inst = instance_id or "<INSTANCE_ID>"
-    host = ssh or "<root@HOST>"
+    project = vb["project"] or "<PROJECT — set compute.gce_burst.project>"
+    bucket = (vb["bucket"] or "<gs://BUCKET — set compute.gce_burst.bucket>").rstrip("/")
+    image = vb["image"] or "<IMAGE — set compute.gce_burst.image>"
+    name = vb["instance_name"]
+    zone = vb["zone"]
     remote_in, remote_out, local_out = vb["remote_in"], vb["remote_out"], vb["local_out"]
-    interruptible = str(vb["instance_pref"]).lower() == "interruptible"
+    spot = bool(vb["spot"])
 
     man_name = os.path.basename(manifest_path)
     fa_name = os.path.basename(shortlist_path)
-    runner = "/opt/proteus/run_fold.py"
 
-    search = ["vastai", "search", "offers",
-              f"gpu_name={vb['gpu']} num_gpus={vb['num_gpus']} "
-              f"cuda_vers>={vb['cuda_min']} inet_down>200",
-              "-o", "dph"]
-    if interruptible:
-        search.append("--interruptible")
+    stage_up = ["gsutil", "-m", "cp", shortlist_path, manifest_path, f"{bucket}/in/"]
 
-    create = ["vastai", "create", "instance", offer, "--image", image,
-              "--disk", str(vb["disk_gb"])]
-    if interruptible:
-        create += ["--bid", bid or "<BID_PRICE>"]   # interruptible bids; on-demand omits
+    create = [
+        "gcloud", "compute", "instances", "create", name,
+        "--project", project, "--zone", zone,
+        "--machine-type", vb["machine_type"],
+        "--accelerator", f"type={vb['accelerator']},count={vb['accelerator_count']}",
+        "--image-family", vb["vm_image_family"],
+        "--image-project", vb["vm_image_project"],
+        "--maintenance-policy", "TERMINATE",
+        "--boot-disk-size", f"{vb['boot_disk_gb']}GB",
+        "--metadata", "install-nvidia-driver=True",
+        "--scopes", "storage-rw",  # so the VM can gsutil the bucket
+    ]
+    if spot:
+        create += ["--provisioning-model", "SPOT",
+                   "--instance-termination-action", "DELETE"]
 
-    up = ["rsync", "-avP", shortlist_path, manifest_path, f"{host}:{remote_in}/"]
-    fold = ["ssh", host, "python3", runner,
-            "--manifest", f"{remote_in}/{man_name}",
-            "--fasta", f"{remote_in}/{fa_name}",
-            "--out", f"{remote_out}/"]
-    down = ["rsync", "-avP", f"{host}:{remote_out}/", f"{local_out}/"]
-    destroy = ["vastai", "destroy", "instance", inst]
+    # On the VM: pull inputs from the bucket, fold in the container, push outputs back.
+    remote = (
+        f"mkdir -p {remote_in} {remote_out} && "
+        f"gsutil -m cp {bucket}/in/* {remote_in}/ && "
+        f"docker run --gpus all -v /data/proteus:/data/proteus {image} "
+        f"--manifest {remote_in}/{man_name} --fasta {remote_in}/{fa_name} "
+        f"--out {remote_out}/ && "
+        f"gsutil -m cp -r {remote_out}/* {bucket}/out/"
+    )
+    fold = ["gcloud", "compute", "ssh", name, "--project", project, "--zone", zone,
+            "--command", remote]
+
+    stage_down = ["gsutil", "-m", "cp", "-r", f"{bucket}/out/*", f"{local_out}/"]
+    delete = ["gcloud", "compute", "instances", "delete", name,
+              "--project", project, "--zone", zone, "--quiet"]
 
     return [
-        {"name": "search_offers", "cmd": search,
-         "note": "pick a cheap offer id for --offer"},
+        {"name": "stage_up", "cmd": stage_up,
+         "note": "ship ONLY the shortlist + manifest up to the GCS staging bucket"},
         {"name": "create_instance", "cmd": create,
-         "note": "interruptible: set --bid; on-demand: drop --bid. Note the instance id."},
-        {"name": "upload", "cmd": up,
-         "note": "ship ONLY the shortlist + manifest up (mounted volume)"},
+         "note": "SPOT GPU VM (Deep Learning image: CUDA + docker)"},
         {"name": "fold", "cmd": fold,
-         "note": "ESMFold on CUDA; resumable + pLDDT-gated (vast/run_fold.py)"},
-        {"name": "download", "cmd": down,
-         "note": "pull folded PDBs + pLDDT back; then run proteus.screen"},
-        {"name": "destroy_instance", "cmd": destroy,
+         "note": "on the VM: pull inputs, docker-run ESMFold (resumable + pLDDT-gated), push out"},
+        {"name": "stage_down", "cmd": stage_down,
+         "note": "pull folded PDBs + pLDDT down; then run proteus.screen"},
+        {"name": "delete_instance", "cmd": delete,
          "note": "stop billing once results are down"},
     ]
 
 
 def render_plan(plan: list[dict]) -> str:
-    lines = ["[launch] Vast burst plan (DRY-RUN — nothing executed):"]
+    lines = ["[launch] GCE burst plan (DRY-RUN — nothing executed):"]
     for i, step in enumerate(plan, 1):
         lines.append(f"  {i}. {step['name']}: {step['note']}")
         lines.append(f"     $ {' '.join(shlex.quote(c) for c in step['cmd'])}")
     return "\n".join(lines)
 
 
-# Steps that need a real ssh host before they can run.
-_NEEDS_SSH = {"upload", "fold", "download"}
-
-
-def execute_plan(plan: list[dict], ssh: str | None, only: set[str] | None = None) -> int:
-    """Execute selected steps (LOCAL, on the Mac). Skips steps whose runtime ids are
-    still placeholders, or ssh steps without --ssh. Returns a process exit code."""
+def execute_plan(plan: list[dict], only: set[str] | None = None) -> int:
+    """Execute selected steps (LOCAL, on the Mac). Skips steps that still carry an
+    unresolved <PLACEHOLDER> (project/bucket/image unset). Returns a process exit code."""
     for step in plan:
         if only and step["name"] not in only:
             continue
-        if step["name"] in _NEEDS_SSH and not ssh:
-            print(f"[launch] skip {step['name']}: needs --ssh root@<host>", file=sys.stderr)
-            continue
-        if any(tok.startswith("<") and tok.endswith(">") for tok in step["cmd"]):
-            print(f"[launch] skip {step['name']}: unresolved placeholder "
-                  f"({' '.join(step['cmd'])})", file=sys.stderr)
+        if any("<" in tok and ">" in tok for tok in step["cmd"]):
+            print(f"[launch] skip {step['name']}: unresolved placeholder — set "
+                  "compute.gce_burst.{project,bucket,image}", file=sys.stderr)
             continue
         print(f"[launch] run {step['name']}: {' '.join(shlex.quote(c) for c in step['cmd'])}")
         proc = subprocess.run(step["cmd"])
@@ -187,14 +198,10 @@ def main(argv=None) -> int:
     ap.add_argument("--manifest", default=os.path.join(_interim, "s3_job_manifest.json"))
     ap.add_argument("--shortlist", default=os.path.join(_interim, "s2_shortlist.fasta"))
     ap.add_argument("--config", default=DEFAULT_CONFIG)
-    ap.add_argument("--offer", default=None, help="vastai offer id (from search_offers)")
-    ap.add_argument("--instance", default=None, help="vastai instance id (for destroy)")
-    ap.add_argument("--ssh", default=None, help="ssh target, e.g. root@1.2.3.4")
-    ap.add_argument("--bid", default=None, help="interruptible bid price ($/hr)")
     ap.add_argument("--execute", action="store_true",
                     help="actually run the plan (default: dry-run print only)")
     ap.add_argument("--only", default=None,
-                    help="comma-separated step names to execute (e.g. upload,fold,download)")
+                    help="comma-separated step names to execute (e.g. stage_up,create_instance)")
     args = ap.parse_args(argv)
 
     cfg = load_config(args.config)
@@ -207,16 +214,15 @@ def main(argv=None) -> int:
     print(f"[launch] inputs OK: {v['manifest']['n_sequences']} sequence(s) to fold "
           f"({os.path.relpath(args.shortlist, os.getcwd())}).")
 
-    plan = build_plan(cfg, args.manifest, args.shortlist, offer_id=args.offer,
-                      instance_id=args.instance, ssh=args.ssh, bid=args.bid)
+    plan = build_plan(cfg, args.manifest, args.shortlist)
     if not args.execute:
         print(render_plan(plan))
-        print("[launch] dry-run only — re-run with --execute "
-              "(and --offer/--instance/--ssh) to burst.")
+        print("[launch] dry-run only — set compute.gce_burst.{project,bucket,image} and "
+              "re-run with --execute to burst.")
         return 0
 
     only = set(args.only.split(",")) if args.only else None
-    return execute_plan(plan, args.ssh, only=only)
+    return execute_plan(plan, only=only)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
-"""S3 — ESMFold batch fold. RUNS ON VAST.AI (Linux+CUDA), NOT on this Mac.
+"""S3 — ESMFold batch fold. RUNS ON GCE (Linux+CUDA), NOT on this Mac.
 
 The pipeline narrows LOCALLY (S0–S2) so only the S2 shortlist is folded. ESMFold
-is GPU-heavy and is intentionally offloaded to the Vast.ai burst box
-(vast/Dockerfile.fold). On Apple Silicon this stage is **dry-run only**: it
-validates the input FASTA and emits a job manifest to ship up to Vast. It MUST
+is GPU-heavy and is intentionally offloaded to the GCE burst box
+(gce/Dockerfile.fold). On Apple Silicon this stage is **dry-run only**: it
+validates the input FASTA and emits a job manifest to ship up to GCE. It MUST
 NOT attempt to fold on MPS.
 
 Local usage (dry-run), from the repo root:
@@ -11,13 +11,13 @@ Local usage (dry-run), from the repo root:
         --fasta data/interim/s2_shortlist.fasta \
         --out   data/interim/s3_job_manifest.json
 
-The emitted manifest is the contract handed to the Vast burst runner: it lists
+The emitted manifest is the contract handed to the GCE burst runner: it lists
 each sequence to fold (id, length, sha256) plus the fold parameters resolved from
 config/proteus.yaml (plddt_min, chunk_size, max_recycles, random_seed). The real
 fold (loading fair-esm, running esmfold_v1 on CUDA, pLDDT filtering) happens
-on Vast — see vast/sync.md.
+on GCE — see gce/sync.md.
 
-TODO(P3): implement the Vast-side runner in vast/ (load ESMFold, seed torch from
+TODO(P3): implement the GCE-side runner in gce/ (load ESMFold, seed torch from
           random_seed, batch-fold with length chunking, write PDBs + per-model
           pLDDT, drop models below plddt_min).
 """
@@ -35,7 +35,7 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 DEFAULT_CONFIG = os.path.join(REPO, "config", "proteus.yaml")
 
 # Standard one-letter amino-acid alphabet (+ X for unknown). Anything else in a
-# sequence is a hard validation error — we don't want to ship junk up to Vast.
+# sequence is a hard validation error — we don't want to ship junk up to GCE.
 _AA = set("ACDEFGHIKLMNPQRSTVWYXBZUO")
 
 
@@ -45,7 +45,7 @@ def _load_config(path: str) -> dict:
     defaults = {
         "random_seed": 1729,
         "s3_fold": {"plddt_min": 70.0, "chunk_size": 400, "max_recycles": 3,
-                    "device": "cuda", "run_location": "vast"},
+                    "device": "cuda", "run_location": "gce"},
         "corpus": {"min_length": 80, "max_length": 1000},
     }
     try:
@@ -102,7 +102,7 @@ def validate_records(records, min_len: int, max_len: int):
             errors.append(f"{rid}: non-amino-acid chars {bad}")
             continue
         n = len(seq)
-        too_long = n > max_len  # not fatal: folded in chunks on Vast, just flag it
+        too_long = n > max_len  # not fatal: folded in chunks on GCE, just flag it
         valid.append({
             "id": rid,
             "length": n,
@@ -119,9 +119,9 @@ def build_manifest(fasta_path: str, cfg: dict, valid) -> dict:
         "schema": "proteus.s3_fold.job_manifest/v1",
         "generated": datetime.now(timezone.utc).isoformat(),
         "stage": "S3_esmfold_batch",
-        "run_location": "vast",          # ESMFold runs on Vast, never on this Mac
-        "note": "Ship this manifest + the shortlist FASTA to the Vast.ai burst box "
-                "(vast/Dockerfile.fold). Do NOT fold on MPS. See vast/sync.md.",
+        "run_location": "gce",          # ESMFold runs on GCE, never on this Mac
+        "note": "Ship this manifest + the shortlist FASTA to the GCE burst box "
+                "(gce/Dockerfile.fold). Do NOT fold on MPS. See gce/sync.md.",
         "input_fasta": os.path.relpath(fasta_path, REPO),
         "random_seed": cfg.get("random_seed"),
         "fold_params": {
@@ -141,10 +141,10 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dry-run", action="store_true",
-                    help="validate FASTA + emit the Vast job manifest. The ONLY mode "
+                    help="validate FASTA + emit the GCE job manifest. The ONLY mode "
                          "supported locally — folding on this Mac is refused.")
     ap.add_argument("--fasta", default=os.path.join(REPO, "data", "interim", "s2_shortlist.fasta"),
-                    help="S2 shortlist FASTA to fold on Vast")
+                    help="S2 shortlist FASTA to fold on GCE")
     ap.add_argument("--out", default=os.path.join(REPO, "data", "interim", "s3_job_manifest.json"),
                     help="path to write the job manifest")
     ap.add_argument("--config", default=DEFAULT_CONFIG)
@@ -152,8 +152,8 @@ def main(argv=None) -> int:
 
     if not args.dry_run:
         print("S3 (ESMFold) does not run on this Apple-Silicon Mac — folding is "
-              "offloaded to Vast.ai. Use --dry-run to validate input and emit the "
-              "job manifest, then run the fold on Vast (see vast/sync.md).",
+              "offloaded to GCE. Use --dry-run to validate input and emit the "
+              "job manifest, then run the fold on GCE (see gce/sync.md).",
               file=sys.stderr)
         return 2
 
@@ -184,7 +184,7 @@ def main(argv=None) -> int:
     print(f"[dry-run] validated {len(valid)} sequence(s), "
           f"{manifest['total_residues']} residues; {len(errors)} rejected.")
     print(f"[dry-run] job manifest -> {os.path.relpath(args.out, os.getcwd())}")
-    print("[dry-run] next: ship the manifest + FASTA to Vast (vast/sync.md); fold on CUDA there.")
+    print("[dry-run] next: ship the manifest + FASTA to GCE (gce/sync.md); fold on CUDA there.")
     return 0
 
 

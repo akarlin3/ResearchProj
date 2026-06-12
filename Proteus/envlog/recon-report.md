@@ -10,7 +10,7 @@ Linux x86_64 cloud container (NOT the target Mac).
 > below therefore reports the *container*, not the Mac. The **recon procedure and
 > the GO/WARNING verdict logic are the deliverable**; re-run the probe block on the
 > actual M4 (it is one shell paste) to capture the real numbers before installing.
-> Nothing in the architecture decision changes: folding is offloaded to Vast.ai, so
+> Nothing in the architecture decision changes: folding is offloaded to GCE, so
 > there is no hard GPU blocker on either host.
 
 ## Probe block (paste on the M4 to regenerate the real numbers)
@@ -48,8 +48,8 @@ df -h .                                   # free disk on working volume
 ## Verdict logic (per spec)
 
 This env has **no hard GPU blocker**, because ESMFold / Chai-1 folding is
-intentionally offloaded to a Vast.ai burst box (Linux + CUDA, scaffolded in
-`vast/`, not installed here). The pipeline narrows **locally** — MMseqs2
+intentionally offloaded to a GCE burst box (Linux + CUDA, scaffolded in
+`gce/`, not installed here). The pipeline narrows **locally** — MMseqs2
 dereplication, ProstT5 seq→3Di, Foldseek fold-class triage, fpocket/geometry,
 Vina — and ships only the S2 shortlist up for folding. So MPS/CPU is sufficient
 for everything that runs on this Mac.

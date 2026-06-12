@@ -2,8 +2,8 @@
 
 One command for the whole LOCAL (M4) narrowing front: assemble the raw corpus,
 dereplicate (S0), tokenise to 3Di (S1), fold-class triage (S2), and emit the S3
-fold job manifest for the shortlist. Folding itself (S3) runs on Vast — this
-driver stops at the manifest the burst box consumes (see vast/sync.md).
+fold job manifest for the shortlist. Folding itself (S3) runs on GCE — this
+driver stops at the manifest the burst box consumes (see gce/sync.md).
 
 It just chains the existing per-stage functions and reports the NARROWING FUNNEL
 (how many sequences survive each gate). Every stage reads thresholds + the seed
@@ -11,7 +11,7 @@ from config; nothing here re-implements stage logic.
 
 S2 needs pre-built reference DBs (s2_foldclass_triage.references[].db); pass
 `references=` to override (e.g. freshly built ones). The funnel is the deliverable
-shipped up to Vast: shortlist FASTA + s3_job_manifest.json.
+shipped up to GCE: shortlist FASTA + s3_job_manifest.json.
 
 Local usage, from the repo root:
     PYTHONPATH=src python -m proteus.pipeline --out data/interim
@@ -71,7 +71,7 @@ def run_local(cfg: dict, references=None, out_dir: str | None = None,
     write_shortlist(reps, s2["shortlisted"], shortlist)
     write_triage_tsv(s2, os.path.join(out, "s2_triage.tsv"))
 
-    # --- S3 job manifest (Vast hand-off) ---------------------------------- #
+    # --- S3 job manifest (GCE hand-off) ---------------------------------- #
     corpus_cfg = cfg.get("corpus", {})
     valid, _errors = validate_records(
         _s3_parse(shortlist), int(corpus_cfg.get("min_length", 0)),
@@ -105,8 +105,8 @@ def run_local(cfg: dict, references=None, out_dir: str | None = None,
           f"-> S0 reps {funnel['s0_representatives']} "
           f"-> S2 shortlist {funnel['s2_shortlisted']} "
           f"-> S3 manifest {funnel['s3_manifest_sequences']} seq")
-    print(f"[pipeline] ship to Vast: {os.path.relpath(shortlist, os.getcwd())} + "
-          f"{os.path.relpath(manifest_path, os.getcwd())} (see vast/sync.md)")
+    print(f"[pipeline] ship to GCE: {os.path.relpath(shortlist, os.getcwd())} + "
+          f"{os.path.relpath(manifest_path, os.getcwd())} (see gce/sync.md)")
     return funnel
 
 

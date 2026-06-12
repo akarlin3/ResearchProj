@@ -604,7 +604,7 @@ def write_report(result: dict, path: str):
     L.append("- Metric orientations and weights were set from biology a priori, not tuned "
              "to maximise separation on these 6 structures; still, a 6-point fit cannot "
              "be considered validated.")
-    L.append("- **Next step:** fold the divergent positives GuaPA and MG8 on the Vast.ai "
+    L.append("- **Next step:** fold the divergent positives GuaPA and MG8 on the GCE "
              "burst box (S3) to add real, sequence-divergent PETases to the positive set, "
              "expand the decoy panel (more lipase/esterase/cutinase-adjacent folds), then "
              "re-calibrate. Re-check the aromatic-subsite metric on the *folded* models "

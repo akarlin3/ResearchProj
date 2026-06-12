@@ -84,8 +84,8 @@ def test_local_pipeline_funnel(tmp_path):
     for key in ("corpus_fasta", "representatives_fasta", "shortlist_fasta", "s3_manifest"):
         assert os.path.exists(art[key]), f"missing artifact: {key}"
 
-    # the S3 manifest is the Vast-ready contract over exactly the 6 shortlisted seqs
+    # the S3 manifest is the GCE-ready contract over exactly the 6 shortlisted seqs
     man = json.loads(open(art["s3_manifest"]).read())
-    assert man["run_location"] == "vast"
+    assert man["run_location"] == "gce"
     assert man["n_sequences"] == 6
     assert all(e.get("sha256") for e in man["sequences"])

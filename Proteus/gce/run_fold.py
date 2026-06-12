@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Proteus S3 — Vast.ai BURST ESMFold runner (runs ON the CUDA box, NOT the Mac).
+"""Proteus S3 — GCE BURST ESMFold runner (runs ON the CUDA box, NOT the Mac).
 
 The local pipeline (S0–S2) narrows the corpus and emits, via
 `python -m proteus.s3_fold --dry-run`, a job manifest + the S2 shortlist FASTA.
-This script is the *contract consumer* on the Vast side (see vast/sync.md): it
+This script is the *contract consumer* on the GCE side (see gce/sync.md): it
 loads ESMFold (esmfold_v1) on CUDA, folds each shortlisted sequence, writes a PDB
 + per-residue pLDDT, and keeps only models whose mean pLDDT >= the manifest's
 plddt_min. It is intentionally a SINGLE self-contained file so the fold image only
@@ -17,9 +17,9 @@ restart — so a reclaim costs only the single in-flight sequence, never the bat
 The ESMFold model is loaded LAZILY (only when a real fold is requested), so the
 orchestration — manifest integrity, resume/checkpoint, pLDDT gating, the run
 summary — is exercised by tests on a CPU-only host with an injected fake folder,
-exactly the way the rest of the pipeline keeps its GPU step Vast-only.
+exactly the way the rest of the pipeline keeps its GPU step GCE-only.
 
-Usage (inside the Vast instance):
+Usage (inside the GCE instance):
     python3 run_fold.py \
         --manifest /data/proteus/in/s3_job_manifest.json \
         --fasta    /data/proteus/in/s2_shortlist.fasta \
@@ -96,14 +96,14 @@ def mean_plddt_from_pdb(pdb_str: str) -> float:
 # ESMFold backend (lazy — imported only when a real fold runs)
 # --------------------------------------------------------------------------- #
 def load_esmfold(device: str = "cuda", seed: int | None = None):
-    """Load esmfold_v1 onto `device`. Imports torch/esm lazily (Vast-only)."""
+    """Load esmfold_v1 onto `device`. Imports torch/esm lazily (GCE-only)."""
     import torch  # noqa: PLC0415
     import esm  # noqa: PLC0415
     if seed is not None:
         torch.manual_seed(seed)
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError(
-            "run_fold.py expects a CUDA box (this is the Vast S3 burst). Use "
+            "run_fold.py expects a CUDA box (this is the GCE S3 burst). Use "
             "--device cpu only for a tiny smoke; never fold the real batch on CPU/MPS.")
     model = esm.pretrained.esmfold_v1().eval().to(device)
     return model
@@ -155,7 +155,7 @@ def fold_batch(manifest: dict, fasta_path: str, out_dir: str, folder=None,
     """Fold every shortlisted sequence with checkpoint/resume + pLDDT gating.
 
     `folder` is a callable (seq, chunk_size, max_recycles) -> (pdb_str, mean_plddt).
-    If None, ESMFold is loaded lazily and wrapped (the real Vast path). Tests pass
+    If None, ESMFold is loaded lazily and wrapped (the real GCE path). Tests pass
     a deterministic fake folder so this logic runs without a GPU.
 
     Returns a run summary dict (also written to <out_dir>/s3_results.json).
@@ -276,7 +276,7 @@ def main(argv=None) -> int:
           f"dropped {summary['n_dropped']}, errors {summary['n_errors']}.")
     print(f"[S3] results -> {os.path.join(args.out, 's3_results.json')}")
     print("[S3] next: rsync the kept PDBs DOWN to structures/folded/ and resume S4/S5 "
-          "locally (vast/sync.md).")
+          "locally (gce/sync.md).")
     # Non-zero only if nothing got folded at all (e.g. total input mismatch).
     return 0 if summary["n_folded"] > 0 or summary["n_manifest"] == 0 else 1
 

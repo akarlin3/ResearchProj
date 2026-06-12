@@ -22,7 +22,7 @@ Foldseek hit passing both the e-value and bit-score cutoffs (and, for a broad
 reference, to an allow-listed target).
 
 Reads target_fold / evalue / min_bits / references from config
-(s2_foldclass_triage). Emits the shortlist FASTA (shipped up to Vast for S3) and
+(s2_foldclass_triage). Emits the shortlist FASTA (shipped up to GCE for S3) and
 a per-query triage TSV.
 
 Local usage, from the repo root:
@@ -334,7 +334,7 @@ def main(argv=None) -> int:
           f"shortlisted (dropped: {summary['dropped'] or 'none'})")
     print(f"[S2] shortlist FASTA ({n} seq) -> {os.path.relpath(shortlist, os.getcwd())}")
     print(f"[S2] triage audit -> {os.path.relpath(triage_tsv, os.getcwd())}")
-    print("[S2] next: ship the shortlist UP to Vast.ai for ESMFold (S3); see vast/sync.md.")
+    print("[S2] next: ship the shortlist UP to GCE for ESMFold (S3); see gce/sync.md.")
     return 0
 
 

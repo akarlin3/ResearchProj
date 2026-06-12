@@ -157,5 +157,5 @@ def test_s2_write_shortlist_subsets_representatives(built, tmp_path):
     from proteus.s2_foldclass_triage import parse_fasta  # noqa: PLC0415
     ids = {rid for rid, _ in parse_fasta(str(out))}
     assert ids == HYDROLASES
-    # the shortlist carries real sequences (non-empty), ready to ship to S3/Vast
+    # the shortlist carries real sequences (non-empty), ready to ship to S3/GCE
     assert all(seq for _, seq in parse_fasta(str(out)))

@@ -3,7 +3,7 @@
 Gathers the raw dark-proteome sequences (the FASTA shards dropped in data/raw,
 plain or gzipped) named by `corpus.fasta_glob`, applies the `corpus.min_length`
 floor (below it: skip — too short to fold/triage meaningfully), flags sequences
-over `corpus.max_length` (kept, but S3 chunks them on Vast), drops non-amino-acid
+over `corpus.max_length` (kept, but S3 chunks them on GCE), drops non-amino-acid
 junk and duplicate ids, and writes ONE assembled corpus FASTA that S0 then
 dereplicates.
 
@@ -113,7 +113,7 @@ def assemble_corpus(cfg: dict, out_fasta: str, glob_override: str | None = None)
                     n_short += 1
                     continue
                 if len(seq) > max_len:
-                    too_long.append(rid)  # keep — S3 chunks long sequences on Vast
+                    too_long.append(rid)  # keep — S3 chunks long sequences on GCE
                 seen.add(rid)
                 out.write(f">{rid}\n")
                 for i in range(0, len(seq), 60):

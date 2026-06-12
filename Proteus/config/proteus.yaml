@@ -1,7 +1,7 @@
 # Proteus — central config
 # Structure-first dark-proteome mining for divergent PET-hydrolase candidates.
 # Target LOCAL host: M4 MacBook Air (Apple Silicon, MPS/CPU, no CUDA).
-# Every stochastic step (S0 MMseqs2, S3 ESMFold/torch on Vast, docking) MUST read
+# Every stochastic step (S0 MMseqs2, S3 ESMFold/torch on GCE, docking) MUST read
 # random_seed from here — never hardcode a seed in stage code.
 
 # ---------------------------------------------------------------------------
@@ -21,13 +21,13 @@ paths:
   data_raw:        data/raw
   data_interim:    data/interim
   data_processed:  data/processed
-  structures:      structures          # gitignored; fetched controls + folded PDBs returned from Vast
-  models:          models              # gitignored; downloaded weights (ProstT5 local; ESMFold lives on Vast)
+  structures:      structures          # gitignored; fetched controls + folded PDBs returned from GCE
+  models:          models              # gitignored; downloaded weights (ProstT5 local; ESMFold lives on GCE)
   controls:        controls
   envlog:          envlog
   # external weight locations (populated when downloaded; left blank to avoid guessing)
   prostt5_weights: ""                  # e.g. "Rostlab/ProstT5" (HF id) or a local cache path
-  # NOTE: no esmfold_weights here — ESMFold runs on the Vast burst box, not locally.
+  # NOTE: no esmfold_weights here — ESMFold runs on the GCE burst box, not locally.
 
 # ---------------------------------------------------------------------------
 # Corpus selection — which dark-proteome sources to mine
@@ -44,7 +44,7 @@ corpus:
   #     - {name: sprot_cutinases, type: uniprot, query: "cutinase AND reviewed:true", limit: 50}
   sources: []
   min_length: 80                       # residues; below this, skip
-  max_length: 1000                     # length cap; longer seqs chunked on Vast (S3)
+  max_length: 1000                     # length cap; longer seqs chunked on GCE (S3)
   fasta_glob: "data/raw/*.fasta.gz"
 
 # ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ s2_foldclass_triage:
   query_db: data/interim/s1_3di/querydb
   representatives_fasta: data/interim/s0_representatives.fasta
   # Outputs.
-  shortlist_fasta: data/interim/s2_shortlist.fasta   # shipped UP to Vast.ai (S3)
+  shortlist_fasta: data/interim/s2_shortlist.fasta   # shipped UP to GCE (S3)
   triage_tsv: data/interim/s2_triage.tsv             # per-query audit (refs hit, best e/bits)
   # BOTH references (union of survivors). `db` is a PRE-BUILT Foldseek 3Di DB;
   # left blank here to avoid guessing a path — populate per host. For a broad
@@ -93,19 +93,19 @@ s2_foldclass_triage:
       post_filter:
         fold_class_allowlist: ""
 
-# S3 — ESMFold batch. RUNS ON VAST.AI (Linux+CUDA), NOT locally. On the Mac this
+# S3 — ESMFold batch. RUNS ON GCE (Linux+CUDA), NOT locally. On the Mac this
 #      stage is DRY-RUN ONLY: validate the input FASTA and emit a job manifest.
-#      NEVER fold on MPS.  [VAST.AI]
+#      NEVER fold on MPS.  [GCE]
 s3_fold:
-  run_location: vast                   # vast | local-dry-run. Local execution is dry-run only.
-  device: cuda                         # the *Vast* device; the Mac never sets this to run
+  run_location: gce                   # gce | local-dry-run. Local execution is dry-run only.
+  device: cuda                         # the *GCE* device; the Mac never sets this to run
   plddt_min: 70.0                      # mean pLDDT cutoff to keep a returned model
-  chunk_size: 400                      # residue chunk for long sequences (applied on Vast)
+  chunk_size: 400                      # residue chunk for long sequences (applied on GCE)
   max_recycles: 3
   manifest_out: data/interim/s3_job_manifest.json
 
 # S4 — catalytic geometry gate: Ser-His-Asp triad + oxyanion hole, on the
-#      structures RETURNED from Vast.  [LOCAL]
+#      structures RETURNED from GCE.  [LOCAL]
 s4_geometry:
   triad_serine_resname: SER
   triad_his_resname: HIS
@@ -182,7 +182,7 @@ s5_cleft_filter:
 
 # Docking (P4) — small AutoDock Vina pass on the S5/screen survivors: dock a
 #      PET-mimic ligand into the catalytic cleft and rank by binding affinity.
-#      LOCAL CPU Vina here; GPU docking (GNINA/DiffDock) is a Vast burst (see vast/).
+#      LOCAL CPU Vina here; GPU docking (GNINA/DiffDock) is a GCE burst (see gce/).
 #      The Vina search is seeded from the global random_seed (never hardcoded).
 docking:
   ligand: BHET                          # PET-mimic: bis(2-hydroxyethyl) terephthalate
@@ -194,22 +194,26 @@ docking:
   top_n: 25                             # keep the best N candidates by affinity (most negative kcal/mol)
 
 # ---------------------------------------------------------------------------
-# Compute split — LOCAL Mac (triage/analysis) vs VAST.AI burst (folding/GPU dock)
+# Compute split — LOCAL Mac (triage/analysis) vs GCE burst (folding/GPU dock)
 # ---------------------------------------------------------------------------
 compute:
   local:
     description: "M4 MacBook Air (Apple Silicon, MPS/CPU, no CUDA, 16 GB unified). Runs S0–S2 narrowing, S4–S5 geometry/cleft, small Vina docking."
     device: mps                        # mps | cpu
-  vast_burst:
-    description: "Vast.ai Linux+CUDA burst: ESMFold batch fold (S3), Chai-1 refinement, GPU docking (GNINA/DiffDock). Only the S2 shortlist is shipped up."
-    image: vast/Dockerfile.fold
-    instance_pref: interruptible        # prefer interruptible; checkpoint outputs; fall back to on-demand
+  gce_burst:
+    description: "Google Compute Engine Linux+CUDA burst: ESMFold batch fold (S3), Chai-1 refinement, GPU docking (GNINA/DiffDock). Only the S2 shortlist is shipped up."
+    dockerfile: gce/Dockerfile.fold     # build context for the fold image (push to Artifact Registry)
     # Burst launch parameters (proteus.launch plans the up-fold-down cycle from these).
-    registry_image: ""                  # PUSHED image Vast pulls (e.g. youruser/proteus-fold:cu124); blank => set per host
-    gpu: RTX_4090                       # vastai offer filter gpu_name
-    num_gpus: 1
-    cuda_min: "12.4"                    # must match Dockerfile.fold CUDA base
-    disk_gb: 60
-    remote_in: /data/proteus/in         # MOUNTED volume the shortlist+manifest are pushed to
-    remote_out: /data/proteus/out       # MOUNTED volume folded PDBs + pLDDT land in (survives reclaim)
+    project: ""                         # GCP project id (set per host)
+    zone: us-central1-a                 # a zone with the chosen GPU available
+    instance_name: proteus-fold
+    machine_type: g2-standard-8         # L4 GPU machine family (n1-standard-* for T4/V100)
+    accelerator: nvidia-l4              # nvidia-l4 | nvidia-tesla-t4 | nvidia-tesla-a100
+    accelerator_count: 1
+    image: ""                           # Artifact Registry fold image (e.g. REGION-docker.pkg.dev/PROJ/REPO/proteus-fold:cu124); blank => set per host
+    boot_disk_gb: 100
+    spot: true                          # SPOT/preemptible for cost; outputs staged to the bucket survive preemption
+    bucket: ""                          # gs://BUCKET staging for in/out (set per host); survives a preempted VM
+    remote_in: /data/proteus/in         # on-VM dir inputs are gsutil-pulled to before folding
+    remote_out: /data/proteus/out       # on-VM dir folded PDBs + pLDDT land in (gsutil-pushed to the bucket)
     local_out: structures/folded        # where the returned models are pulled DOWN to

@@ -1,13 +1,13 @@
-"""S3 Vast-runner orchestration tests (vast/run_fold.py).
+"""S3 GCE-runner orchestration tests (gce/run_fold.py).
 
-ESMFold itself runs only on the Vast CUDA box, so it is NEVER loaded here. The
+ESMFold itself runs only on the GCE CUDA box, so it is NEVER loaded here. The
 runner is designed with the model backend injectable: these tests drive the
 host-agnostic orchestration — manifest integrity, per-sequence checkpoint/resume,
 mean-pLDDT keep/drop gating, long-sequence chunk flagging, and the run summary —
 with a deterministic FAKE folder. This is the same split the pipeline uses to
-keep its GPU step Vast-only (cf. the S3 dry-run manifest test in test_smoke.py).
+keep its GPU step GCE-only (cf. the S3 dry-run manifest test in test_smoke.py).
 
-We import vast/run_fold.py by path (it lives outside src/ so the fold image can
+We import gce/run_fold.py by path (it lives outside src/ so the fold image can
 COPY a single self-contained file).
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ import os
 import pytest
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RUN_FOLD = os.path.join(REPO, "vast", "run_fold.py")
+RUN_FOLD = os.path.join(REPO, "gce", "run_fold.py")
 
 
 def _load_runner():
@@ -52,7 +52,7 @@ def _manifest(entries):
     """entries: list of (id, seq). Build a minimal S3 manifest like s3_fold emits."""
     return {
         "schema": "proteus.s3_fold.job_manifest/v1",
-        "run_location": "vast",
+        "run_location": "gce",
         "random_seed": 1729,
         "fold_params": {"model": "esmfold_v1", "device": "cuda",
                         "plddt_min": 70.0, "chunk_size": 400, "max_recycles": 3},

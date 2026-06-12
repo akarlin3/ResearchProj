@@ -4,7 +4,7 @@ Each test asserts a POSITIVE artifact (a finite tensor, a 3Di string, a hit row,
 a cluster TSV, a pocket, a finite affinity, a valid manifest) — not merely "no
 exception". green-without-output is NOT green.
 
-There is NO local ESMFold test: folding (S3) is offloaded to the Vast.ai burst box.
+There is NO local ESMFold test: folding (S3) is offloaded to the GCE burst box.
 Instead we assert that `s3_fold.py --dry-run` emits a valid job manifest, and that
 MPS itself is healthy for the stages that DO run locally (ProstT5, etc.).
 
@@ -86,7 +86,7 @@ def test_s3_dry_run_emits_valid_manifest(tmp_path):
     assert proc.returncode == 0, f"s3 dry-run failed: {proc.stderr}"
     assert out.exists(), "no job manifest emitted"
     man = json.loads(out.read_text())
-    assert man["run_location"] == "vast", "S3 must be marked as a Vast job, not local"
+    assert man["run_location"] == "gce", "S3 must be marked as a GCE job, not local"
     assert man["n_sequences"] == 2, "manifest sequence count wrong"
     assert man["fold_params"]["model"] == "esmfold_v1"
     assert all(e.get("sha256") for e in man["sequences"]), "missing per-seq sha256"

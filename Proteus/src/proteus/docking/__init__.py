@@ -4,7 +4,7 @@ Dock a PET-mimic ligand (default BHET) into the catalytic cleft of the screen's
 PETase-like hits and rank by binding affinity. The search box is centred on the
 active site found by S4 (the catalytic Ser OG) — so docking probes the SAME site
 the geometry/cleft gates scored, not an arbitrary pocket. GPU docking
-(GNINA / DiffDock) and Chai-1 cofolding are Vast.ai burst targets, not here.
+(GNINA / DiffDock) and Chai-1 cofolding are GCE burst targets, not here.
 
 The Vina call is INJECTABLE (a `scorer` callable), exactly like the S3 fold
 backend: the orchestration — active-site box placement, candidate iteration,

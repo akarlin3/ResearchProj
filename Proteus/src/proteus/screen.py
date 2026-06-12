@@ -1,7 +1,7 @@
-"""Local resume: screen the structures returned from Vast (S3) through S4 + S5.
+"""Local resume: screen the structures returned from GCE (S3) through S4 + S5.
 
-After the Vast burst folds the S2 shortlist (S3 -> structures + per-model pLDDT),
-the pipeline RESUMES locally (vast/sync.md): each kept model is run through the
+After the GCE burst folds the S2 shortlist (S3 -> structures + per-model pLDDT),
+the pipeline RESUMES locally (gce/sync.md): each kept model is run through the
 S4 catalytic-geometry gate and the S5 cleft filter, then scored RELATIVE to the
 positive controls — exactly the calibrated separation, now applied to dark
 candidates instead of controls.
