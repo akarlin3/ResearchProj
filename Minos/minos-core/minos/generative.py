@@ -147,3 +147,41 @@ def realise(base: BaseDraws, cfg: MinosConfig, *, delta: float, shift):
         mu = base.theta + bias + sigma_true * standardized_error(base, cfg)
     w = cfg.w_train_mean + feat_mean + cfg.w_train_std * base.z_w
     return mu, w
+
+
+# ----------------------------------------------------------------------------------
+# v3 deployment realiser — the observable / hidden shift split (DESIGN_C Section 1).
+#
+# This is the ONLY new generative surface in v3; ``realise`` (v1/v2) above is untouched.
+# The honesty constraint demands two orthogonal channels that perturb the truth<->report
+# relationship by the SAME amount, one observable and one hidden:
+#
+#   * ``delta_obs`` moves the OBSERVABLE channel: it biases the reported point ``mu`` DOWN
+#     (``mu = report_center - beta*s*delta_obs``), leaving the truth ``theta`` put. The
+#     reported-mu distribution translates, so a label-free monitor watching ``{mu}`` can see it.
+#   * ``delta_hid`` moves the HIDDEN channel: it biases the truth ``theta`` UP
+#     (``theta = report_center + beta*s*delta_hid + s*u``), leaving the reported ``mu`` put. The
+#     truth<->report gap changes identically, but NO observable summary moves, so a label-free
+#     monitor is blind to it by construction.
+#
+# At matched delta the two yield the SAME deployment decision problem (same theta-mu law, hence
+# the same oracle scale and the same stale-correction regret) — distinguished only by whether the
+# observable mu-channel moved. That is the sharpest honesty demonstration: identical regret, one
+# detectable and one not. Posterior-centric only (a reported centre must exist); CRN-preserving.
+# ----------------------------------------------------------------------------------
+def realise_deploy(base: BaseDraws, cfg: MinosConfig, *, delta_obs: float = 0.0,
+                   delta_hid: float = 0.0):
+    """Deployment ``(mu, theta)`` under the observable/hidden shift split (DESIGN_C §1).
+
+    ``delta_obs`` biases the reported point ``mu`` down (observable, detectable); ``delta_hid``
+    biases the truth ``theta`` up (hidden, undetectable). Both reuse the same gain ``beta*s`` so
+    matched ``delta`` induce the same ``theta-mu`` discrepancy. Returns ``(mu, theta)`` — the
+    monitor consumes ``mu`` only; ``theta`` is used solely to *score* utility, never to decide.
+    """
+    assert cfg.posterior_centric and base.report_center is not None, (
+        "realise_deploy requires the posterior-centric model (a reported centre must exist)"
+    )
+    u = _unit_skew_error(base.z_eta, base.z_skew, cfg)
+    mu = base.report_center - cfg.beta * cfg.s * delta_obs
+    theta = base.report_center + cfg.beta * cfg.s * delta_hid + cfg.s * u
+    return mu, theta
