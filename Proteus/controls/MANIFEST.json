@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-12T04:34:15.629670+00:00",
+  "generated": "2026-06-12T04:49:42.830915+00:00",
   "source": "RCSB files.rcsb.org",
   "format": "pdb",
   "structures": [
@@ -42,7 +42,7 @@
     {
       "id": "PET46",
       "role": "recovery",
-      "note": "archaeal PETase from Candidatus Bathyarchaeota (Erickson/Streit 2023); divergent-positive STRUCTURE standing in for the unresolvable GuaPA/MG8; held out from the IsPETase/LCC anchor",
+      "note": "archaeal PETase from Candidatus Bathyarchaeota (Erickson/Streit 2023); most-divergent positive STRUCTURE standing in for the unresolvable GuaPA/MG8; held out from the IsPETase/LCC anchor",
       "accession": "8B4U",
       "format": "pdb",
       "url": "https://files.rcsb.org/download/8B4U.pdb",
@@ -50,6 +50,30 @@
       "path": "../structures/8B4U.pdb",
       "bytes": 622566,
       "sha256": "43039aa71bfc67b7aa4fe5f2956cbec18cd460c9de3cff6d0f75e21fb8390ad4"
+    },
+    {
+      "id": "Cut190",
+      "role": "recovery",
+      "note": "thermostable cutinase Cut190 from Saccharomonospora viridis; PET-active actinomycete cutinase; divergent positive (held out)",
+      "accession": "4WFI",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/4WFI.pdb",
+      "status": "ok",
+      "path": "../structures/4WFI.pdb",
+      "bytes": 211005,
+      "sha256": "c968cc3d4c5dc6267fd4ec61eb6491a9a550e5beff67b4743b4bc39e022617aa"
+    },
+    {
+      "id": "TfCut2",
+      "role": "recovery",
+      "note": "cutinase TfCut2 from Thermobifida fusca; PET-active actinomycete cutinase; divergent positive (held out)",
+      "accession": "4CG1",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/4CG1.pdb",
+      "status": "ok",
+      "path": "../structures/4CG1.pdb",
+      "bytes": 571860,
+      "sha256": "a8d38c5c059f4a1256bccc7867c088377c5fb37c9ec700caf993ff42cc661649"
     },
     {
       "id": "CalB",

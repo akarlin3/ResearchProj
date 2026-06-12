@@ -28,7 +28,10 @@ import argparse
 import csv
 import json
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
 
 import numpy as np
 
@@ -178,26 +181,59 @@ def write_outputs(summary: dict, out_prefix: str) -> tuple[str, str]:
 # --------------------------------------------------------------------------- #
 # Real AutoDock Vina backend (lazy — only built when actually docking on the Mac)
 # --------------------------------------------------------------------------- #
-def vina_scorer(sf_name: str = "vina"):
+def prepare_receptor_pdbqt(pdb_path: str, out_pdbqt: str, obabel_bin: str = "obabel",
+                           ph: float = 7.4) -> str:
+    """Convert a receptor PDB to a rigid AutoDock PDBQT (Open Babel: add polar H at
+    the given pH, assign Gasteiger charges + AutoDock atom types). Meeko/ADFR are
+    equivalent alternatives; Open Babel is the dependency-light default. Returns
+    `out_pdbqt`."""
+    if shutil.which(obabel_bin) is None:
+        raise FileNotFoundError(
+            f"'{obabel_bin}' not on PATH — install Open Babel (or prep the receptor "
+            "PDBQT with Meeko/ADFR) to dock a folded .pdb model")
+    os.makedirs(os.path.dirname(os.path.abspath(out_pdbqt)), exist_ok=True)
+    proc = subprocess.run(
+        [obabel_bin, pdb_path, "-O", out_pdbqt, "-xr", "-p", str(ph)],
+        capture_output=True, text=True)
+    if proc.returncode != 0 or not os.path.exists(out_pdbqt):
+        raise RuntimeError(f"obabel receptor prep failed (rc={proc.returncode}): "
+                           f"{proc.stderr[-400:]}")
+    return out_pdbqt
+
+
+def vina_scorer(sf_name: str = "vina", obabel_bin: str = "obabel"):
     """Build the real AutoDock Vina scorer callable. Imports `vina` lazily (it is a
-    LOCAL-only dependency). Expects a prepared receptor PDBQT and ligand PDBQT
-    (prep upstream, e.g. via Meeko); the box is centred on the catalytic Ser OG."""
+    LOCAL-only dependency). A receptor passed as a `.pdb` (e.g. a folded model) is
+    auto-prepped to PDBQT via Open Babel; a `.pdbqt` is used as-is. The ligand must
+    be a prepared PDBQT (the committed PET-mimic, controls/ligands/bhet.pdbqt, or a
+    Meeko prep). The box is centred on the catalytic Ser OG."""
     from vina import Vina  # noqa: PLC0415
 
     def _score(receptor, center, box_size, seed, exhaustiveness, n_poses, ligand):
         if not (isinstance(ligand, str) and ligand.endswith(".pdbqt") and os.path.exists(ligand)):
             raise RuntimeError(
                 "vina_scorer needs a prepared ligand PDBQT (docking.ligand_pdbqt); "
-                "prep the PET-mimic with Meeko first")
-        v = Vina(sf_name=sf_name, seed=int(seed), verbosity=0)
-        v.set_receptor(receptor)  # receptor must be a prepared PDBQT
-        v.set_ligand_from_file(ligand)
-        v.compute_vina_maps(center=[float(x) for x in center],
-                            box_size=[float(x) for x in box_size])
-        v.dock(exhaustiveness=int(exhaustiveness), n_poses=int(n_poses))
-        energies = v.energies(n_poses=int(n_poses))
-        best = float(min(e[0] for e in energies)) if len(energies) else float(v.score()[0])
-        return {"affinity": best, "n_poses": int(len(energies)) or 1}
+                "use controls/ligands/bhet.pdbqt or prep the PET-mimic with Meeko")
+        tmp = None
+        if receptor.endswith((".pdb", ".ent")):
+            tmp = tempfile.mkdtemp(prefix="dock_rec_")
+            receptor_pdbqt = prepare_receptor_pdbqt(
+                receptor, os.path.join(tmp, "receptor.pdbqt"), obabel_bin)
+        else:
+            receptor_pdbqt = receptor
+        try:
+            v = Vina(sf_name=sf_name, seed=int(seed), verbosity=0)
+            v.set_receptor(receptor_pdbqt)
+            v.set_ligand_from_file(ligand)
+            v.compute_vina_maps(center=[float(x) for x in center],
+                                box_size=[float(x) for x in box_size])
+            v.dock(exhaustiveness=int(exhaustiveness), n_poses=int(n_poses))
+            energies = v.energies(n_poses=int(n_poses))
+            best = float(min(e[0] for e in energies)) if len(energies) else float(v.score()[0])
+            return {"affinity": best, "n_poses": int(len(energies)) or 1}
+        finally:
+            if tmp:
+                shutil.rmtree(tmp, ignore_errors=True)
 
     return _score
 

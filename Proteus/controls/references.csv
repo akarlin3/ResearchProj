@@ -4,7 +4,9 @@ LCC_WT,reference,structure,4EB0,wild-type leaf-branch compost cutinase; catalyti
 LCC_ICCG,positive,structure,6THS,S165A inactivated — revert A165S in silico for docking
 GuaPA,recovery,sequence,marcottelab/GuaPA,archaeal PETase (Acosta 2025); UNRESOLVED — GitHub repo not reachable; needs Vast fold to enter S4/S5 calibration
 MG8,recovery,sequence,EIAMTHONG_2022_SI,saliva-metagenome PETase (Angew Chem 2022); UNRESOLVED — no PDB and SI accession not located; needs Vast fold
-PET46,recovery,structure,8B4U,archaeal PETase from Candidatus Bathyarchaeota (Erickson/Streit 2023); divergent-positive STRUCTURE standing in for the unresolvable GuaPA/MG8; held out from the IsPETase/LCC anchor
+PET46,recovery,structure,8B4U,archaeal PETase from Candidatus Bathyarchaeota (Erickson/Streit 2023); most-divergent positive STRUCTURE standing in for the unresolvable GuaPA/MG8; held out from the IsPETase/LCC anchor
+Cut190,recovery,structure,4WFI,thermostable cutinase Cut190 from Saccharomonospora viridis; PET-active actinomycete cutinase; divergent positive (held out)
+TfCut2,recovery,structure,4CG1,cutinase TfCut2 from Thermobifida fusca; PET-active actinomycete cutinase; divergent positive (held out)
 CalB,negative,structure,1TCA,Candida antarctica lipase B; lid-bearing lipase; alpha/beta-hydrolase; no PET activity
 AChE_Tc,negative,structure,1EA5,Torpedo californica acetylcholinesterase; deep-gorge serine hydrolase S200/H440/E327; no PET activity
 CRL,negative,structure,1CRL,Candida rugosa lipase 1; lid-bearing alpha/beta-hydrolase S209/H449/E341; no PET activity
