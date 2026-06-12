@@ -37,6 +37,32 @@ There is **no hard local GPU blocker** precisely because folding is offloaded.
 | **S5** | `src/proteus/s5_cleft_filter.py` | LOCAL | Cleft metrics A–E (fpocket), scored **anchored to the positive controls**. |
 | P4 | `src/proteus/docking/` | LOCAL (small) | AutoDock Vina docking of PET-mimic ligands into ranked clefts. Large/GPU docking bursts to Vast. |
 
+## Run the local narrowing pipeline
+
+The front door (`proteus.corpus`) assembles + length-filters the raw FASTA shards
+in `data/raw` into one corpus; `proteus.pipeline` then chains **corpus → S0 → S1 →
+S2 → S3 job manifest** in one command and prints the narrowing funnel:
+
+```bash
+# drop dark-proteome FASTA(.gz) shards in data/raw/ (corpus.fasta_glob), then:
+PYTHONPATH=src python -m proteus.pipeline --out data/interim
+#   corpus N (length-filtered) → S0 reps → S2 shortlist → S3 manifest
+# ship data/interim/s2_shortlist.fasta + s3_job_manifest.json to Vast (vast/sync.md)
+```
+
+S3 folds on the Vast burst box. When the models come back, **resume locally**:
+
+```bash
+PYTHONPATH=src python -m proteus.screen \
+  --folded structures/folded --struct-dir structures \
+  --out data/processed/s4s5_candidates        # S4 geometry + S5 cleft, control-anchored
+PYTHONPATH=src python -m proteus.docking \
+  --candidates data/processed/s4s5_candidates.json --models structures/folded \
+  --out data/processed/docking                # Vina dock BHET into the PETase-like hits
+```
+
+(S2 needs pre-built reference DBs — set `s2_foldclass_triage.references[].db`.)
+
 ## Controls
 
 `controls/references.csv` is the locked control set (positives: IsPETase, LCC_ICCG;
