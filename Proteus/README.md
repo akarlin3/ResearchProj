@@ -32,10 +32,21 @@ There is **no hard local GPU blocker** precisely because folding is offloaded.
 | **S0** | `src/proteus/s0_dereplicate.py` | LOCAL | MMseqs2 clustering to **dereplicate** (collapse near-identical seqs). NOT a homology gate. |
 | **S1** | `src/proteus/s1_tokenize.py` | LOCAL | ProstT5 translates sequence → Foldseek 3Di alphabet (cheap structural proxy; MPS, cpu fallback). |
 | **S2** | `src/proteus/s2_foldclass_triage.py` | LOCAL | Foldseek triage vs the **α/β-hydrolase fold CLASS** (unseeded — fold, not template). Emits the shortlist FASTA. |
-| **S3** | `src/proteus/s3_fold.py` | **VAST** | ESMFold batch fold; mean-pLDDT filter; length-chunk long seqs. **Local = dry-run only** (validate FASTA + emit job manifest; never fold on MPS). |
+| **S3** | `src/proteus/s3_fold.py` (local dry-run) + `vast/run_fold.py` (on-box) | **VAST** | ESMFold batch fold; mean-pLDDT filter; length-chunk long seqs. **Local = dry-run only** (validate FASTA + emit job manifest; never fold on MPS). The on-box runner folds on CUDA, resumable + pLDDT-gated. |
 | **S4** | `src/proteus/s4_geometry.py` | LOCAL | Catalytic geometry gate on returned models: Ser-His-Asp triad + oxyanion hole. |
 | **S5** | `src/proteus/s5_cleft_filter.py` | LOCAL | Cleft metrics A–E (fpocket), scored **anchored to the positive controls**. |
-| P4 | `src/proteus/docking/` | LOCAL (small) | AutoDock Vina docking of PET-mimic ligands into ranked clefts. Large/GPU docking bursts to Vast. |
+| P4 | `src/proteus/docking/` | LOCAL (small) | AutoDock Vina docking of the PET-mimic BHET into the catalytic cleft (box on the S4 Ser OG). Large/GPU docking bursts to Vast. |
+
+### Ingestion & orchestration
+
+| Module | What it does |
+|---|---|
+| `proteus.fetch_corpus` | Resolve `corpus.sources` (UniProt queries / URLs) into `data/raw` shards + a provenance manifest. |
+| `proteus.corpus` | Assemble + length-filter the raw shards into one corpus FASTA (the S0 input); sanitises ids so MMseqs2/Foldseek and the parsers agree. |
+| `proteus.pipeline` | One command: corpus → S0 → S1 → S2 → S3 manifest, with the narrowing-funnel report. |
+| `proteus.launch` | Drive the Vast burst (validate manifest → search/create/up/fold/down/destroy). **Dry-run by default.** |
+| `proteus.screen` | Resume after folding: S4 geometry → S5 cleft → control-anchored score → ranked PETase-like hits. |
+| `proteus.calibrate` | Calibrate S4+S5 on the controls (separation verdict, operating point) + held-out divergent-positive recovery. |
 
 ## Run the local narrowing pipeline
 
@@ -67,15 +78,23 @@ PYTHONPATH=src python -m proteus.docking \
 
 ## Controls
 
-`controls/references.csv` is the locked control set (positives: IsPETase, LCC_ICCG;
-reference: LCC_WT; recovery: GuaPA, MG8; negative: CalB). Fetch the structures:
+`controls/references.csv` is the locked control set:
+
+- **Positives** (anchor the cleft scoring): IsPETase (6EQE), LCC_WT (4EB0); LCC_ICCG
+  (6THS) is the S165A inactivation trap.
+- **Negatives** (share the fold/triad but not PET activity): CalB (1TCA), AChE (1EA5),
+  CRL (1CRL), Est2 (1EVQ).
+- **Recovery** — held-out **divergent positives** that test generalization without
+  re-anchoring: PET46 (8B4U, archaeal), Cut190 (4WFI), TfCut2 (4CG1). GuaPA and MG8
+  remain **unresolved** (no reachable sequence/structure) and need a Vast fold to
+  enter calibration — the three structures above stand in for them.
 
 ```bash
 python controls/fetch_controls.py     # downloads PDBs -> structures/, writes MANIFEST.json (+sha256)
 ```
 
-Structure rows are pulled from RCSB with a sha256 manifest. Sequence rows
-(GuaPA, MG8) print manual-fetch instructions — see "Manual steps" below.
+Structure rows are pulled from RCSB with a sha256 manifest. The PET-mimic docking
+ligand is committed at `controls/ligands/bhet.pdbqt` (BHET, prepared with Open Babel).
 
 ## Reproduce the environment (on the M4)
 
@@ -119,31 +138,54 @@ per-stage thresholds. **Every stochastic step** (S0 MMseqs2, S3 ESMFold/torch on
 Vast, docking search) must read the seed from there — do not hardcode seeds in
 stage code.
 
+## Tests & CI
+
+The suite is **positive-output** (asserts real artifacts, not just "no exception") and
+**tool-gated** (a test skips cleanly if its tool/weights/structures are absent, so it
+never falsely fails). Install the local toolchain — the **same script** CI and the web
+SessionStart hook use — then run ruff + pytest:
+
+```bash
+bash scripts/setup_tools.sh                 # MMseqs2, Foldseek, fpocket, Open Babel,
+                                            # Python deps + ruff + vina, control structures.
+PROTEUS_FETCH_WEIGHTS=1 bash scripts/setup_tools.sh   # also fetch the ~2.4 GB ProstT5 weights
+export PATH="$HOME/.proteus-tools/bin:$PATH"
+ruff check src/ tests/
+python -m pytest -q
+```
+
+- **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs ruff + pytest on
+  every PR/push, reusing `scripts/setup_tools.sh` (no weights → S1/S2/pipeline skip).
+- **Claude Code on the web**: a `SessionStart` hook (`.claude/`) auto-installs the full
+  toolchain (incl. weights) so tool-gated tests run in-session.
+
 ## Layout
 
 ```
-config/proteus.yaml      paths, corpus, thresholds, device (mps|cpu), RANDOM SEED
-controls/                locked control set + fetch script + MANIFEST (+sha256)
-src/proteus/             pipeline stages S0–S5, docking/, utils/
-vast/                    Vast.ai burst fold image (Dockerfile.fold) + sync notes (sync.md)
-tests/test_smoke.py      positive-output test per local tool + MPS sanity + S3 dry-run
+config/proteus.yaml      paths, corpus (+ sources), thresholds, device (mps|cpu), RANDOM SEED
+controls/                locked control set + fetch script + MANIFEST (+sha256); ligands/bhet.pdbqt
+src/proteus/             stages s0–s5; corpus, fetch_corpus, pipeline, screen, launch, calibrate; docking/, utils/
+vast/                    burst fold image (Dockerfile.fold), on-box run_fold.py, sync notes (sync.md)
+tests/                   positive-output tests per stage + smoke (per-tool) + end-to-end funnel
+scripts/setup_tools.sh   shared toolchain installer (CI + SessionStart hook)
+.github/workflows/ci.yml ruff + pytest on PRs
+.claude/                 Claude-Code-on-the-web SessionStart hook
 envlog/                  recon report, env-failures, resolved-version snapshots
 data/{raw,interim,processed}/   gitignored corpora/artifacts
 ```
 
 ## Manual steps left to the operator
 
-1. **GuaPA sequence** — archaeal PETase (Acosta et al. 2025); fetch the protein
-   sequence from the Marcotte Lab GitHub repo (`marcottelab/GuaPA`), save FASTA to
-   `data/raw/`, record the commit hash.
-2. **MG8 sequence** — saliva-metagenome PETase (Eiamthong et al., *Angew. Chem.*
-   2022); locate the accession/sequence in the paper's SI, deposit FASTA in
-   `data/raw/`.
-3. **CalB / 1TCA** — confirm PDB **1TCA** is *Candida antarctica* lipase B
-   (Uppenberg et al. 1994), the lid-bearing lipase used as the structural negative.
-4. **ADFRsuite** — x86-only; install separately (Scripps) under Rosetta 2 if
-   needed for receptor prep, or prefer Meeko. Not pip/conda installable on arm64.
-5. **Provision a Vast.ai box for S3** — build/push `vast/Dockerfile.fold`, then ship
-   the S2 shortlist up and fold (`vast/sync.md`).
-6. Run install + `pytest tests/test_smoke.py` **on the M4** to reach a GREEN env and
-   generate the real lockfiles.
+1. **GuaPA / MG8 sequences (unresolved)** — GuaPA (archaeal PETase, Acosta et al.
+   2025) repo `marcottelab/GuaPA` is unreachable; MG8 (saliva-metagenome PETase,
+   Eiamthong et al., *Angew. Chem.* 2022) has no PDB and its SI accession is not
+   located. If you obtain either sequence, drop the FASTA in `data/raw/`, fold it on
+   Vast, and add the structure to calibration. Until then the divergent-positive
+   structures PET46/Cut190/TfCut2 stand in (see Controls).
+2. **ADFRsuite** — x86-only; install separately (Scripps) under Rosetta 2 if needed
+   for receptor prep, or prefer Open Babel / Meeko. Not pip/conda installable on arm64.
+3. **Provision a Vast.ai box for S3** — build/push `vast/Dockerfile.fold` (pin the
+   ESMFold toolchain on the first CUDA build), then drive the burst with
+   `proteus.launch` (or the manual steps in `vast/sync.md`).
+4. Run install + `pytest` **on the M4** to reach a GREEN env and generate the real
+   lockfiles (`requirements-lock.txt`, `envlog/conda-env-resolved.yml`).
