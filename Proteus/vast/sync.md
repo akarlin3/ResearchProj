@@ -5,6 +5,17 @@ ESMFold (S3) and any Chai-1 refinement / GPU docking are GPU-heavy and run as a
 pipeline (S0–S2) narrows the corpus first, so only the **S2 shortlist** is shipped
 up. Nothing here installs into the local conda env.
 
+> **One-command option:** `proteus.launch` automates the steps below (validate the
+> manifest/shortlist, then plan/run search → create → up → fold → down → destroy
+> from `compute.vast_burst`). It is **dry-run by default** — it just prints the
+> plan — and only touches Vast with `--execute` + `--offer/--instance/--ssh`:
+> ```bash
+> PYTHONPATH=src python -m proteus.launch \
+>   --manifest data/interim/s3_job_manifest.json \
+>   --shortlist data/interim/s2_shortlist.fasta        # prints the burst plan
+> ```
+> The manual steps below are the same cycle, spelled out.
+
 ## What moves, in which direction
 
 ```

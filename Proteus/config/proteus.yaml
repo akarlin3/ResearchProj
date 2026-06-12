@@ -204,3 +204,12 @@ compute:
     description: "Vast.ai Linux+CUDA burst: ESMFold batch fold (S3), Chai-1 refinement, GPU docking (GNINA/DiffDock). Only the S2 shortlist is shipped up."
     image: vast/Dockerfile.fold
     instance_pref: interruptible        # prefer interruptible; checkpoint outputs; fall back to on-demand
+    # Burst launch parameters (proteus.launch plans the up-fold-down cycle from these).
+    registry_image: ""                  # PUSHED image Vast pulls (e.g. youruser/proteus-fold:cu124); blank => set per host
+    gpu: RTX_4090                       # vastai offer filter gpu_name
+    num_gpus: 1
+    cuda_min: "12.4"                    # must match Dockerfile.fold CUDA base
+    disk_gb: 60
+    remote_in: /data/proteus/in         # MOUNTED volume the shortlist+manifest are pushed to
+    remote_out: /data/proteus/out       # MOUNTED volume folded PDBs + pLDDT land in (survives reclaim)
+    local_out: structures/folded        # where the returned models are pulled DOWN to
