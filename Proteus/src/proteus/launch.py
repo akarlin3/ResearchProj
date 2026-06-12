@@ -113,7 +113,8 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
     remote_in, remote_out, local_out = vb["remote_in"], vb["remote_out"], vb["local_out"]
     spot = bool(vb["spot"])
     accel = (str(vb.get("accelerator") or "")).strip()
-    gpu = bool(accel) and accel.lower() not in ("none", "") and int(vb.get("accelerator_count", 0) or 0) > 0
+    n_accel = int(vb.get("accelerator_count", 0) or 0)
+    gpu = bool(accel) and accel.lower() != "none" and n_accel > 0
 
     man_name = os.path.basename(manifest_path)
     fa_name = os.path.basename(shortlist_path)
