@@ -33,7 +33,10 @@ RUN python3 -m pip install --upgrade pip
 # build on a CPU box. transformers needs only a CPU torch wheel; the ~2.5 GB esmfold_v1
 # weights download from the Hub on first run (cached under HF_HOME on the mounted volume).
 RUN pip3 install "torch==2.2.2" --index-url https://download.pytorch.org/whl/cpu
-RUN pip3 install "transformers==4.44.2" "accelerate==0.34.2"
+# Pin numpy < 2: torch 2.2.2 is built against NumPy 1.x, and NumPy 2.x breaks its C
+# bridge ("module compiled using NumPy 1.x cannot run in NumPy 2.x" -> "Could not infer
+# dtype of numpy.int64" at fold time). transformers/accelerate are happy on 1.26.
+RUN pip3 install "numpy==1.26.4" "transformers==4.44.2" "accelerate==0.34.2"
 
 # --- GPU docking (GNINA / DiffDock) lives in the P4 burst, kept out of this image.
 
