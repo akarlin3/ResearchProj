@@ -97,36 +97,46 @@ def mean_plddt_from_pdb(pdb_str: str) -> float:
 # ESMFold backend (lazy — imported only when a real fold runs)
 # --------------------------------------------------------------------------- #
 def load_esmfold(device: str = "cpu", seed: int | None = None):
-    """Load esmfold_v1 onto `device` ('cpu' or 'cuda'). Imports torch/esm lazily
-    (GCE-only). On CPU, ESMFold runs fp32 — slow + RAM-heavy but fine for the small
-    narrowed shortlist; never fold on the Mac's MPS."""
+    """Load ESMFold (facebook/esmfold_v1) via HuggingFace transformers onto `device`
+    ('cpu' or 'cuda'). transformers' EsmForProteinFolding is used (not fair-esm) so
+    the image builds CPU-only — it needs no OpenFold CUDA kernels. Imports are lazy
+    (GCE-only). On CPU it runs fp32: slow + RAM-heavy but fine for the small narrowed
+    shortlist; never fold on the Mac's MPS. Returns (model, tokenizer)."""
     import torch  # noqa: PLC0415
-    import esm  # noqa: PLC0415
+    from transformers import AutoTokenizer, EsmForProteinFolding  # noqa: PLC0415
     if seed is not None:
         torch.manual_seed(seed)
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError(
             "run_fold.py was asked for --device cuda but this box has no GPU. Use "
             "--device cpu (the default GCE fold here), or launch a GPU VM.")
-    model = esm.pretrained.esmfold_v1().eval().to(device)
-    return model
+    tokenizer = AutoTokenizer.from_pretrained("facebook/esmfold_v1")
+    model = EsmForProteinFolding.from_pretrained("facebook/esmfold_v1",
+                                                 low_cpu_mem_usage=True)
+    model = model.eval().to(device)
+    return model, tokenizer
 
 
-def make_esmfold_folder(model, device: str = "cuda"):
-    """Wrap an ESMFold model as a folder callable: (seq, chunk_size, max_recycles)
-    -> (pdb_str, mean_plddt). For long sequences we reduce the trunk chunk size to
-    fit memory (ESMFold's set_chunk_size trades speed for memory — it does NOT
-    split the chain, which would corrupt the fold)."""
+def make_esmfold_folder(bundle, device: str = "cpu"):
+    """Wrap a loaded (model, tokenizer) as a folder callable: (seq, chunk_size,
+    max_recycles) -> (pdb_str, mean_plddt). For long sequences we reduce the trunk
+    chunk size to fit memory (set_chunk_size trades speed for memory — it does NOT
+    split the chain, which would corrupt the fold). ESMFold writes per-residue pLDDT
+    into the PDB B-factor column, so mean_plddt_from_pdb reads it back directly."""
     import torch  # noqa: PLC0415
+    model, tokenizer = bundle
 
     def _fold(seq: str, chunk_size: int | None, max_recycles: int | None):
-        if chunk_size and len(seq) > chunk_size:
-            model.set_chunk_size(chunk_size)
+        if chunk_size and len(seq) > int(chunk_size):
+            model.trunk.set_chunk_size(int(chunk_size))
         else:
-            model.set_chunk_size(None)
+            model.trunk.set_chunk_size(None)
+        inputs = tokenizer([seq], return_tensors="pt", add_special_tokens=False)
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+        kw = {} if max_recycles is None else {"num_recycles": int(max_recycles)}
         with torch.no_grad():
-            kw = {} if max_recycles is None else {"num_recycles": int(max_recycles)}
-            pdb_str = model.infer_pdb(seq, **kw)
+            outputs = model(**inputs, **kw)
+        pdb_str = model.output_to_pdb(outputs)[0]
         return pdb_str, mean_plddt_from_pdb(pdb_str)
 
     return _fold

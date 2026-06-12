@@ -7,8 +7,8 @@
 # to GPU later: switch the base to nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04, install the
 # +cu124 torch wheel, set compute.gce_burst.accelerator, and proteus.launch builds the GPU plan.)
 #
-# Pin the toolchain on the FIRST real build and record the resolved versions next to the
-# local lockfiles in envlog/. Packages carry __PIN_ON_FIRST_BUILD__ markers, not guesses.
+# Versions are pinned for a buildable CPU image; verify + capture the exact resolved
+# set into envlog/ on the first real build (`pip freeze`).
 
 # CPU base — no CUDA. Slim Debian + Python 3.11.
 FROM python:3.11-slim-bookworm
@@ -20,7 +20,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HOME=/data/hf-cache
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git wget ca-certificates \
+        ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/proteus
@@ -28,13 +28,12 @@ WORKDIR /opt/proteus
 RUN python3 -m pip install --upgrade pip
 
 # --- ESMFold (S3 — the reason this box exists), CPU build ----------------------
-# fair-esm provides ESMFold (esmfold_v1). Install the CPU torch wheel (no CUDA) plus
-# the OpenFold deps ESMFold needs (dllogger, openfold). Pin all on the first build
-# and capture the exact versions into envlog/.
-# RUN pip3 install "torch==__PIN_ON_FIRST_BUILD__" --index-url https://download.pytorch.org/whl/cpu
-# RUN pip3 install "fair-esm[esmfold]==__PIN_ON_FIRST_BUILD__"
-# RUN pip3 install 'dllogger @ git+https://github.com/NVIDIA/dllogger.git' \
-#                  'openfold @ git+https://github.com/aqlaboratory/openfold.git@__PIN__'
+# We run ESMFold (facebook/esmfold_v1) via HuggingFace transformers' EsmForProteinFolding
+# — deliberately NOT fair-esm, because that pulls OpenFold's CUDA-only kernels that won't
+# build on a CPU box. transformers needs only a CPU torch wheel; the ~2.5 GB esmfold_v1
+# weights download from the Hub on first run (cached under HF_HOME on the mounted volume).
+RUN pip3 install "torch==2.2.2" --index-url https://download.pytorch.org/whl/cpu
+RUN pip3 install "transformers==4.44.2" "accelerate==0.34.2"
 
 # --- GPU docking (GNINA / DiffDock) lives in the P4 burst, kept out of this image.
 
