@@ -4,17 +4,17 @@ This is the LOCAL orchestrator that automates the manual steps in gce/sync.md. I
 validates the S3 job manifest + shortlist (the contract from `proteus.s3_fold`),
 then plans the burst cycle from `compute.gce_burst` in config:
 
-  1. gsutil the shortlist + manifest UP to the staging bucket
-  2. gcloud create a SPOT GPU VM (Deep Learning image; CUDA + docker)
+  1. gcloud storage cp the shortlist + manifest UP to the staging bucket
+  2. gcloud create the fold VM (SPOT or on-demand; GPU Deep-Learning image, or CPU COS)
   3. gcloud ssh -> on the VM: pull inputs from the bucket, `docker run` the fold image
      (gce/run_fold.py — ESMFold, pLDDT gate, resumable), push outputs to the bucket
-  4. gsutil the folded PDBs + pLDDT DOWN to structures/folded/
+  4. gcloud storage cp the folded PDBs + pLDDT DOWN to structures/folded/
   5. gcloud delete the VM (stop billing)
 
 Outputs are staged to a GCS bucket, so a preempted SPOT VM doesn't lose finished
 models. DRY-RUN BY DEFAULT: it prints the exact command plan and never touches GCP
 unless `--execute` is passed. The plan builder + input validation are pure and
-unit-tested; the actual `gcloud`/`gsutil` calls are LOCAL-on-the-Mac.
+unit-tested; the actual `gcloud` calls are LOCAL-on-the-Mac.
 
 ESMFold itself never runs here — this just ships the narrowed shortlist up and
 pulls the models back so S4/S5 (proteus.screen) can resume locally.
@@ -112,6 +112,7 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
     zone = vb["zone"]
     remote_in, remote_out, local_out = vb["remote_in"], vb["remote_out"], vb["local_out"]
     spot = bool(vb["spot"])
+    prov = "SPOT" if spot else "on-demand"
     accel = (str(vb.get("accelerator") or "")).strip()
     n_accel = int(vb.get("accelerator_count", 0) or 0)
     gpu = bool(accel) and accel.lower() != "none" and n_accel > 0
@@ -137,13 +138,13 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
                    "--image-family", vb.get("vm_image_family", "common-cu123"),
                    "--image-project", vb.get("vm_image_project", "deeplearning-platform-release"),
                    "--metadata", "install-nvidia-driver=True"]
-        create_note = "SPOT GPU VM (Deep Learning image: CUDA + docker)"
+        create_note = f"{prov} GPU VM (Deep Learning image: CUDA + docker)"
         gpu_flag, device = "--gpus all ", "cuda"
     else:
         # CPU fold: Container-Optimized OS ships docker; no GPU, no driver. ESMFold on
         # CPU is slow + RAM-heavy but fine for the small narrowed shortlist.
         create += ["--image-family", "cos-stable", "--image-project", "cos-cloud"]
-        create_note = "SPOT CPU VM (Container-Optimized OS: docker); ESMFold on CPU"
+        create_note = f"{prov} CPU VM (Container-Optimized OS: docker); ESMFold on CPU"
         gpu_flag, device = "", "cpu"
     if spot:
         create += ["--provisioning-model", "SPOT",
