@@ -41,15 +41,17 @@ never loses finished models.
 ## 0. Build & push the image to Artifact Registry (once)
 
 ```bash
-# On a Linux box or CI — NOT on the Mac. Pin the ESMFold toolchain on this first
-# real build (see the __PIN_ON_FIRST_BUILD__ markers in gce/Dockerfile.fold — it is
-# a CPU torch build, no CUDA).
-REGION=us-central1; PROJ=projproteus; REPO=proteus
-gcloud artifacts repositories create $REPO --repository-format=docker --location=$REGION
-IMAGE=$REGION-docker.pkg.dev/$PROJ/$REPO/proteus-fold:cpu
-docker build -t "$IMAGE" -f gce/Dockerfile.fold .
-docker push "$IMAGE"          # put $IMAGE in compute.gce_burst.image
+gcloud artifacts repositories create proteus --repository-format=docker --location=us-central1
+# Build on Cloud Build (x86, so the image runs on the x86 GCE VM even though you submit
+# from an arm64 Mac — no local Docker/buildx). The image tag is set in cloudbuild.yaml:
+gcloud builds submit --config cloudbuild.yaml .
+# -> us-central1-docker.pkg.dev/projproteus/proteus/proteus-fold:cpu (put this in
+#    compute.gce_burst.image). The CPU torch + transformers build is pinned in
+#    gce/Dockerfile.fold; the ~2.5 GB esmfold_v1 weights pull from the Hub on first fold.
 ```
+
+> Do NOT `docker build` on the arm64 Mac (the VM is x86). Cloud Build above avoids that;
+> or cross-build: `docker buildx build --platform linux/amd64 -t $IMAGE -f gce/Dockerfile.fold --push .`
 
 ## 1. Emit the job manifest locally (dry-run, on the Mac)
 
@@ -67,7 +69,7 @@ from `config/proteus.yaml` (`plddt_min`, `chunk_size`, `max_recycles`,
 
 ```bash
 BUCKET=gs://<BUCKET>
-gsutil -m cp data/interim/s2_shortlist.fasta data/interim/s3_job_manifest.json $BUCKET/in/
+gcloud storage cp data/interim/s2_shortlist.fasta data/interim/s3_job_manifest.json $BUCKET/in/
 ```
 
 ## 3. Create the SPOT CPU VM and fold on it
@@ -80,16 +82,19 @@ gcloud compute instances create proteus-fold \
   --boot-disk-size 100GB --scopes cloud-platform \
   --provisioning-model SPOT --instance-termination-action DELETE
 
-# On the VM (Container-Optimized OS has docker): pull inputs, run the fold container
-# on CPU, push outputs back to the bucket.
+# On the VM (Container-Optimized OS has docker but NO gcloud/gsutil), so the GCS copies
+# run in the google/cloud-sdk container; the fold runs in our image. The VM service
+# account (--scopes cloud-platform) authenticates both automatically.
 gcloud compute ssh proteus-fold --project projproteus --zone us-central1-a --command "
   mkdir -p /data/proteus/in /data/proteus/out &&
-  gsutil -m cp $BUCKET/in/* /data/proteus/in/ &&
+  docker run --rm -v /data/proteus:/data/proteus google/cloud-sdk:slim \
+    gcloud storage cp $BUCKET/in/* /data/proteus/in/ &&
   docker run -v /data/proteus:/data/proteus $IMAGE \
     --manifest /data/proteus/in/s3_job_manifest.json \
     --fasta    /data/proteus/in/s2_shortlist.fasta \
     --out      /data/proteus/out/ --device cpu &&
-  gsutil -m cp -r /data/proteus/out/* $BUCKET/out/"
+  docker run --rm -v /data/proteus:/data/proteus google/cloud-sdk:slim \
+    gcloud storage cp --recursive /data/proteus/out/* $BUCKET/out/"
 ```
 
 The runner checkpoints per sequence to `/data/proteus/out` and pushes to the bucket,
@@ -98,7 +103,7 @@ so a preempt costs only the single in-flight sequence (skipped-already-done on r
 ## 4. Pull structures back DOWN and resume locally
 
 ```bash
-gsutil -m cp -r $BUCKET/out/* structures/folded/
+gcloud storage cp --recursive $BUCKET/out/* structures/folded/
 gcloud compute instances delete proteus-fold --project projproteus --zone us-central1-a --quiet
 
 # resume locally — screen the returned models through S4 (triad geometry) + S5

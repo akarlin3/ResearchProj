@@ -73,8 +73,8 @@ def test_build_plan_orders_the_burst_cycle(tmp_path):
     assert names == ["stage_up", "create_instance", "fold", "stage_down", "delete_instance"]
     by = {s["name"]: s["cmd"] for s in plan}
 
-    # stage_up ships ONLY the shortlist + manifest to the bucket's in/ prefix
-    assert by["stage_up"][:3] == ["gsutil", "-m", "cp"]
+    # stage_up runs LOCALLY via gcloud storage (no gsutil dependency), to in/
+    assert by["stage_up"][:3] == ["gcloud", "storage", "cp"]
     assert man in by["stage_up"] and fa in by["stage_up"]
     assert by["stage_up"][-1] == "gs://my-bucket/in/"
     # create: gcloud compute instances create, with project/zone/accelerator + SPOT
@@ -83,14 +83,17 @@ def test_build_plan_orders_the_burst_cycle(tmp_path):
     assert "n1-standard-4" in by["create_instance"]
     assert "type=nvidia-tesla-t4,count=1" in by["create_instance"]
     assert "SPOT" in by["create_instance"]
-    # fold: gcloud ssh runs the fold container against the staged manifest/fasta
+    # fold: gcloud ssh runs the fold container against the staged manifest/fasta. The
+    # VM-side GCS copies go through the cloud-sdk container (COS has no gcloud).
     assert by["fold"][:3] == ["gcloud", "compute", "ssh"]
     remote = by["fold"][-1]
     assert "docker run --gpus all" in remote
     assert "us-docker.pkg.dev/p/r/fold:cu124" in remote
     assert "/data/proteus/in/s3_job_manifest.json" in remote
+    assert "google/cloud-sdk" in remote and "gcloud storage cp" in remote
     assert "gs://my-bucket/in/*" in remote and "gs://my-bucket/out/" in remote
-    # stage_down pulls results from the bucket to the local folded dir; delete cleans up
+    # stage_down runs LOCALLY via gcloud storage; delete cleans up
+    assert by["stage_down"][:3] == ["gcloud", "storage", "cp"]
     assert by["stage_down"][-2] == "gs://my-bucket/out/*"
     assert by["stage_down"][-1].endswith("structures/folded/")
     assert by["delete_instance"][:4] == ["gcloud", "compute", "instances", "delete"]

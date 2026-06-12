@@ -118,15 +118,17 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
 
     man_name = os.path.basename(manifest_path)
     fa_name = os.path.basename(shortlist_path)
+    sdk = "google/cloud-sdk:slim"  # COS ships neither gcloud nor gsutil — run them in a container
 
-    stage_up = ["gsutil", "-m", "cp", shortlist_path, manifest_path, f"{bucket}/in/"]
+    # stage_up runs LOCALLY (the Mac has gcloud) -> the bucket's in/ prefix.
+    stage_up = ["gcloud", "storage", "cp", shortlist_path, manifest_path, f"{bucket}/in/"]
 
     create = [
         "gcloud", "compute", "instances", "create", name,
         "--project", project, "--zone", zone,
         "--machine-type", vb["machine_type"],
         "--boot-disk-size", f"{vb['boot_disk_gb']}GB",
-        "--scopes", "cloud-platform",  # gsutil (GCS) + docker pull (Artifact Registry)
+        "--scopes", "cloud-platform",  # GCS (gcloud storage) + docker pull (Artifact Registry)
     ]
     if gpu:
         # GPU fold: attach the accelerator on a Deep Learning (CUDA + docker) image.
@@ -147,19 +149,24 @@ def build_plan(cfg: dict, manifest_path: str, shortlist_path: str) -> list[dict]
         create += ["--provisioning-model", "SPOT",
                    "--instance-termination-action", "DELETE"]
 
-    # On the VM: pull inputs from the bucket, fold in the container, push outputs back.
+    # On the VM: pull inputs from the bucket (via the cloud-sdk container, since COS has
+    # no gcloud), fold in the container, push outputs back (same container). The VM's
+    # service account (--scopes cloud-platform) authenticates these automatically.
     remote = (
         f"mkdir -p {remote_in} {remote_out} && "
-        f"gsutil -m cp {bucket}/in/* {remote_in}/ && "
+        f"docker run --rm -v /data/proteus:/data/proteus {sdk} "
+        f"gcloud storage cp {bucket}/in/* {remote_in}/ && "
         f"docker run {gpu_flag}-v /data/proteus:/data/proteus {image} "
         f"--manifest {remote_in}/{man_name} --fasta {remote_in}/{fa_name} "
         f"--out {remote_out}/ --device {device} && "
-        f"gsutil -m cp -r {remote_out}/* {bucket}/out/"
+        f"docker run --rm -v /data/proteus:/data/proteus {sdk} "
+        f"gcloud storage cp --recursive {remote_out}/* {bucket}/out/"
     )
     fold = ["gcloud", "compute", "ssh", name, "--project", project, "--zone", zone,
             "--command", remote]
 
-    stage_down = ["gsutil", "-m", "cp", "-r", f"{bucket}/out/*", f"{local_out}/"]
+    # stage_down runs LOCALLY -> pull the folded models from the bucket.
+    stage_down = ["gcloud", "storage", "cp", "--recursive", f"{bucket}/out/*", f"{local_out}/"]
     delete = ["gcloud", "compute", "instances", "delete", name,
               "--project", project, "--zone", zone, "--quiet"]
 
