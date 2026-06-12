@@ -171,6 +171,19 @@ s5_cleft_filter:
     hydrophobicity: 0
     polarity: 0
 
+# Docking (P4) — small AutoDock Vina pass on the S5/screen survivors: dock a
+#      PET-mimic ligand into the catalytic cleft and rank by binding affinity.
+#      LOCAL CPU Vina here; GPU docking (GNINA/DiffDock) is a Vast burst (see vast/).
+#      The Vina search is seeded from the global random_seed (never hardcoded).
+docking:
+  ligand: BHET                          # PET-mimic: bis(2-hydroxyethyl) terephthalate
+  ligand_pdbqt: ""                      # prepared ligand PDBQT (host-local; blank => prep first, e.g. via Meeko)
+  box_center: catalytic_ser_og          # catalytic_ser_og | pocket_center — box centred on the active site
+  box_size: [20.0, 20.0, 20.0]          # Angstrom search box (x,y,z)
+  exhaustiveness: 8
+  n_poses: 9
+  top_n: 25                             # keep the best N candidates by affinity (most negative kcal/mol)
+
 # ---------------------------------------------------------------------------
 # Compute split — LOCAL Mac (triage/analysis) vs VAST.AI burst (folding/GPU dock)
 # ---------------------------------------------------------------------------

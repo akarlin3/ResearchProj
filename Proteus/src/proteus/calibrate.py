@@ -27,7 +27,12 @@ import os
 import shutil
 
 from proteus.s4_geometry import analyze_model
-from proteus.s5_cleft_filter import PERIPHERALITY_MODES, analyze_cleft, score_controls
+from proteus.s5_cleft_filter import (
+    PERIPHERALITY_MODES,
+    analyze_cleft,
+    composite_from_anchor,
+    score_controls,
+)
 from proteus.utils import DEFAULT_CONFIG, REPO, load_config
 
 CONTROLS_CSV = os.path.join(REPO, "controls", "references.csv")
@@ -134,6 +139,8 @@ def classify(control: dict, positive_ids) -> str:
         return "trap"
     if control["role"] == "negative":
         return "negative"
+    if control["role"] == "recovery":
+        return "recovery"  # held-out divergent positive — never enters the anchor
     return "other"
 
 
@@ -160,7 +167,11 @@ def analyze_controls(cfg: dict, struct_dir: str) -> dict:
     This keeps the normalization comparison clean: only the exposure metric changes
     between modes, never the (mildly non-deterministic) fpocket pocket metrics."""
     positive_ids = list(cfg["s5_cleft_filter"]["positive_controls"])
-    controls = read_structure_controls()
+    # Recovery controls are HELD OUT of the anchor: they are divergent positives we
+    # test the calibration's generalization against, never fit it to. Excluding them
+    # here keeps the production anchor/operating point byte-identical. They are scored
+    # separately against the finished anchor by recovery_screen().
+    controls = [c for c in read_structure_controls() if c["role"] != "recovery"]
 
     per_control, s4_detail = {}, {}
     for c in controls:
@@ -258,6 +269,86 @@ def run_calibration(cfg: dict, struct_dir: str, mode: str | None = None) -> dict
     cfg = _cfg_with_mode(cfg, mode)
     analysis = analyze_controls(cfg, struct_dir)
     return score_analysis(analysis, cfg)
+
+
+def recovery_screen(cfg: dict, struct_dir: str, cal: dict) -> dict:
+    """Score the HELD-OUT divergent-positive recovery controls against the finished
+    production anchor (IsPETase/LCC). The anchor is NOT rebuilt — these structures
+    test whether the calibrated separation generalizes to sequence-divergent PETases.
+
+    For each recovery structure: run S4 -> S5, score with composite_from_anchor, and
+    record whether it clears (a) every negative and (b) the production operating
+    point. Then propose a WIDENED operating point that would also keep the recovered
+    divergent positives, reporting its precision against the negatives.
+    """
+    anchor = cal["anchor"]
+    mode = cal["mode"]
+    prod_thr = cal.get("operating_point", {}).get("threshold")
+    per = cal["per_control"]
+    neg_comp = {cid: per[cid]["composite"] for cid in per
+                if per[cid].get("class") == "negative" and "composite" in per[cid]}
+    max_neg = max(neg_comp.values(), default=float("-inf"))
+    pos_comp = [per[cid]["composite"] for cid in per
+                if per[cid].get("class") == "positive" and "composite" in per[cid]]
+
+    recs = []
+    for c in read_structure_controls():
+        if c["role"] != "recovery":
+            continue
+        pdb = os.path.join(struct_dir, f"{c['accession']}.pdb")
+        rec = {"id": c["id"], "accession": c["accession"], "present": os.path.exists(pdb),
+               "triad_found": None, "catalytic_ser": None, "pocket_ok": None,
+               "composite": None, "above_all_negatives": None,
+               "above_production_line": None, "status": "missing"}
+        if not rec["present"]:
+            recs.append(rec)
+            continue
+        s4 = analyze_model(pdb, cfg)
+        rec["triad_found"] = s4["triad_found"]
+        rec["catalytic_ser"] = s4["best"]["ser"]["res_id"] if s4["best"] else None
+        if not (s4["triad_found"] and rec["catalytic_ser"] is not None):
+            rec["status"] = "no_triad"
+            recs.append(rec)
+            continue
+        s5 = analyze_cleft(pdb, rec["catalytic_ser"], cfg)
+        rec["pocket_ok"] = s5["pocket_id"] is not None
+        if not rec["pocket_ok"]:
+            rec["status"] = "no_pocket"
+            recs.append(rec)
+            continue
+        s5["metrics"]["exposure"] = _exposure_for_mode(s5, mode)
+        comp = composite_from_anchor(s5["metrics"], anchor, cfg)["composite"]
+        rec["composite"] = comp
+        rec["above_all_negatives"] = bool(comp > max_neg)
+        rec["above_production_line"] = (None if prod_thr is None else bool(comp >= prod_thr))
+        rec["status"] = ("RECOVERED" if rec["above_production_line"] else
+                         "above_negatives_below_line" if rec["above_all_negatives"] else
+                         "MISSED")
+        recs.append(rec)
+
+    # Widened operating point: lower the line to also keep every recovered divergent
+    # positive that already clears the negatives; report its precision vs the negatives.
+    widened = None
+    recovered = [r for r in recs if r["composite"] is not None and r["above_all_negatives"]]
+    scored = [r for r in recs if r["pocket_ok"]]
+    if pos_comp and recovered:
+        thr = min(min(pos_comp), min(r["composite"] for r in recovered))
+        fp = sorted(cid for cid, v in neg_comp.items() if v >= thr)
+        kept_pos = len(pos_comp) + len(recovered)
+        widened = {
+            "threshold": round(thr, 4),
+            "includes_recovery": [r["id"] for r in recovered],
+            "false_positives": len(fp),
+            "negatives_above_line": fp,
+            "precision": round(kept_pos / (kept_pos + len(fp)), 4),
+            "divergent_recall": round(len(recovered) / len(scored), 4) if scored else None,
+        }
+    return {
+        "recovery": recs,
+        "production_threshold": prod_thr,
+        "max_negative": round(max_neg, 4) if neg_comp else None,
+        "widened_operating_point": widened,
+    }
 
 
 def _separation(per_control, pos, neg) -> dict:
@@ -681,6 +772,47 @@ def write_normalization_csv(results: dict, path: str) -> None:
         w.writerows(rows)
 
 
+def append_recovery_section(recov: dict, path: str) -> None:
+    """Append the held-out divergent-positive recovery section to the report."""
+    present = [r for r in recov["recovery"] if r["present"]]
+    L = ["", "## Divergent-positive recovery (held out of the anchor)", ""]
+    L.append("Sequence-divergent PETase **structures** scored against the finished "
+             "IsPETase/LCC anchor — they never enter the anchor, so this measures "
+             "GENERALIZATION, not fit. (GuaPA and MG8 remain unresolved — no reachable "
+             "sequence/structure — so the archaeal PET46/8B4U structure stands in.)")
+    L.append("")
+    if not present:
+        L.append("_No recovery structures present — fetch via controls/fetch_controls.py._")
+    else:
+        L.append(f"Production operating point = {_fmt(recov['production_threshold'],3)}; "
+                 f"highest negative = {_fmt(recov['max_negative'],3)}.")
+        L.append("")
+        L.append("| id | acc | triad | cat.Ser | composite | > all negatives | "
+                 ">= production line | status |")
+        L.append("|---|---|:--:|---:|---:|:--:|:--:|---|")
+        for r in present:
+            comp = "—" if r["composite"] is None else _fmt(r["composite"], 3)
+            L.append(f"| {r['id']} | {r['accession']} "
+                     f"| {'Y' if r['triad_found'] else 'N'} | {r['catalytic_ser'] or '—'} "
+                     f"| {comp} | {'Y' if r['above_all_negatives'] else 'N'} "
+                     f"| {'Y' if r['above_production_line'] else 'N'} | {r['status']} |")
+        L.append("")
+        w = recov["widened_operating_point"]
+        if w:
+            L.append(f"**Recommended widened operating point = {_fmt(w['threshold'],3)}** — "
+                     f"lowers the line to also keep the recovered divergent positive(s) "
+                     f"{w['includes_recovery']} while holding precision "
+                     f"**{_fmt(w['precision'],3)}** ({w['false_positives']} false positive(s)). "
+                     "The production line stays IsPETase/LCC-anchored; this is the "
+                     "next-gen threshold once more divergent positives are folded.")
+        else:
+            L.append("_No widened line proposed (no recovery structure cleared the "
+                     "negatives, or no positives scored)._")
+    L.append("")
+    with open(path, "a") as fh:
+        fh.write("\n".join(L) + "\n")
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -740,6 +872,28 @@ def main(argv=None) -> int:
               f"precision={_fmt(s['precision'],3)} "
               f"loo={'pass' if s['loo_pass'] else 'FAIL' if s['loo_pass'] is not None else '-'}"
               f"{tag}")
+
+    # Held-out divergent-positive recovery (e.g. archaeal PET46/8B4U). Scored against
+    # the production anchor; never used to fit it. Reports a recommended widened line.
+    recov = recovery_screen(cfg, args.struct_dir, result)
+    present_recov = [r for r in recov["recovery"] if r["present"]]
+    if present_recov:
+        print("--- divergent-positive recovery (held out of the anchor) ---")
+        for r in present_recov:
+            comp = "n/a" if r["composite"] is None else f"{r['composite']:+.3f}"
+            print(f"  {r['id']:9s} ({r['accession']}): {r['status']:26s} "
+                  f"composite={comp} (production line={_fmt(recov['production_threshold'],3)}, "
+                  f"max negative={_fmt(recov['max_negative'],3)})")
+        w = recov["widened_operating_point"]
+        if w:
+            print(f"  WIDENED operating point = {_fmt(w['threshold'],3)} "
+                  f"(keeps {w['includes_recovery']}): precision={_fmt(w['precision'],3)}, "
+                  f"false_positives={w['false_positives']}")
+        append_recovery_section(recov, args.report)
+        with open(os.path.join(os.path.dirname(os.path.abspath(args.csv)),
+                               "s5_recovery.json"), "w") as fh:
+            json.dump(recov, fh, indent=2)
+            fh.write("\n")
 
     inv_ok = all(results[m]["verdict"].get("separated") for m in COMPARE_MODES if m != "absolute")
     abs_ok = results["absolute"]["verdict"].get("separated")

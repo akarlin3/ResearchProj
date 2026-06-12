@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-11T07:49:02.695527+00:00",
+  "generated": "2026-06-12T04:34:15.629670+00:00",
   "source": "RCSB files.rcsb.org",
   "format": "pdb",
   "structures": [
@@ -38,6 +38,18 @@
       "path": "../structures/6THS.pdb",
       "bytes": 404676,
       "sha256": "cee37883ac411cc7cdf9f1481d2b51b71f78b186304a112ac38fb29653549270"
+    },
+    {
+      "id": "PET46",
+      "role": "recovery",
+      "note": "archaeal PETase from Candidatus Bathyarchaeota (Erickson/Streit 2023); divergent-positive STRUCTURE standing in for the unresolvable GuaPA/MG8; held out from the IsPETase/LCC anchor",
+      "accession": "8B4U",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/8B4U.pdb",
+      "status": "ok",
+      "path": "../structures/8B4U.pdb",
+      "bytes": 622566,
+      "sha256": "43039aa71bfc67b7aa4fe5f2956cbec18cd460c9de3cff6d0f75e21fb8390ad4"
     },
     {
       "id": "CalB",
@@ -94,14 +106,14 @@
       "type": "sequence",
       "accession": "marcottelab/GuaPA",
       "status": "manual",
-      "note": "archaeal PETase (Acosta 2025); fetch seq from GitHub repo"
+      "note": "archaeal PETase (Acosta 2025); UNRESOLVED \u2014 GitHub repo not reachable; needs Vast fold to enter S4/S5 calibration"
     },
     {
       "id": "MG8",
       "type": "sequence",
       "accession": "EIAMTHONG_2022_SI",
       "status": "manual",
-      "note": "saliva-metagenome PETase; locate accession in Angew Chem 2022 SI"
+      "note": "saliva-metagenome PETase (Angew Chem 2022); UNRESOLVED \u2014 no PDB and SI accession not located; needs Vast fold"
     }
   ]
 }
