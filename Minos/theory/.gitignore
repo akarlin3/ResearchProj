@@ -1,0 +1,7 @@
+# Compiled note (regenerate with: tectonic theory/plumbline.tex). The .md/.tex sources and the
+# figures/*.pdf are tracked; the rendered note PDF and LaTeX intermediates are not.
+plumbline.pdf
+*.aux
+*.log
+*.out
+*.toc
