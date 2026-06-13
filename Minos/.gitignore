@@ -25,3 +25,6 @@ data/raw/
 .remember/
 .claude/
 .DS_Store
+
+# Theory module dedicated venv (not tracked)
+.venv-theory/
