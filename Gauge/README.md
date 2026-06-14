@@ -1,5 +1,7 @@
 # Gauge
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20686273.svg)](https://doi.org/10.5281/zenodo.20686273)
+
 **Distribution-free conformal coverage for IVIM parameter maps.**
 
 Gauge brings finite-sample, distribution-free **conformal** prediction intervals to
