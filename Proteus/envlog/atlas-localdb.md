@@ -1,5 +1,18 @@
 # Atlas local-DB sweep — Checkpoint 0 RESOURCE AUDIT
 
+> ⚠️ **SUPERSEDED / CORRECTED (2026-06-14).** This audit's central premise — that
+> Meta deprecated the ESM Atlas hosting and the prebuilt Foldseek DB is gone — was
+> **WRONG.** The `403 AccessDenied` seen below was only an S3 **directory-listing**
+> denial; the prebuilt files are alive one level down under a `foldseekdb/`
+> subdirectory (`…/highquality_clust30/foldseekdb/<file>` → HTTP 200), with the
+> manifest hosted on GitHub raw (`facebookresearch/esm/.../foldseekdb.txt`). The
+> **~20 GB prebuilt 3Di+AA Foldseek DB** (skipping the 88 GB `_ca`) downloads
+> directly — **no 120 GB Foldcomp build, no ~2 TB decompress, no terabyte disk.**
+> The sweep was subsequently **completed on a cheap GCE n2-standard-16** using the
+> prebuilt DB. See `envlog/atlas-foldcomp.md` (CP0–CP2), `envlog/atlas-enrichment.md`
+> (CP3 economics), and `envlog/atlas-sweep.md` (CP4–CP5 results + headline).
+> The disk/host reasoning below is retained only as a record of the (mistaken) STOP.
+
 **Run date:** 2026-06-13
 **Host audited:** M4 MacBook Air (Apple Silicon, arm64, 16 GB unified, MPS/CPU).
 **Verdict:** 🛑 **STOP — do NOT run the local-DB sweep on this host.** Move it to a
