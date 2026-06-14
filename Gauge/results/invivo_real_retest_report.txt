@@ -1,0 +1,27 @@
+############################################################################################
+GAUGE -- REAL IN-VIVO TEST-RETEST REPEATABILITY PROXY (Checkpoint D)
+############################################################################################
+** REPEATABILITY-TRACKING CHECK -- NOT a coverage claim. ** No ground truth is used. This asks
+   whether the conformal interval WIDTH (predicted uncertainty) tracks the real scan-rescan
+   variability of the plug-in diffusion estimate across tumors. Region-level (whole-tumor ROI);
+   the two same-visit ACRIN-6698 exams are NOT registered, so this is not a per-voxel claim.
+   dataset: ACRIN-6698 / I-SPY2 Breast DWI (TCIA, CC-BY-4.0); b=[0.0, 100.0, 600.0, 800.0] s/mm^2; tumor pairs n=11.
+--------------------------------------------------------------------------------------------
+[D.1] Tissue diffusion D (well-identified even by the 4-b ADC scheme; the ADC-like quantity):
+      conformal D-width vs |scan-rescan ΔD|:  Spearman r = +0.69 (p=0.019, n=11);  Pearson r = +0.48
+      median conformal D-width = 0.40; median |scan-rescan ΔD| = 0.334  (1e-3 mm^2/s)
+      READING: the conformal D interval WIDENS where the real ADC is LEAST repeatable -- the band
+      tracks / adapts to / is consistent with the measured scan-rescan variability. This is explicitly
+      NOT validation, accuracy, calibration, or coverage (no in-vivo ground truth exists); it is an
+      honest width-vs-repeatability association only.
+[D.2] Pseudo-diffusion D* (under-identified by the 4-b ADC scheme):
+      conformal D*-width vs |scan-rescan ΔD*|:  Spearman r = -0.49 (p=0.125, n=11) -- NOT significant.
+--------------------------------------------------------------------------------------------
+      ON-THESIS SPLIT: for the well-identified D the width-vs-repeatability relationship is
+      DEMONSTRABLE; for D*, consistent with the identifiability wall (Gauge 03), it is UNRESOLVABLE
+      at this sample size and a 4-b scheme. The D* negative is EVIDENCE for the thesis, not a gap.
+      CAVEATS (do not over-read): n=11 tumor pairs is SMALL -- a Spearman of +0.69 at n=11 carries a
+      very wide confidence interval, so D.1 is SUGGESTIVE (reported with its n and p), NOT robust. It
+      is a region-level whole-tumor-ROI association on UNREGISTERED same-visit exams (no per-voxel
+      correspondence), and a repeatability-tracking check -- NOT an in-vivo coverage claim.
+############################################################################################
