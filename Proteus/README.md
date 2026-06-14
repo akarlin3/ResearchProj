@@ -49,6 +49,22 @@ Folding is offloaded, so there is **no hard local compute blocker**.
 | `proteus.launch` | Drive the GCE burst (validate manifest → stage-up → create → fold → stage-down → delete). **Dry-run by default.** |
 | `proteus.screen` | Resume after folding: S4 geometry → S5 cleft → control-anchored score → ranked PETase-like hits. |
 | `proteus.calibrate` | Calibrate S4+S5 on the controls (separation verdict, operating point) + held-out divergent-positive recovery. |
+| `proteus.atlas` | **Inverted discovery:** Foldseek the α/β-hydrolase fold-class query against the pre-folded ESM Metagenomic Atlas, fetch hit structures, biome-tag them (`data/interim/atlas_hits.json`). Pluggable backend (`api` \| `local_db`); endpoints + provenance in `envlog/atlas-endpoints.md`. |
+| `proteus.atlas_screen` | Feed the Atlas hits into `proteus.screen` (S4→S5) at the **widened** operating point → `data/processed/atlas_candidates.csv` (accession, composite, above/below line, biome, marine, pLDDT, triad). |
+
+## Atlas discovery (inverted pipeline)
+
+The Atlas is **pre-folded**, so discovery inverts the pipeline (S0/S1/S3 sit out):
+search the broad fold-class query against the Atlas, pull the hit structures, and
+screen them at the widened operating point. The `api` backend submits the fold-class
+reference structures to the hosted Atlas Foldseek search (server-side 3Di — no local
+Foldseek); on a hosted-search outage it logs and surfaces the `local_db` fallback.
+See `envlog/atlas-pilot.md` for the bounded pilot run.
+
+```
+PYTHONPATH=src python -m proteus.atlas        --out data/interim/atlas_hits.json --hits-dir structures/atlas_hits
+PYTHONPATH=src python -m proteus.atlas_screen --hits data/interim/atlas_hits.json --out data/processed/atlas_candidates
+```
 
 ## Run the local narrowing pipeline
 
