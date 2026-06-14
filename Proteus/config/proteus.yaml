@@ -179,6 +179,48 @@ s5_cleft_filter:
     hydrophobicity: 0
     polarity: 0
 
+# ---------------------------------------------------------------------------
+# ESM Metagenomic Atlas retrieval (inverted discovery front-end)
+# ---------------------------------------------------------------------------
+# The Atlas is PRE-FOLDED structures, so discovery inverts the pipeline: Foldseek
+# the alpha/beta-hydrolase fold-class query AGAINST the Atlas, fetch the hit
+# structures, and feed them straight into `screen` (S4->S5 at the widened operating
+# point). S0/S1/S3 sit out. Resolved endpoints + provenance: envlog/atlas-endpoints.md
+# (the API drifts — re-resolve before large runs). See src/proteus/atlas.py.
+atlas:
+  backend: api                 # api | local_db
+  version: v2023_02            # Atlas version; recorded with every run for provenance
+  query_set: foldclass_union   # curated + broad alpha/beta-hydrolase union (UNSEEDED)
+  hit_cap: 2000                # pilot cap on retrieved hits; raise for the local-DB sweep
+  min_bits: 50                 # Foldseek bit-score threshold (>= keeps)
+  local_db_path: ""            # set when scaling to the downloaded HQ clust30 Foldseek DB
+  operating_point: widened     # screen at the -1.156 widened line (max divergent recall)
+  # Query set: the fold-class union is the curated alpha/beta-hydrolase reference
+  # STRUCTURES in `structures/` (controls/references.csv). The api backend submits
+  # these PDBs directly to the Atlas search (server-side 3Di), so it needs no local
+  # Foldseek. `exclude_trap` drops the S165A inactive duplicate (6THS/LCC_ICCG).
+  query_exclude_ids: [LCC_ICCG]     # drop the inactive-mutant near-duplicate from the query
+  # Resolved Atlas endpoints (in config so drift is fixable without code edits).
+  endpoints:
+    base: "https://api.esmatlas.com"
+    search_structure: "https://api.esmatlas.com/searchStructure"   # /ticket, /ticket/{id}, /result/{id}/0
+    fetch_structure: "https://api.esmatlas.com/fetchPredictedStructure"  # /{MGYP}.pdb
+    search_db: highquality_clust30   # FOLDSEEK_DB token passed as database[] in the search body
+    search_mode: 3diaa
+  # MGnify metadata for biome tagging (non-blocking; unresolved -> unknown).
+  mgnify_api: "https://www.ebi.ac.uk/metagenomics/api/v1"
+  # Pilot-only degraded fallback: when the hosted search is unavailable AND no
+  # local_db is configured, draw a bounded UNSEEDED slice of the HQ clust30
+  # representative set (the Foldseek DB's own id list) so the fetch->screen
+  # machinery runs end-to-end on real Atlas structures. Honestly NOT fold-class
+  # targeted — labelled as such in the report. Turn off for a real sweep.
+  allow_representative_fallback: true
+  representative_lookup_url: "https://foldcomp.steineggerlab.workers.dev/highquality_clust30.lookup"
+  pilot_sample_size: 60        # representative-fallback slice size for the pilot
+  request_timeout_s: 60        # per-HTTP-call timeout
+  poll_interval_s: 3           # ticket poll interval
+  poll_max_s: 180              # give up on a ticket after this many seconds
+
 # Docking (P4) — small AutoDock Vina pass on the S5/screen survivors: dock a
 #      PET-mimic ligand into the catalytic cleft and rank by binding affinity.
 #      LOCAL CPU Vina here; GPU docking (GNINA/DiffDock) is a GCE burst (see gce/).
