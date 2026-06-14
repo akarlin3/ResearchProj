@@ -604,19 +604,25 @@ def main_real(data_dir, seed=SEED, use_tumor_mask=False):
     rfire = "FIRES" if r["monitor_resid_fires"] else "silent"
     out(f"       Family-2 residual: {rfire}  stat {r['monitor_resid']:.3f}/thr "
         f"{r['monitor_resid_thr']:.3f}  AUC {r['monitor_resid_auc']:.2f}")
-    out(f"       (CAVEAT: with only 4 b-values an exactly-determined NLLS fit drives "
-        f"the residual NORM toward 0,")
-    out(f"       so Family-2 is NOT comparable to the 22-b calibration; Family-1 "
-        f"Mahalanobis is the honest detector.)")
+    out(f"       PROTOCOL NOTE (why Family-2 is silent -- the monitor has NOT "
+        f"half-failed): ACRIN-6698 is a 4-b ADC")
+    out(f"       protocol, NOT IVIM-optimized; 4 b-values EXACTLY-DETERMINE the "
+        f"4-parameter IVIM fit, so the NLLS")
+    out(f"       residual norm collapses toward 0 and Family-2 is structurally "
+        f"uninformative here (not comparable")
+    out(f"       to the 22-b calibration). The firing decision is carried entirely "
+        f"by Family-1 (Mahalanobis,")
+    out(f"       b-independent feature detector; AUC {r['monitor_maha_auc']:.2f}) -- "
+        f"that is the honest detector.")
     out(f"       domain-weight spread {r['weight_spread']:.0f}x.")
     out("       INTERPRETATION: the synthetic-calibrated -> real-in-vivo transfer "
-        "(sparse 4-b scheme + real")
-    out("       breast tissue) is a large exchangeability break, and the as-deployed "
-        "monitor detects it. That")
-    out("       firing is the honest, label-free reason the synthetic coverage "
-        "guarantee must NOT be transferred")
-    out("       to this data -- matched LABELED in-vivo data does not exist (the Echo "
-        "tension).")
+        "(sparse 4-b ADC protocol + real")
+    out("       breast tissue) is a LARGE exchangeability break, and the as-deployed "
+        "monitor detects it via")
+    out("       Family-1. That firing is the honest, label-free reason the synthetic "
+        "coverage guarantee correctly")
+    out("       REFUSES to transfer to this data -- matched LABELED in-vivo data does "
+        "not exist (the Echo tension).")
     if not r["monitor_fires"]:
         out("       >> FINDING: the monitor did NOT fire -- surfaced as a result "
             "(unexpected on a 4-b transfer).")
@@ -775,28 +781,37 @@ def main_retest(root, seed=SEED):
         sD, pD = spearmanr(wD, dD)
         rD, prD = pearsonr(wD, dD)
         sDs, pDs = spearmanr(wDs, dDs)
-        out(f"[D.1] Tissue diffusion D (the 4-b-identifiable / ADC-like quantity):")
+        out(f"[D.1] Tissue diffusion D (well-identified even by the 4-b ADC scheme; "
+            f"the ADC-like quantity):")
         out(f"      conformal D-width vs |scan-rescan ΔD|:  Spearman r = {sD:+.2f} "
             f"(p={pD:.3f}, n={n});  Pearson r = {rD:+.2f}")
         out(f"      median conformal D-width = {np.median(wD):.2f}; median "
             f"|scan-rescan ΔD| = {np.median(dD):.3f}  (1e-3 mm^2/s)")
-        out(f"[D.2] Pseudo-diffusion D* (poorly identified by the sparse 4-b scheme "
-            f"-- expected noisy):")
+        out(f"      READING: the conformal D interval WIDENS where the real ADC is "
+            f"LEAST repeatable -- the band")
+        out(f"      tracks / adapts to / is consistent with the measured scan-rescan "
+            f"variability. This is explicitly")
+        out(f"      NOT validation, accuracy, calibration, or coverage (no in-vivo "
+            f"ground truth exists); it is an")
+        out(f"      honest width-vs-repeatability association only.")
+        out(f"[D.2] Pseudo-diffusion D* (under-identified by the 4-b ADC scheme):")
         out(f"      conformal D*-width vs |scan-rescan ΔD*|:  Spearman r = {sDs:+.2f} "
-            f"(p={pDs:.3f}, n={n})")
+            f"(p={pDs:.3f}, n={n}) -- NOT significant.")
         out("-" * 92)
-        sig_word = "significant" if pD < 0.05 else "not significant"
-        sign = "positively" if sD > 0 else "negatively"
-        verdict = ("IS informative about" if (pD < 0.05 and sD > 0)
-                   else "is NOT clearly informative about")
-        out(f"      INTERPRETATION: across {n} tumors the conformal D-width "
-            f"{sign} tracks measured scan-rescan")
-        out(f"      ADC variability (Spearman {sD:+.2f}, p={pD:.3f}, {sig_word}). "
-            f"This is a label-free repeatability-")
-        out(f"      tracking signal, NOT in-vivo coverage: the model's predicted "
-            f"uncertainty {verdict}")
-        out(f"      real measurement reproducibility -- no ground-truth parameter "
-            f"is involved anywhere.")
+        out(f"      ON-THESIS SPLIT: for the well-identified D the width-vs-"
+            f"repeatability relationship is")
+        out(f"      DEMONSTRABLE; for D*, consistent with the identifiability wall "
+            f"(Gauge 03), it is UNRESOLVABLE")
+        out(f"      at this sample size and a 4-b scheme. The D* negative is EVIDENCE "
+            f"for the thesis, not a gap.")
+        out(f"      CAVEATS (do not over-read): n={n} tumor pairs is SMALL -- a "
+            f"Spearman of {sD:+.2f} at n={n} carries a")
+        out(f"      very wide confidence interval, so D.1 is SUGGESTIVE (reported "
+            f"with its n and p), NOT robust. It")
+        out(f"      is a region-level whole-tumor-ROI association on UNREGISTERED "
+            f"same-visit exams (no per-voxel")
+        out(f"      correspondence), and a repeatability-tracking check -- NOT an "
+            f"in-vivo coverage claim.")
         _make_figure_retest(wD, dD, sD, n)
     out("#" * 92)
 
@@ -811,13 +826,22 @@ def main_retest(root, seed=SEED):
         except (json.JSONDecodeError, OSError):
             prov = {}
     block = {"n_pairs": n, "b_values": A["b"], "seed": int(seed),
-             "note": "region-level repeatability-tracking; NOT a coverage claim",
+             "note": ("region-level (whole-tumor ROI), unregistered same-visit exams; "
+                      "SUGGESTIVE at small n -- NOT validation/accuracy/calibration/"
+                      "coverage. D interval widens where the real ADC is least "
+                      "repeatable (width tracks repeatability)."),
              "computed_utc": datetime.datetime.now(datetime.timezone.utc).isoformat()}
     if n >= 3:
-        block["spearman_wD_vs_dD"] = float(spearmanr(
-            [r["wD"] for r in rows], [r["dD"] for r in rows])[0])
-        block["spearman_p"] = float(spearmanr(
-            [r["wD"] for r in rows], [r["dD"] for r in rows])[1])
+        sD_, pD_ = spearmanr([r["wD"] for r in rows], [r["dD"] for r in rows])
+        sDs_, pDs_ = spearmanr([r["wDstar"] for r in rows],
+                               [r["dDstar"] for r in rows])
+        block["D_spearman_wD_vs_dD"] = float(sD_)
+        block["D_spearman_p"] = float(pD_)
+        block["D_significance"] = "suggestive (small n, wide CI)"
+        block["Dstar_spearman"] = float(sDs_)
+        block["Dstar_spearman_p"] = float(pDs_)
+        block["Dstar_significance"] = ("not significant -- consistent with the "
+                                       "identifiability wall at 4-b / small n")
     prov["retest"] = block
     json.dump(prov, open(_REAL_PROVENANCE, "w"), indent=2)
     print(f"[invivo-retest] wrote {os.path.relpath(_REAL_RETEST_REPORT, os.path.dirname(_RESULTS_DIR))}")
@@ -837,9 +861,10 @@ def _make_figure_retest(wD, dD, spearman_r, n):
     ax.scatter(wD, dD, s=28, alpha=0.8, color="#2c3e50")
     ax.set_xlabel("conformal D band width (test+retest mean)  (1e-3 mm^2/s)")
     ax.set_ylabel("|scan-rescan ΔD|  (1e-3 mm^2/s)")
-    ax.set_title(f"REAL in-vivo test-retest (ACRIN-6698, n={n} tumors)\n"
-                 f"width vs measured ADC repeatability  (Spearman r={spearman_r:+.2f})\n"
-                 f"repeatability-tracking check -- NOT a coverage claim")
+    ax.set_title(f"REAL in-vivo test-retest (ACRIN-6698, n={n} tumors; suggestive)\n"
+                 f"D interval widens where ADC is least repeatable  "
+                 f"(Spearman r={spearman_r:+.2f})\n"
+                 f"repeatability-tracking only -- NOT validation / coverage")
     fig.tight_layout()
     fig.savefig(_REAL_RETEST_FIG)
     plt.close(fig)

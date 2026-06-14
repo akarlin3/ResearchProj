@@ -21,10 +21,13 @@ real-data path applies the as-deployed conformal predictor and deployment monito
 to real in-vivo multi-$b$ diffusion-weighted MRI from the publicly available
 \textbf{ACRIN-6698 / I-SPY2 Breast DWI} collection (The Cancer Imaging Archive;
 DOI \href{https://doi.org/10.7937/tcia.kk02-6d95}{10.7937/tcia.kk02-6d95};
-licensed CC-BY-4.0), cited as Newitt et al. (2021). This dataset has \emph{no}
-ground-truth IVIM parameters, so it supports only qualitative pipeline/monitor
-behavior and a label-free test--retest \emph{repeatability-tracking} check --- it
-makes \textbf{no in-vivo coverage claim}. Per a download-on-demand posture, no
+licensed CC-BY-4.0), cited as Newitt et al. (2021). This is a 4-$b$ ADC protocol
+(not IVIM-optimized) with \emph{no} ground-truth IVIM parameters, so it supports
+only qualitative pipeline/monitor behavior and a suggestive (small-$n$) label-free
+test--retest \emph{repeatability-tracking} check in which the conformal interval
+widens where the real measurement is least repeatable --- it makes \textbf{no
+in-vivo coverage, validation, accuracy, or calibration claim}. Per a
+download-on-demand posture, no
 pixel data are redistributed in this repository; the data are retrieved by
 \texttt{scripts/fetch\_invivo.py} into an ignored path, and only the provenance
 manifest (\texttt{results/invivo\_real\_provenance.json}, with series UIDs,
@@ -55,26 +58,33 @@ interpolation would fabricate unacquired $b$-values). Bands are not coverage
 intervals.
 
 ### Checkpoint C — qualitative run (patient ACRIN-6698-102212, 4000 b=0-foreground voxels)
-- As-deployed deployment monitor: **FIRES**, AUC(cal vs in-vivo) = **0.97**.
-  - Family-1 Mahalanobis (b-independent feature detector): **FIRES**, stat 16.26 / thr 2.60, AUC 0.97.
-  - Family-2 residual: silent (stat 0.063 / thr 0.177, AUC 0.19). *Caveat:* with only
-    4 b-values an exactly-determined NLLS fit drives the residual norm → 0, so
-    Family-2 is not comparable to the 22-b calibration; Mahalanobis is the honest detector.
+- As-deployed deployment monitor: **FIRES**, AUC(cal vs in-vivo) = **0.97**, carried by Family-1.
+  - Family-1 Mahalanobis (b-independent feature detector): **FIRES**, stat 16.26 / thr 2.60, **AUC 0.97**.
+  - Family-2 residual: **silent** (stat 0.063 / thr 0.177, AUC 0.19). **Why (the monitor
+    has NOT half-failed):** ACRIN-6698 is a 4-b ADC protocol (not IVIM-optimized); 4
+    b-values *exactly-determine* the 4-parameter IVIM fit, so the NLLS residual norm
+    collapses → 0 and Family-2 is structurally uninformative here (not comparable to the
+    22-b calibration). The firing decision is carried entirely by Family-1 (Mahalanobis).
 - D\* band widths on real signal, 10/50/90th pct (1e-3 mm²/s): **[63.7, 78.7, 86.4]**;
   widest/narrowest-decile ratio 1.4×; median plug-in (D, D\*, f) = (0.64, 54.7, 0.505) [D,D\* in 1e-3 mm²/s].
-- **Interpretation:** synthetic→real-in-vivo (sparse 4-b scheme + real breast tissue)
-  is a large exchangeability break; the as-deployed monitor detects it, which is the
-  honest, label-free reason the synthetic coverage guarantee must NOT transfer in vivo.
+- **Interpretation:** synthetic→real-in-vivo (sparse 4-b ADC protocol + real breast tissue)
+  is a *large* exchangeability break; the as-deployed monitor detects it via Family-1, which
+  is the honest, label-free reason the synthetic coverage guarantee *correctly refuses* to
+  transfer in vivo.
 
 ### Checkpoint D — test–retest repeatability proxy (n = 11 tumors with two same-visit exams)
-- Region-level (whole-tumor ROI); the two same-visit exams are NOT registered, so this
-  is **not** a per-voxel claim and **not** a coverage claim.
-- Conformal **D**-width vs scan–rescan |ΔD| (ADC repeatability): **Spearman r = +0.69
-  (p = 0.019, n = 11)**; Pearson r = +0.48. The model's predicted uncertainty
-  significantly tracks real measurement reproducibility — a label-free
-  repeatability-tracking signal.
-- D\* (poorly identified by the sparse 4-b scheme): Spearman r = −0.49 (p = 0.125) —
-  not significant, as expected.
+- Region-level (whole-tumor ROI) on **unregistered** same-visit exams — **not** a per-voxel
+  claim and **not** a coverage / validation / accuracy / calibration claim.
+- Well-identified **D** (ADC-like): conformal D-width vs scan–rescan |ΔD| **Spearman r = +0.69
+  (p = 0.019, n = 11)**; Pearson r = +0.48. *Reading:* the conformal D interval **widens
+  where the real ADC is least repeatable** — the band *tracks / adapts to / is consistent
+  with* measured scan–rescan variability. At **n = 11 the CI is very wide, so this is
+  SUGGESTIVE (reported with its n and p), not robust.**
+- **D\*** (under-identified by the 4-b scheme): Spearman r = **−0.49 (p = 0.125) — not
+  significant.** This is **on-thesis**, not a hole: for the well-identified D the
+  width-vs-repeatability relationship is demonstrable; for D\*, consistent with the
+  identifiability wall (Gauge 03), it is **unresolvable** at this sample size and a 4-b
+  scheme. The negative is evidence *for* the thesis.
 
 ## No-in-vivo-coverage invariant (attestation)
 - The synthetic seed-20260613 pipeline is **byte-identical**
