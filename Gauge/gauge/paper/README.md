@@ -54,6 +54,11 @@ self-contained; the Wiley/MRM LaTeX class can be swapped in at submission withou
 touching the content (a non-CTAN class is not fetchable by tectonic, hence not
 hard-wired here).
 
+## Authorship
+Sole author: **Avery Karlin** (ORCID
+[0000-0003-3848-6782](https://orcid.org/0000-0003-3848-6782)); no funding. The
+Funding, Author Contributions, Conflict of Interest, and ORCID statements are
+complete.
+
 ## Still open (human)
-A human read of the abstract's open-problem framing, and completion of the
-author-specific declaration fields (funding, author contributions, ORCID).
+A human read of the abstract's open-problem framing before submission.
