@@ -105,7 +105,8 @@ def test_find_retest_pairs(tmp_path):
             d.mkdir(parents=True)
             np.save(d / "signals_4d.npy", np.ones((2, 2, 1, 4), np.float32))
             np.save(d / "tumor_mask.npy", np.ones((2, 2, 1), bool))
-    pairs = _find_retest_pairs(str(root))
+    pairs, skips = _find_retest_pairs(str(root))       # now (pairs, skips)
     patients = {p for p, _ in pairs}
     assert patients == {"P1", "P2"}                    # P3 (1 exam) excluded
     assert all(len(exs) == 2 for _, exs in pairs)
+    assert {s["patient"] for s in skips} == {"P3"}     # P3 logged as a skip
