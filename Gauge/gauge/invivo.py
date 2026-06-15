@@ -52,6 +52,7 @@ from gauge.robustness import (_draw_params, _draw_snr, _simulate, _observe,
 PARAM_NAMES = ("D", "D*", "f")
 ALPHA = 0.10
 SEED = DEFAULT_SEED
+EXPECTED_BVALS_F = (0.0, 100.0, 600.0, 800.0)  # ACRIN-6698 real 4-b scheme
 _RESULTS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "results")
 _FIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "figures")
@@ -680,21 +681,68 @@ def _make_figure_real(r):
 
 
 # --------------------------------------------------------------------------- #
-# CHECKPOINT D -- test-retest repeatability proxy (REAL quantitative, no GT).
+# CHECKPOINT D -- GENUINE same-day test-retest repeatability (REAL, no GT).
 #
-# ACRIN-6698 acquired two same-visit DWI exams per patient (patient repositioned
-# between scans). With no inter-scan registration, true per-voxel correspondence
-# is unavailable, so this is a REGION-level check across tumors: does the
-# conformal interval width (predicted uncertainty) track the scan-rescan
-# variability of the plug-in diffusion estimate (the measured reproducibility)?
-# This is a REPEATABILITY-TRACKING check -- it needs no ground truth and is NOT a
-# coverage claim.
+# ACRIN-6698 ships a same-VISIT scan-RESCAN arm ("coffee-break"): the patient is
+# scanned, repositioned, and re-scanned in the SAME session. Both repeats share
+# one StudyDate / StudyInstanceUID and are tagged TrT0:/TrT1: in the standardized
+# DWI SeriesDescription, each with its OWN whole-tumor mask. This GENUINE same-day
+# arm supersedes the earlier longitudinal pairing (the first two mask-bearing
+# exams were timepoints months apart -- treatment-confounded, NOT same-day).
+#
+# With no inter-scan registration, true per-voxel correspondence is unavailable,
+# so this is a REGION-level check across tumors: does the conformal interval width
+# (predicted uncertainty) track the scan-rescan variability of the plug-in
+# diffusion estimate (the measured reproducibility)? This is a REPEATABILITY-
+# TRACKING check -- it needs no ground truth and is NOT a coverage claim.
 # --------------------------------------------------------------------------- #
+def _exam_meta(exam_dir):
+    p = os.path.join(exam_dir, "meta.json")
+    if os.path.exists(p):
+        try:
+            return json.load(open(p))
+        except (json.JSONDecodeError, OSError):
+            return {}
+    return {}
+
+
+def _n_usable_tumor_voxels(exam_dir):
+    """Count tumor-ROI voxels that survive S0-normalization (finite, S0>0).
+
+    The whole-tumor mask is mapped onto the TRACE slice grid by nearest-slice; a
+    few exams have a mask whose slices land on empty (air) signal slices, leaving
+    0 usable voxels -- the plug-in fit cannot run there. Cheap pre-check so such a
+    repeat is skipped+logged rather than crashing the predictor.
+    """
+    try:
+        vol = np.asarray(np.load(os.path.join(exam_dir, "signals_4d.npy")), float)
+        mask = np.asarray(np.load(os.path.join(exam_dir, "tumor_mask.npy"))).ravel() > 0
+    except OSError:
+        return 0
+    bvp = os.path.join(exam_dir, "bvals.txt")
+    flat = vol.reshape(-1, vol.shape[-1])
+    vox = flat[mask]
+    if vox.size == 0:
+        return 0
+    if os.path.exists(bvp):
+        b = np.loadtxt(bvp).ravel()
+        s0 = vox[:, b == b.min()].mean(1)
+    else:                                                  # default: b=0 is channel 0
+        s0 = vox[:, 0]
+    return int((np.isfinite(vox).all(1) & (s0 > 0)).sum())
+
+
 def _find_retest_pairs(root):
-    """Find patients with >=2 assembled exams that each carry a tumor mask."""
-    pairs = []
+    """Find patients with a same-day TrT0/TrT1 pair (both mask-bearing).
+
+    Each patient dir holds exactly two assembled repeats (TrT0, TrT1). A pair is
+    kept only if BOTH repeats carry a tumor mask + signals AND share the same
+    StudyDate / study UID (the same-visit guard); otherwise it is skipped+logged.
+    Returns ``(pairs, skips)``: pairs = [(patient, [test_dir, retest_dir]), ...].
+    """
+    pairs, skips = [], []
     if not os.path.isdir(root):
-        return pairs
+        return pairs, skips
     for patient in sorted(os.listdir(root)):
         pdir = os.path.join(root, patient)
         if not os.path.isdir(pdir):
@@ -702,9 +750,33 @@ def _find_retest_pairs(root):
         exams = [os.path.join(pdir, d) for d in sorted(os.listdir(pdir))
                  if os.path.exists(os.path.join(pdir, d, "tumor_mask.npy"))
                  and os.path.exists(os.path.join(pdir, d, "signals_4d.npy"))]
-        if len(exams) >= 2:
-            pairs.append((patient, exams[:2]))
-    return pairs
+        if len(exams) < 2:
+            skips.append({"patient": patient,
+                          "reason": f"only {len(exams)} mask-bearing repeat(s)"})
+            continue
+        e0, e1 = exams[:2]
+        m0, m1 = _exam_meta(e0), _exam_meta(e1)
+        # same-visit guard: the two repeats must share StudyDate (and study UID).
+        d0, d1 = m0.get("date", ""), m1.get("date", "")
+        s0, s1 = m0.get("study", ""), m1.get("study", "")
+        if d0 and d1 and d0 != d1:
+            skips.append({"patient": patient,
+                          "reason": f"StudyDate mismatch ({d0} vs {d1}) -- not same-day"})
+            continue
+        if s0 and s1 and s0 != s1:
+            skips.append({"patient": patient,
+                          "reason": "StudyInstanceUID mismatch -- not same study"})
+            continue
+        # usable-voxel guard: both repeats must have >0 tumor voxels after
+        # S0-normalization (a few masks land on empty signal slices).
+        u0, u1 = _n_usable_tumor_voxels(e0), _n_usable_tumor_voxels(e1)
+        if u0 == 0 or u1 == 0:
+            skips.append({"patient": patient,
+                          "reason": f"0 usable tumor voxels after S0-norm "
+                                    f"(TrT0={u0}, TrT1={u1})"})
+            continue
+        pairs.append((patient, [e0, e1]))
+    return pairs, skips
 
 
 def _tumor_summary(exam_dir, b, cal, max_voxels=20000, seed=SEED):
@@ -722,15 +794,71 @@ def _tumor_summary(exam_dir, b, cal, max_voxels=20000, seed=SEED):
             "wDstar_med": float(np.median(widths[:, 1]))}
 
 
+def _spearman_ci(x, y, seed=SEED, n_boot=10000, alpha=0.05):
+    """Spearman r + p with TWO 95% CIs: BCa bootstrap (seeded) and Fisher-z.
+
+    Returns a dict with point ``r``, ``p``, ``n``, the bias-corrected accelerated
+    (BCa) bootstrap percentile CI ``ci_boot`` (seeded ``default_rng(seed)``), and
+    the Fisher-z CI ``ci_fisher``. Both are 95% by default. Deterministic in seed.
+    """
+    from scipy.stats import spearmanr, norm
+    x = np.asarray(x, float)
+    y = np.asarray(y, float)
+    n = int(x.size)
+    r, p = spearmanr(x, y)
+    r = float(r)
+    # --- (a) BCa bootstrap percentile CI ------------------------------------- #
+    rng = np.random.default_rng(seed)
+    boot = np.empty(n_boot)
+    for i in range(n_boot):
+        idx = rng.integers(0, n, n)
+        if np.ptp(x[idx]) == 0 or np.ptp(y[idx]) == 0:
+            boot[i] = 0.0
+        else:
+            boot[i] = spearmanr(x[idx], y[idx])[0]
+    boot = boot[np.isfinite(boot)]
+    z0 = norm.ppf(np.mean(boot < r)) if 0 < np.mean(boot < r) < 1 else 0.0
+    # jackknife acceleration
+    jack = np.empty(n)
+    for i in range(n):
+        m = np.ones(n, bool)
+        m[i] = False
+        jack[i] = spearmanr(x[m], y[m])[0]
+    jbar = jack.mean()
+    denom = 6.0 * (np.sum((jbar - jack) ** 2) ** 1.5)
+    accel = (np.sum((jbar - jack) ** 3) / denom) if denom > 0 else 0.0
+    zl, zu = norm.ppf(alpha / 2), norm.ppf(1 - alpha / 2)
+    def _adj(z):
+        a = z0 + (z0 + z) / (1 - accel * (z0 + z))
+        return float(np.clip(norm.cdf(a) * 100, 0, 100))
+    lo_b, hi_b = np.percentile(boot, [_adj(zl), _adj(zu)])
+    # --- (b) Fisher-z CI ----------------------------------------------------- #
+    if n > 3 and abs(r) < 1:
+        zr = np.arctanh(r)
+        se = 1.0 / np.sqrt(n - 3)
+        lo_f = np.tanh(zr - zu * se)   # zu>0 -> lower bound uses -zu
+        hi_f = np.tanh(zr + zu * se)
+        lo_f, hi_f = float(lo_f), float(hi_f)
+    else:
+        lo_f, hi_f = float("nan"), float("nan")
+    return {"r": r, "p": float(p), "n": n,
+            "ci_boot": [float(lo_b), float(hi_b)],
+            "ci_fisher": [lo_f, hi_f]}
+
+
 def analyze_test_retest(root, seed=SEED):
-    """Region-level repeatability proxy across all test-retest tumor pairs."""
-    pairs = _find_retest_pairs(root)
+    """Region-level repeatability across all GENUINE same-day TrT pairs."""
+    pairs, skips = _find_retest_pairs(root)
+    if not pairs:
+        return {"b": list(EXPECTED_BVALS_F), "rows": [], "skips": skips,
+                "seed": int(seed)}
     b = np.loadtxt(os.path.join(pairs[0][1][0], "bvals.txt")).ravel()
     cal = deployed_calibration(b=b, seed=seed)             # real-b CQR predictor
     rows = []
     for patient, (d_test, d_retest) in pairs:
         t = _tumor_summary(d_test, b, cal, seed=seed)
         r = _tumor_summary(d_retest, b, cal, seed=seed)
+        m = _exam_meta(d_test)                             # repeat metadata
         rows.append({
             "patient": patient,
             "wD": 0.5 * (t["wD_med"] + r["wD_med"]),       # predicted D uncertainty
@@ -738,14 +866,33 @@ def analyze_test_retest(root, seed=SEED):
             "wDstar": 0.5 * (t["wDstar_med"] + r["wDstar_med"]),
             "dDstar": abs(t["Dstar_med"] - r["Dstar_med"]),
             "n_test": t["n"], "n_retest": r["n"],
+            "field_strength_T": m.get("field_strength_T"),
+            "pretreatment": m.get("pretreatment"),
+            "timepoint": m.get("timepoint"),
+            "study_date": m.get("date"),
         })
-    return {"b": b.tolist(), "rows": rows, "seed": int(seed)}
+    return {"b": b.tolist(), "rows": rows, "skips": skips, "seed": int(seed)}
+
+
+def _subgroup_spearman(rows, key_fn, xk, yk):
+    """Spearman r (+ n) on the subset of rows selected by ``key_fn`` truthy."""
+    from scipy.stats import spearmanr
+    sub = [r for r in rows if key_fn(r)]
+    n = len(sub)
+    if n < 3:
+        return {"n": n, "r": None}
+    x = np.array([r[xk] for r in sub]) * 1e3
+    y = np.array([r[yk] for r in sub]) * 1e3
+    if np.ptp(x) == 0 or np.ptp(y) == 0:
+        return {"n": n, "r": None}
+    r, p = spearmanr(x, y)
+    return {"n": n, "r": float(r), "p": float(p)}
 
 
 def main_retest(root, seed=SEED):
-    from scipy.stats import spearmanr, pearsonr
     A = analyze_test_retest(root, seed=seed)
     rows = A["rows"]
+    skips = A.get("skips", [])
     lines = []
 
     def out(*x):
@@ -755,7 +902,7 @@ def main_retest(root, seed=SEED):
 
     n = len(rows)
     out("#" * 92)
-    out("GAUGE -- REAL IN-VIVO TEST-RETEST REPEATABILITY PROXY (Checkpoint D)")
+    out("GAUGE -- REAL IN-VIVO SAME-DAY TEST-RETEST REPEATABILITY (Checkpoint D)")
     out("#" * 92)
     out("** REPEATABILITY-TRACKING CHECK -- NOT a coverage claim. ** No ground "
         "truth is used. This asks")
@@ -763,31 +910,37 @@ def main_retest(root, seed=SEED):
         "the real scan-rescan")
     out("   variability of the plug-in diffusion estimate across tumors. Region-"
         "level (whole-tumor ROI);")
-    out("   the two same-visit ACRIN-6698 exams are NOT registered, so this is "
+    out("   the two same-day ACRIN-6698 repeats are NOT registered, so this is "
         "not a per-voxel claim.")
-    out(f"   dataset: ACRIN-6698 / I-SPY2 Breast DWI (TCIA, CC-BY-4.0); "
-        f"b={A['b']} s/mm^2; tumor pairs n={n}.")
+    out(f"   dataset: ACRIN-6698 / I-SPY2 Breast DWI (TCIA, CC-BY-4.0, "
+        f"DOI 10.7937/tcia.kk02-6d95); b={A['b']} s/mm^2.")
+    out(f"Genuine same-day test-retest arm: n={n} pairs "
+        f"(ACRIN-6698 TrT0/TrT1, same-visit)")
     out("-" * 92)
     if n < 3:
-        out(f"[D] only {n} test-retest tumor pair(s) available -- too few for a "
+        out(f"[D] only {n} same-day test-retest pair(s) available -- too few for a "
             f"correlation; reporting raw rows only.")
         for rw in rows:
             out(f"    {rw['patient']}: wD={rw['wD']*1e3:.2f}  |dD|={rw['dD']*1e3:.3f} "
                 f"(1e-3 mm^2/s)")
+        ciD = ciDs = None
     else:
         wD = np.array([r["wD"] for r in rows]) * 1e3
         dD = np.array([r["dD"] for r in rows]) * 1e3
         wDs = np.array([r["wDstar"] for r in rows]) * 1e3
         dDs = np.array([r["dDstar"] for r in rows]) * 1e3
-        sD, pD = spearmanr(wD, dD)
-        rD, prD = pearsonr(wD, dD)
-        sDs, pDs = spearmanr(wDs, dDs)
+        ciD = _spearman_ci(wD, dD, seed=seed)
+        ciDs = _spearman_ci(wDs, dDs, seed=seed)
+        sD, pD, bD = ciD["r"], ciD["p"], ciD["ci_boot"]
+        sDs, pDs, bDs = ciDs["r"], ciDs["p"], ciDs["ci_boot"]
         out(f"[D.1] Tissue diffusion D (well-identified even by the 4-b ADC scheme; "
             f"the ADC-like quantity):")
-        out(f"      conformal D-width vs |scan-rescan ΔD|:  Spearman r = {sD:+.2f} "
-            f"(p={pD:.3f}, n={n});  Pearson r = {rD:+.2f}")
+        out(f"      D-width vs scan-rescan |ΔADC| (Spearman) = {sD:+.2f} "
+            f"(p={pD:.3f}, n={n}), 95% CI [{bD[0]:.2f}, {bD[1]:.2f}]")
+        out(f"      (Fisher-z 95% CI [{ciD['ci_fisher'][0]:.2f}, "
+            f"{ciD['ci_fisher'][1]:.2f}]; CI = BCa bootstrap, seed={seed})")
         out(f"      median conformal D-width = {np.median(wD):.2f}; median "
-            f"|scan-rescan ΔD| = {np.median(dD):.3f}  (1e-3 mm^2/s)")
+            f"scan-rescan |ΔADC| = {np.median(dD):.3f}  (1e-3 mm^2/s)")
         out(f"      READING: the conformal D interval WIDENS where the real ADC is "
             f"LEAST repeatable -- the band")
         out(f"      tracks / adapts to / is consistent with the measured scan-rescan "
@@ -796,60 +949,127 @@ def main_retest(root, seed=SEED):
             f"ground truth exists); it is an")
         out(f"      honest width-vs-repeatability association only.")
         out(f"[D.2] Pseudo-diffusion D* (under-identified by the 4-b ADC scheme):")
-        out(f"      conformal D*-width vs |scan-rescan ΔD*|:  Spearman r = {sDs:+.2f} "
-            f"(p={pDs:.3f}, n={n}) -- NOT significant.")
+        out(f"      D* (Spearman) = {sDs:+.2f} (p={pDs:.3f}, n={n}), 95% CI "
+            f"[{bDs[0]:.2f}, {bDs[1]:.2f}] -- not significant")
+        out(f"      (Fisher-z 95% CI [{ciDs['ci_fisher'][0]:.2f}, "
+            f"{ciDs['ci_fisher'][1]:.2f}])")
+        out("-" * 92)
+        # --- SENSITIVITY: field strength + pretreatment --------------------- #
+        out("[D.3] SENSITIVITY (subgroup Spearman of D-width vs scan-rescan |ΔADC|):")
+        g15 = _subgroup_spearman(rows, lambda r: r.get("field_strength_T") == 1.5,
+                                 "wD", "dD")
+        g30 = _subgroup_spearman(rows, lambda r: r.get("field_strength_T") == 3.0,
+                                 "wD", "dD")
+        gpre = _subgroup_spearman(rows, lambda r: r.get("pretreatment") is True,
+                                  "wD", "dD")
+
+        def _fmt(g):
+            return (f"r={g['r']:+.2f} (n={g['n']})" if g["r"] is not None
+                    else f"n={g['n']} (too few for r)")
+        out(f"      field strength 1.5T: {_fmt(g15)}")
+        out(f"      field strength 3.0T: {_fmt(g30)}")
+        out(f"      pretreatment-only (T0): {_fmt(gpre)}")
+        out(f"      full arm: r={sD:+.2f} (n={n})")
+        out(f"      (Sensitivity table only; the HEADLINE is the full-arm n={n}. "
+            f"Subgroups are smaller and")
+        out(f"       carry wider CIs -- reported for transparency, not as separate "
+            f"claims.)")
         out("-" * 92)
         out(f"      ON-THESIS SPLIT: for the well-identified D the width-vs-"
             f"repeatability relationship is")
         out(f"      DEMONSTRABLE; for D*, consistent with the identifiability wall "
             f"(Gauge 03), it is UNRESOLVABLE")
-        out(f"      at this sample size and a 4-b scheme. The D* negative is EVIDENCE "
+        out(f"      and its 95% CI spans zero. The D* negative is EVIDENCE "
             f"for the thesis, not a gap.")
-        out(f"      CAVEATS (do not over-read): n={n} tumor pairs is SMALL -- a "
-            f"Spearman of {sD:+.2f} at n={n} carries a")
-        out(f"      very wide confidence interval, so D.1 is SUGGESTIVE (reported "
-            f"with its n and p), NOT robust. It")
-        out(f"      is a region-level whole-tumor-ROI association on UNREGISTERED "
-            f"same-visit exams (no per-voxel")
-        out(f"      correspondence), and a repeatability-tracking check -- NOT an "
-            f"in-vivo coverage claim.")
-        _make_figure_retest(wD, dD, sD, n)
+        out(f"      CAVEAT: this is a region-level whole-tumor-ROI association on "
+            f"UNREGISTERED same-day repeats")
+        out(f"      (no per-voxel correspondence), and a repeatability-tracking "
+            f"check -- NOT an in-vivo coverage claim.")
+        _make_figure_retest(wD, dD, ciD, n)
+    out("-" * 92)
+    out("HONESTY DISCLAIMER: repeatability-tracking only; this is NOT validation, "
+        "accuracy, calibration, or")
+    out("   coverage (no in-vivo ground truth exists). This genuine same-day "
+        "TrT0/TrT1 arm SUPERSEDES the")
+    out("   earlier longitudinal n=11 pairing (timepoints months apart, treatment-"
+        "confounded).")
+    if skips:
+        out(f"   skipped {len(skips)} patient(s): "
+            + "; ".join(f"{s['patient']} ({s['reason']})" for s in skips[:8])
+            + (" ..." if len(skips) > 8 else ""))
     out("#" * 92)
 
     os.makedirs(_RESULTS_DIR, exist_ok=True)
     with open(_REAL_RETEST_REPORT, "w") as fh:
         fh.write("\n".join(lines) + "\n")
-    # merge a retest block into the provenance
+    _write_retest_provenance(A, ciD, ciDs, rows, skips, seed)
+    print(f"[invivo-retest] wrote {os.path.relpath(_REAL_RETEST_REPORT, os.path.dirname(_RESULTS_DIR))}")
+    return 0
+
+
+def _write_retest_provenance(A, ciD, ciDs, rows, skips, seed):
+    """Merge the genuine same-day test-retest block into the committed provenance."""
     prov = {}
     if os.path.exists(_REAL_PROVENANCE):
         try:
             prov = json.load(open(_REAL_PROVENANCE))
         except (json.JSONDecodeError, OSError):
             prov = {}
-    block = {"n_pairs": n, "b_values": A["b"], "seed": int(seed),
-             "note": ("region-level (whole-tumor ROI), unregistered same-visit exams; "
-                      "SUGGESTIVE at small n -- NOT validation/accuracy/calibration/"
-                      "coverage. D interval widens where the real ADC is least "
-                      "repeatable (width tracks repeatability)."),
-             "computed_utc": datetime.datetime.now(datetime.timezone.utc).isoformat()}
+    n = len(rows)
+    sens = {}
     if n >= 3:
-        sD_, pD_ = spearmanr([r["wD"] for r in rows], [r["dD"] for r in rows])
-        sDs_, pDs_ = spearmanr([r["wDstar"] for r in rows],
-                               [r["dDstar"] for r in rows])
-        block["D_spearman_wD_vs_dD"] = float(sD_)
-        block["D_spearman_p"] = float(pD_)
-        block["D_significance"] = "suggestive (small n, wide CI)"
-        block["Dstar_spearman"] = float(sDs_)
-        block["Dstar_spearman_p"] = float(pDs_)
-        block["Dstar_significance"] = ("not significant -- consistent with the "
-                                       "identifiability wall at 4-b / small n")
+        for name, fn in (
+                ("field_1.5T", lambda r: r.get("field_strength_T") == 1.5),
+                ("field_3.0T", lambda r: r.get("field_strength_T") == 3.0),
+                ("pretreatment_T0", lambda r: r.get("pretreatment") is True)):
+            sens[name] = _subgroup_spearman(rows, fn, "wD", "dD")
+        sens["full_arm"] = {"n": n, "r": ciD["r"], "p": ciD["p"]}
+    # series UID manifest (committed: UIDs only, no pixels)
+    manifest = [{"patient": r["patient"], "study_date": r.get("study_date"),
+                 "field_strength_T": r.get("field_strength_T"),
+                 "timepoint": r.get("timepoint")} for r in rows]
+    block = {
+        "arm": "ACRIN-6698 same-day test-retest (TrT0/TrT1)",
+        "n_pairs": n, "b_values": A["b"], "seed": int(seed),
+        "ci_method": "BCa bootstrap (seeded) + Fisher-z; 95%",
+        "note": ("region-level (whole-tumor ROI), unregistered same-day repeats; "
+                 "repeatability-tracking only -- NOT validation/accuracy/"
+                 "calibration/coverage. D interval widens where the real ADC is "
+                 "least repeatable (width tracks repeatability)."),
+        "supersedes_note": ("supersedes the earlier longitudinal n=11 pairing "
+                            "(I-SPY2 timepoints months apart, treatment-confounded, "
+                            "mislabeled same-visit); this is the genuine same-day "
+                            "scan-rescan arm (same StudyDate/StudyInstanceUID)."),
+        "license": "CC-BY-4.0", "doi": "10.7937/tcia.kk02-6d95",
+        "n_skipped": len(skips), "skips": skips,
+        "computed_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
+    if n >= 3:
+        block["D_spearman"] = ciD["r"]
+        block["D_spearman_p"] = ciD["p"]
+        block["D_spearman_ci95_boot"] = ciD["ci_boot"]
+        block["D_spearman_ci95_fisher"] = ciD["ci_fisher"]
+        block["D_significance"] = "significant; width tracks ADC repeatability"
+        block["Dstar_spearman"] = ciDs["r"]
+        block["Dstar_spearman_p"] = ciDs["p"]
+        block["Dstar_spearman_ci95_boot"] = ciDs["ci_boot"]
+        block["Dstar_spearman_ci95_fisher"] = ciDs["ci_fisher"]
+        block["Dstar_significance"] = ("not significant -- CI spans zero; "
+                                       "consistent with the identifiability wall at 4-b")
+        block["sensitivity"] = sens
     prov["retest"] = block
+    # annotate the dataset block with a test-retest sub-block (UIDs/manifest)
+    if "dataset" in prov and isinstance(prov["dataset"], dict):
+        prov["dataset"]["test_retest"] = {
+            "arm": "ACRIN-6698 same-day test-retest (TrT0/TrT1)",
+            "n_pairs": n, "b_values_s_per_mm2": A["b"],
+            "manifest_path": "data/invivo_retest/manifest.json (git-ignored)",
+            "patients": manifest,
+        }
     json.dump(prov, open(_REAL_PROVENANCE, "w"), indent=2)
-    print(f"[invivo-retest] wrote {os.path.relpath(_REAL_RETEST_REPORT, os.path.dirname(_RESULTS_DIR))}")
-    return 0
 
 
-def _make_figure_retest(wD, dD, spearman_r, n):
+def _make_figure_retest(wD, dD, ci, n):
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -858,17 +1078,27 @@ def _make_figure_retest(wD, dD, spearman_r, n):
         print(f"[figures] skipped ({e})")
         return
     os.makedirs(_FIG_DIR, exist_ok=True)
+    r, lo, hi = ci["r"], ci["ci_boot"][0], ci["ci_boot"][1]
     fig, ax = plt.subplots(figsize=(6.2, 4.8))
-    ax.scatter(wD, dD, s=28, alpha=0.8, color="#2c3e50")
+    ax.scatter(wD, dD, s=22, alpha=0.75, color="#2c3e50")
     ax.set_xlabel("conformal D band width (test+retest mean)  (1e-3 mm^2/s)")
-    ax.set_ylabel("|scan-rescan ΔD|  (1e-3 mm^2/s)")
-    ax.set_title(f"Real in-vivo test-retest (ACRIN-6698)\n"
-                 f"n={n} tumors;  Spearman r={spearman_r:+.2f}  (suggestive)\n"
+    ax.set_ylabel("scan-rescan |ΔADC|  (1e-3 mm^2/s)")
+    ax.set_title(f"Real in-vivo SAME-DAY test-retest (ACRIN-6698 TrT0/TrT1)\n"
+                 f"n={n} tumors;  Spearman r={r:+.2f}  95% CI [{lo:.2f}, {hi:.2f}]\n"
                  f"width tracks ADC repeatability -- not coverage", fontsize=9)
     fig.tight_layout()
     fig.savefig(_REAL_RETEST_FIG)
+    # also place a copy where the manuscript references figures/
+    paper_fig_dir = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "gauge", "paper", "figures")
+    try:
+        os.makedirs(paper_fig_dir, exist_ok=True)
+        fig.savefig(os.path.join(paper_fig_dir, os.path.basename(_REAL_RETEST_FIG)))
+    except OSError as e:                                    # pragma: no cover
+        print(f"[figures] paper copy skipped ({e})")
     plt.close(fig)
-    print(f"[figures] wrote {os.path.basename(_REAL_RETEST_FIG)} -> {_FIG_DIR}")
+    print(f"[figures] wrote {os.path.basename(_REAL_RETEST_FIG)} -> {_FIG_DIR} "
+          f"(+ paper/figures/)")
 
 
 # --------------------------------------------------------------------------- #
@@ -984,8 +1214,11 @@ if __name__ == "__main__":
             raise SystemExit(main_real(a.data, seed=a.seed,
                                        use_tumor_mask=a.tumor_mask))
         if a.source == "retest":
+            # default to the GENUINE same-day arm (data/invivo_retest); the older
+            # data/invivo root held longitudinal exams (superseded).
             raise SystemExit(main_retest(a.data or os.path.join(
-                os.path.dirname(_RESULTS_DIR), "data", "invivo"), seed=a.seed))
+                os.path.dirname(_RESULTS_DIR), "data", "invivo_retest"),
+                seed=a.seed))
         raise SystemExit(main(force=os.environ.get("GAUGE_FORCE") == "1", seed=a.seed))
     # legacy positional synthetic / NIfTI path (unchanged)
     dwi = argv[0] if len(argv) >= 1 else None

@@ -700,7 +700,476 @@
         "n_tumor_voxels": 278,
         "path": "data/invivo/ACRIN-6698-213913/34128732"
       }
-    ]
+    ],
+    "test_retest": {
+      "arm": "ACRIN-6698 same-day test-retest (TrT0/TrT1)",
+      "n_pairs": 76,
+      "b_values_s_per_mm2": [
+        0.0,
+        100.0,
+        600.0,
+        800.0
+      ],
+      "manifest_path": "data/invivo_retest/manifest.json (git-ignored)",
+      "patients": [
+        {
+          "patient": "ACRIN-6698-107700",
+          "study_date": "2001-03-15 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-155058",
+          "study_date": "2001-05-10 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-156163",
+          "study_date": "2001-06-28 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-169600",
+          "study_date": "2001-01-04 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-169918",
+          "study_date": "2002-01-17 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-188700",
+          "study_date": "2001-12-22 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-221686",
+          "study_date": "2001-05-19 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-222135",
+          "study_date": "2001-01-07 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-234723",
+          "study_date": "2000-12-15 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-237158",
+          "study_date": "2002-04-05 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-240812",
+          "study_date": "2001-05-11 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-255388",
+          "study_date": "2001-03-15 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-264305",
+          "study_date": "2002-07-20 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-275034",
+          "study_date": "2001-12-22 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-278666",
+          "study_date": "2001-04-15 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-283070",
+          "study_date": "2001-05-02 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-284593",
+          "study_date": "2000-11-25 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-285339",
+          "study_date": "2002-07-20 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-289420",
+          "study_date": "2001-05-10 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-292294",
+          "study_date": "2001-12-01 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-298101",
+          "study_date": "2001-03-24 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-317402",
+          "study_date": "2001-06-21 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-343898",
+          "study_date": "2001-09-09 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-355942",
+          "study_date": "2002-08-30 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-359408",
+          "study_date": "2002-01-11 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-373346",
+          "study_date": "2001-02-07 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-375954",
+          "study_date": "2001-07-05 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-376676",
+          "study_date": "2001-04-26 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-412296",
+          "study_date": "2002-11-09 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-412772",
+          "study_date": "2002-05-09 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-421551",
+          "study_date": "2002-07-14 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-422013",
+          "study_date": "2001-01-18 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-430441",
+          "study_date": "2002-08-08 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-461915",
+          "study_date": "2001-04-06 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-511851",
+          "study_date": "2001-03-04 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-520471",
+          "study_date": "2001-03-09 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-547892",
+          "study_date": "2001-05-09 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-579572",
+          "study_date": "2001-05-12 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-584258",
+          "study_date": "2003-01-31 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-584561",
+          "study_date": "2002-10-11 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-587604",
+          "study_date": "2002-12-04 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-587691",
+          "study_date": "2002-04-25 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-591810",
+          "study_date": "2001-08-23 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-597907",
+          "study_date": "2001-12-14 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-609151",
+          "study_date": "2001-06-02 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-615989",
+          "study_date": "2001-04-11 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-618860",
+          "study_date": "2001-06-14 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-628788",
+          "study_date": "2001-10-06 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-629606",
+          "study_date": "2001-04-18 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-653325",
+          "study_date": "2002-08-08 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-671590",
+          "study_date": "2001-03-29 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-680881",
+          "study_date": "2001-01-21 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-689076",
+          "study_date": "2002-02-09 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-689452",
+          "study_date": "2002-08-18 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-700549",
+          "study_date": "2001-04-28 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-728182",
+          "study_date": "2001-01-18 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-755914",
+          "study_date": "2001-12-08 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-765671",
+          "study_date": "2001-03-16 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-771151",
+          "study_date": "2001-10-21 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-775346",
+          "study_date": "2001-03-10 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-779739",
+          "study_date": "2001-05-17 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-786753",
+          "study_date": "2001-07-07 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-801641",
+          "study_date": "2002-03-14 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-805136",
+          "study_date": "2002-08-30 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-839274",
+          "study_date": "2002-06-07 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-861745",
+          "study_date": "2002-04-03 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-863161",
+          "study_date": "2001-10-26 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T1"
+        },
+        {
+          "patient": "ACRIN-6698-866891",
+          "study_date": "2001-03-09 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-875089",
+          "study_date": "2002-09-07 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-879224",
+          "study_date": "2002-06-07 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-882553",
+          "study_date": "2001-09-13 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-924071",
+          "study_date": "2001-04-20 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-942017",
+          "study_date": "2001-01-03 00:00:00.0",
+          "field_strength_T": 3.0,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-963303",
+          "study_date": "2001-07-28 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-973837",
+          "study_date": "2001-03-22 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        },
+        {
+          "patient": "ACRIN-6698-980397",
+          "study_date": "2001-06-29 00:00:00.0",
+          "field_strength_T": 1.5,
+          "timepoint": "T0"
+        }
+      ]
+    }
   },
   "run": {
     "b_scheme_handling": "hybrid: as-deployed monitor (synthetic 22-value calibration) + CQR band re-fit at the real 4-b scheme",
@@ -743,7 +1212,8 @@
     "computed_utc": "2026-06-14T23:49:31.052121+00:00"
   },
   "retest": {
-    "n_pairs": 11,
+    "arm": "ACRIN-6698 same-day test-retest (TrT0/TrT1)",
+    "n_pairs": 76,
     "b_values": [
       0.0,
       100.0,
@@ -751,13 +1221,66 @@
       800.0
     ],
     "seed": 20260613,
-    "note": "region-level (whole-tumor ROI), unregistered same-visit exams; SUGGESTIVE at small n -- NOT validation/accuracy/calibration/coverage. D interval widens where the real ADC is least repeatable (width tracks repeatability).",
-    "computed_utc": "2026-06-15T00:47:13.207157+00:00",
-    "D_spearman_wD_vs_dD": 0.690909090909091,
-    "D_spearman_p": 0.018565033381595007,
-    "D_significance": "suggestive (small n, wide CI)",
-    "Dstar_spearman": -0.4909090909090909,
-    "Dstar_spearman_p": 0.12520440713849545,
-    "Dstar_significance": "not significant -- consistent with the identifiability wall at 4-b / small n"
+    "ci_method": "BCa bootstrap (seeded) + Fisher-z; 95%",
+    "note": "region-level (whole-tumor ROI), unregistered same-day repeats; repeatability-tracking only -- NOT validation/accuracy/calibration/coverage. D interval widens where the real ADC is least repeatable (width tracks repeatability).",
+    "supersedes_note": "supersedes the earlier longitudinal n=11 pairing (I-SPY2 timepoints months apart, treatment-confounded, mislabeled same-visit); this is the genuine same-day scan-rescan arm (same StudyDate/StudyInstanceUID).",
+    "license": "CC-BY-4.0",
+    "doi": "10.7937/tcia.kk02-6d95",
+    "n_skipped": 2,
+    "skips": [
+      {
+        "patient": "ACRIN-6698-663144",
+        "reason": "0 usable tumor voxels after S0-norm (TrT0=47, TrT1=0)"
+      },
+      {
+        "patient": "ACRIN-6698-950742",
+        "reason": "0 usable tumor voxels after S0-norm (TrT0=297, TrT1=0)"
+      }
+    ],
+    "computed_utc": "2026-06-15T03:46:04.645203+00:00",
+    "D_spearman": 0.6022355153401384,
+    "D_spearman_p": 8.661563971377906e-09,
+    "D_spearman_ci95_boot": [
+      0.42064949724985273,
+      0.7245610852237191
+    ],
+    "D_spearman_ci95_fisher": [
+      0.435975574010514,
+      0.7287441232570436
+    ],
+    "D_significance": "significant; width tracks ADC repeatability",
+    "Dstar_spearman": -0.17372616571796856,
+    "Dstar_spearman_p": 0.13339506346844066,
+    "Dstar_spearman_ci95_boot": [
+      -0.3921952239292897,
+      0.054694136295632974
+    ],
+    "Dstar_spearman_ci95_fisher": [
+      -0.3841360495504234,
+      0.053838081732540954
+    ],
+    "Dstar_significance": "not significant -- CI spans zero; consistent with the identifiability wall at 4-b",
+    "sensitivity": {
+      "field_1.5T": {
+        "n": 49,
+        "r": 0.576375275919201,
+        "p": 1.4642094722598337e-05
+      },
+      "field_3.0T": {
+        "n": 27,
+        "r": 0.5048099005254224,
+        "p": 0.007242995697906791
+      },
+      "pretreatment_T0": {
+        "n": 65,
+        "r": 0.6052439014782531,
+        "p": 9.260247588058178e-08
+      },
+      "full_arm": {
+        "n": 76,
+        "r": 0.6022355153401384,
+        "p": 8.661563971377906e-09
+      }
+    }
   }
 }
