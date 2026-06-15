@@ -75,6 +75,91 @@ def add_gaussian_noise(signal, snr, rng, S0=1.0):
     return np.asarray(signal, dtype=float) + rng.normal(0.0, sigma, size=shape)
 
 
+def _gamma_perfusion_kernel(b, mu, k):
+    """E[exp(-b D*)] for D* ~ Gamma(shape=k, mean=mu): ``(1 + b mu/k) ** (-k)``.
+
+    Broadcasts over ``b`` and/or array ``mu``/``k``. ``k`` may be ``np.inf``,
+    which is the zero-dispersion limit ``exp(-b mu)`` -- handled explicitly via the
+    log form so there is no ``inf * log1p(0)`` NaN.
+    """
+    b = np.asarray(b, dtype=float)
+    mu = np.asarray(mu, dtype=float)
+    k = np.asarray(k, dtype=float)
+    finite = np.isfinite(k)
+    k_safe = np.where(finite, k, 1.0)
+    ratio = b * mu / k_safe
+    log_perf_finite = -k_safe * np.log1p(ratio)
+    log_perf_limit = -b * mu                       # k -> inf
+    log_perf = np.where(finite, log_perf_finite, log_perf_limit)
+    return np.exp(log_perf)
+
+
+def ivim_signal_dispersion(b, D, mu, k, f, S0=1.0):
+    """Velocity-dispersion IVIM signal: gamma-DISTRIBUTED pseudo-diffusivity.
+
+    The bi-exponential's single pseudo-diffusion coefficient D* is replaced by a
+    *distribution* of pseudo-diffusivities -- physically, blood traversing a
+    population of capillary segments with dispersed velocities / a distribution of
+    flow phases. With the pseudo-diffusivity drawn ``D* ~ Gamma(shape=k, mean=mu)``,
+    the perfusion signal is the Laplace transform of that gamma law:
+
+        S_perf(b)/f = E[exp(-b D*)] = (1 + b mu / k) ** (-k),
+
+    so
+
+        S(b)/S0 = (1 - f) exp(-b D) + f (1 + b mu / k) ** (-k).
+
+    This is a GENUINELY non-bi-exponential perfusion physics (a gamma-mixture /
+    power-law decay, NOT a finite sum of exponentials), so a cohort generated from
+    it is NOT a realization of Eq. (1) -- which is the whole point of the
+    circularity break. The tissue diffusion ``D`` and perfusion fraction ``f`` keep
+    their bi-exponential meaning exactly; only the perfusion *shape* differs.
+
+    Continuity: as ``k -> inf`` (zero relative dispersion) the kernel -> exp(-b mu)
+    and the signal reduces to :func:`ivim_signal` with ``D* = mu`` EXACTLY. The
+    relative dispersion (coefficient of variation) of the pseudo-diffusivity is
+    ``CV = 1/sqrt(k)``; ``CV = 0`` (``k = inf``) is the bi-exponential model. This
+    is the deviation scalar swept in the off-model envelope (Arm 2).
+    """
+    b = np.asarray(b, dtype=float)
+    perf = _gamma_perfusion_kernel(b, mu, k)
+    return S0 * ((1.0 - f) * np.exp(-b * D) + f * perf)
+
+
+def dispersion_dstar_eff(mu, k=None):
+    """Effective pseudo-diffusion D*eff of the dispersion model (surrogate A).
+
+    Defined as the low-b initial log-slope of the perfusion term,
+    ``D*eff = -d/db[log S_perf(b)]|_{b->0}``. For the gamma kernel this equals the
+    DISTRIBUTION MEAN ``mu`` exactly, independent of the dispersion shape ``k``:
+
+        d/db log (1 + b mu/k)^(-k) = -mu / (1 + b mu/k)  ->  -mu  as b -> 0.
+
+    So ``D*eff = mu``. It is a property of the alternative model alone (it never
+    references the bi-exponential parametrization), and it is continuous to the
+    bi-exp limit (where ``mu = D*``), which is exactly what makes it a clean,
+    non-circular stratification axis. ``k`` is accepted (and ignored) so callers
+    can pass the full parameter tuple. This is surrogate (A); surrogate (B) -- the
+    best-fit bi-exp D* to the alternative signal -- is computed in ``altmodel``.
+    """
+    return np.asarray(mu, dtype=float)
+
+
+def ivim_signal_stretched(b, D, Dstar, f, beta, S0=1.0):
+    """Stretched-exponential (anomalous) perfusion IVIM signal.
+
+        S(b)/S0 = (1 - f) exp(-b D) + f exp(-(b Dstar) ** beta).
+
+    ``beta = 1`` recovers :func:`ivim_signal` EXACTLY (the continuity limit); the
+    deviation scalar is ``|1 - beta|``. ``beta < 1`` gives a heavier-tailed
+    (sub-diffusive) perfusion decay. Used as a SECOND off-model departure family in
+    Arm 2 so the envelope result is not specific to one way of leaving Eq. (1).
+    """
+    b = np.asarray(b, dtype=float)
+    perf = np.exp(-np.power(np.clip(b * Dstar, 0.0, None), beta))
+    return S0 * ((1.0 - f) * np.exp(-b * D) + f * perf)
+
+
 def ivim_signal_triexp(b, D, Dstar, f, Dstar2, g, S0=1.0):
     """Tri-exponential IVIM signal: bi-exp plus a third very-fast compartment.
 
@@ -158,6 +243,56 @@ def crlb(b, D, Dstar, f, S0=1.0, snr=None, sigma=None, fix_s0=False):
     for k, nm in enumerate(names):
         v = var[k]
         out[nm] = float(np.sqrt(v)) if np.isfinite(v) and v > 0 else np.inf
+    return out
+
+
+def dispersion_crlb_mu_batch(b, D, mu, k, f, snr, S0=1.0, fix_k=True):
+    """Vectorized CRLB std for D*eff = mu under the TRUE (dispersion) model.
+
+    The companion to :func:`crlb_dstar_batch`, but built on the dispersion-model
+    signal Jacobian rather than the bi-exponential one -- so the high-D*eff wall
+    can be probed under the model that actually generated the data (the
+    circularity-relevant CRLB). Parameter vector is (D, mu, f, S0) with the
+    dispersion shape ``k`` known (``fix_k=True``, the form-known case directly
+    comparable to the bi-exp 4-parameter CRLB) or jointly estimated as
+    (D, mu, k, f, S0) when ``fix_k=False`` (the honest unknown-shape case; ``k`` is
+    near-unidentifiable as CV -> 0, so the bound there is large by construction).
+
+    Returns an ``(N,)`` array of CRLB(mu) std (``np.inf`` where unidentifiable).
+    Report this LABELED as the dispersion-Jacobian CRLB; the bi-exp-fitted CRLB
+    (``crlb_dstar_batch`` on the best-fit bi-exp params) is the comparison number.
+    """
+    b = np.asarray(b, dtype=float)
+    D = np.asarray(D, dtype=float)
+    mu = np.asarray(mu, dtype=float)
+    k = np.asarray(k, dtype=float)
+    f = np.asarray(f, dtype=float)
+    snr = np.asarray(snr, dtype=float)
+    N = D.shape[0]
+    S0 = np.broadcast_to(np.asarray(S0, dtype=float), (N,))
+    sigma = S0 / snr
+    bb = b[None, :]
+    ed = np.exp(-bb * D[:, None])                        # (N, n_b)
+    kk = k[:, None]
+    u = 1.0 + bb * mu[:, None] / kk                      # (N, n_b)
+    perf = np.power(u, -kk)
+    dD = S0[:, None] * (1.0 - f[:, None]) * (-bb) * ed
+    dmu = -S0[:, None] * f[:, None] * bb * np.power(u, -(kk + 1.0))
+    df = S0[:, None] * (perf - ed)
+    dS0 = (1.0 - f[:, None]) * ed + f[:, None] * perf
+    cols = [dD, dmu, df, dS0]                            # mu is index 1
+    if not fix_k:
+        dk = S0[:, None] * f[:, None] * perf * (1.0 - 1.0 / u - np.log(u))
+        cols = [dD, dmu, dk, df, dS0]                    # mu still index 1
+    J = np.stack(cols, axis=2)                           # (N, n_b, P)
+    info = np.einsum("nbi,nbj->nij", J, J) / (sigma * sigma)[:, None, None]
+    out = np.full(N, np.inf)
+    for i in range(N):
+        try:
+            v = np.linalg.inv(info[i])[1, 1]
+            out[i] = np.sqrt(v) if np.isfinite(v) and v > 0 else np.inf
+        except np.linalg.LinAlgError:
+            out[i] = np.inf
     return out
 
 

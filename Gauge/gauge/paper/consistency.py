@@ -117,6 +117,20 @@ CHECKS = [
      "results/osipi_report.txt", ["deployment monitor on naive transfer: FIRES"]),
     ("OSIPI high-D* identifiability wall replicates on external ground truth",
      "replicates = True", "results/osipi_report.txt", ["replicates = True"]),
+    # --- Alt-forward-model: circularity break + off-model envelope --------------
+    # Numeric coverage/wall values are banded across seeds (see [B-ALTMODEL]);
+    # only the seed-robust qualitative claims trace verbatim here.
+    ("Alt-model ground truth is genuinely non-bi-exponential (dispersion)",
+     "NOT a realization of Eq. (1)", "results/altmodel_report.txt",
+     ["NOT a realization of Eq. (1)"]),
+    ("Arm-1 circularity verdict: wall general (Branch A)", "BRANCH A",
+     "results/altmodel_report.txt", ["BRANCH A -- WALL IS GENERAL / CIRCULARITY BROKEN"]),
+    ("Arm-1 continuity gate: CV=0 dispersion == bi-exp generator (exact)",
+     "max |.| = 0.00e+00", "results/altmodel_report.txt",
+     ["max |S_disp(CV=0) - S_biexp| = 0.00e+00 (numerically exact)"]),
+    ("Arm-2 zero-deviation recovery (dispersion family recovers control)",
+     "within 0.05 of nominal: True", "results/altmodel_report.txt",
+     ["[dispersion] deviation scalar = CV", "within 0.05 of nominal: True"]),
 ]
 
 
@@ -199,6 +213,28 @@ OSIPI_BAND_ASSERTIONS = [
     ("OSIPI wall abs-CRLB growth", "osipi/controlled/wall/abs_growth"),
     ("OSIPI native recal marg D*", "osipi/native/recal/cqr_marg/D*"),
     ("OSIPI native recal hi-D* tercile", "osipi/native/recal/cqr_hiDstar"),
+]
+
+# Alt-forward-model (E) headlines -> altmodel_multiseed.json item keys. Arm-1
+# circularity (co-primary surrogates A & B) + Arm-2 envelope, banded across seeds
+# exactly like the OSIPI numbers. The high-D*eff RECALIBRATED tercile coverage is
+# the decisive circularity-breaker; the wall ratios are the (labeled) CRLB
+# secondaries; the Arm-2 endpoints are the envelope degradation extremes.
+ALTMODEL_BAND_ASSERTIONS = [
+    ("Arm1 A recal marg D*eff", "altmodel/arm1/A/recal/cqr_marg/D*"),
+    ("Arm1 A recal hi-D*eff tercile (decisive)", "altmodel/arm1/A/recal/cqr_hiDstar"),
+    ("Arm1 B recal hi-D*eff tercile (decisive)", "altmodel/arm1/B/recal/cqr_hiDstar"),
+    ("Arm1 A naive hi-D*eff tercile (breaks)", "altmodel/arm1/A/recal/cqr_loDstar"),
+    ("Arm1 A naive monitor AUC", "altmodel/arm1/A/naive/monitor_auc"),
+    ("Arm1 wall dispJac CRLB/width hi (>1=wall)", "altmodel/arm1/wall_dispJac/crlb_over_width/hi"),
+    ("Arm1 wall biexpFit CRLB/width hi", "altmodel/arm1/wall_biexpFit/crlb_over_width/hi"),
+    ("Arm1 wall dispJac abs-CRLB growth", "altmodel/arm1/wall_dispJac/abs_growth"),
+    ("continuity CV=0 recal hi-D* (control)", "altmodel/continuity/cv0_recal_hiDstar_A"),
+    ("Arm2 dispersion dev0 cov D* (recovery)", "altmodel/arm2/dispersion/dev0/cov/D*"),
+    ("Arm2 dispersion dev4 cov f (degraded)", "altmodel/arm2/dispersion/dev4/cov/f"),
+    ("Arm2 triexp dev4 cov D* (degraded)", "altmodel/arm2/triexp/dev4/cov/D*"),
+    ("Arm2 triexp dev4 monitor AUC", "altmodel/arm2/triexp/dev4/auc"),
+    ("Arm2 stretched dev4 cov D* (degraded)", "altmodel/arm2/stretched/dev4/cov/D*"),
 ]
 
 
@@ -314,7 +350,21 @@ def main():
               f"{len(OSIPI_BAND_ASSERTIONS)} valid (n_seeds={osipi_n}); "
               f"{osipi_fail} failed.")
 
-    gate_fail = failed + band_fail + osipi_fail
+    print("-" * 88)
+    print("[B-ALTMODEL] BAND VALIDITY -- alt-forward-model (E) headlines (Arm-1 "
+          "circularity + Arm-2 envelope) lie in their [5,95] band and carry an n_seeds")
+    print("-" * 88)
+    alt_lines, alt_fail, alt_n = _band_checks(
+        "results/altmodel_multiseed.json", ALTMODEL_BAND_ASSERTIONS,
+        "python -m gauge.altmodel sweep 16")
+    for ln in alt_lines:
+        print(ln)
+    if alt_n is not None:
+        print(f"[B-ALTMODEL] band checks: {len(ALTMODEL_BAND_ASSERTIONS)-alt_fail}/"
+              f"{len(ALTMODEL_BAND_ASSERTIONS)} valid (n_seeds={alt_n}); "
+              f"{alt_fail} failed.")
+
+    gate_fail = failed + band_fail + osipi_fail + alt_fail
     verdict = "PASS" if gate_fail == 0 else "FAIL"
     print("=" * 88)
     print("CONSISTENCY SUMMARY (GATE 3, Gauge-CI):")

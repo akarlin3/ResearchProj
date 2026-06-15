@@ -32,3 +32,7 @@ gauge/paper/*.blg
 # results/invivo_real_provenance.json IS committed, the pixel data is not).
 data/
 gauge/paper/Gauge_MRM_cover_letter_B_enhanced.pdf
+
+# Regenerable per-seed alt-forward-model raw quantities (aggregated into
+# results/altmodel_multiseed.json)
+results/altmodel_seeds/

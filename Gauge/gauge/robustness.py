@@ -33,7 +33,8 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 
 from gauge.forward import (ivim_signal, ivim_signal_triexp, add_rician_noise,
-                           add_gaussian_noise, crlb_dstar_batch,
+                           add_gaussian_noise, ivim_signal_dispersion,
+                           ivim_signal_stretched, crlb_dstar_batch,
                            design_crlb_dstar, DEFAULT_B_VALUES)
 from gauge.cohort import (D_RANGE, DSTAR_RANGE, F_RANGE, DEFAULT_SNR_GRID,
                           DEFAULT_SEED)
@@ -73,19 +74,33 @@ def _draw_params(n, rng, prior=None):
 
 
 def _simulate(b, params, snr, rng, noise="rician", model="biexp",
-              triexp=(4.0, 0.25)):
+              triexp=(4.0, 0.25), disp_cv=0.5, beta=1.0):
     """Noisy IVIM signals for given params/SNR under a noise & forward model.
 
     ``model='triexp'`` adds a third compartment at ``Dstar2 = mult*Dstar`` taking
     fraction ``g`` of the perfusion pool (forward-model misspecification; the
-    nominal bi-exp (D,D*,f) stays the coverage target). ``noise='gaussian'`` uses
-    additive Gaussian noise instead of Rician.
+    nominal bi-exp (D,D*,f) stays the coverage target). ``model='dispersion'``
+    replaces the single pseudo-diffusivity D* with a gamma distribution of mean
+    ``D*`` and coefficient-of-variation ``disp_cv`` (shape ``k = 1/disp_cv**2``) --
+    a genuinely non-bi-exponential perfusion mechanism; ``disp_cv=0`` is the exact
+    bi-exp limit. ``model='stretched'`` uses a stretched-exponential perfusion with
+    exponent ``beta`` (``beta=1`` is the exact bi-exp limit). ``noise='gaussian'``
+    uses additive Gaussian noise instead of Rician.
     """
     D, Dstar, f = params[:, 0], params[:, 1], params[:, 2]
     if model == "triexp":
         mult, g = triexp
         clean = ivim_signal_triexp(b[None, :], D[:, None], Dstar[:, None],
                                    f[:, None], mult * Dstar[:, None], g, S0=1.0)
+    elif model == "dispersion":
+        # D* column is reinterpreted as the gamma MEAN mu; k = 1/CV^2 (inf at CV=0
+        # -> exact bi-exp limit, handled inside the kernel).
+        k = np.inf if disp_cv <= 0 else 1.0 / (disp_cv * disp_cv)
+        clean = ivim_signal_dispersion(b[None, :], D[:, None], Dstar[:, None],
+                                       k, f[:, None], S0=1.0)
+    elif model == "stretched":
+        clean = ivim_signal_stretched(b[None, :], D[:, None], Dstar[:, None],
+                                      f[:, None], beta, S0=1.0)
     else:
         clean = ivim_signal(b[None, :], D[:, None], Dstar[:, None],
                             f[:, None], S0=1.0)
