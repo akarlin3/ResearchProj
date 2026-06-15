@@ -51,22 +51,34 @@ Fisher-information / Cram\'er--Rao analysis diagnoses the residual gap; weighted
 exchangeability; a qualitative in-vivo demonstration is included.
 
 \noindent
-\textbf{Results:} Model-based IVIM UQ is overconfident \emph{broadly} across $D$,
-$\Dstar$, and $f$ (not specifically pseudo-diffusion), so the naive marginal
-hypothesis is rejected. Conformal and conformalized methods restore near-nominal
+\textbf{Results:} Among credible model-based baselines (MDN deep
+ensemble, per-voxel Bayesian MCMC), marginal overconfidence is mild and broad
+rather than $\Dstar$-specific (gaps $0.024$--$0.045$); a deliberately weak point
+ensemble under-covers severely and is reported only to show the conformal layer
+restores coverage from a poor base. The naive $\Dstar$-concentrated hypothesis is
+rejected, and the conformal layer's value is the finite-sample guarantee, not the
+magnitude of correction. Conformal and conformalized methods restore near-nominal
 marginal coverage everywhere ($|\text{gap}|\le 0.024$), and conformalizing the MDN
 is the sharpest valid recipe ($0.65$--$0.77\times$ pure-CQR width). The real
-failure is conditional: the high-$\Dstar$ regime under-covers for every method
-(robustly at low-to-moderate SNR), and no label-free method closes the gap because the Cram\'er--Rao bound
-on $\Dstar$ reaches the regime-bin width -- an irreducible identifiability limit.
+failure is conditional: the high-$\Dstar$ regime under-covers for every method we
+tested (robustly at low-to-moderate SNR). The barrier is latent-axis conditioning
+-- coverage conditional on the true $\Dstar$ regime, an axis the data do not reveal
+-- i.e.\ the IVIM instance of the known impossibility of distribution-free
+conditional coverage~\citep{barber2021limits}. A Fisher-information /
+Cram\'er--Rao analysis shows $\Dstar$ point-identifiability also collapses in the
+same regime (the CRLB reaches the regime-bin width): a concomitant diagnostic, not
+the proven cause of the coverage failure.
 The wall is robust to the b-value scheme; weighted conformal recovers covariate
 shift but not forward-model misspecification; the monitor fires before coverage
 fails but is blind to the latent gap.
 
 \noindent
 \textbf{Conclusion:} The central finding is an IVIM-specific identifiability
-boundary: high-$\Dstar$ regime-conditional coverage is unrecoverable by any
-label-free method because the Cram\'er--Rao bound exceeds the regime resolution.
+boundary: high-$\Dstar$ regime-conditional coverage is unrecoverable by the
+label-free methods we tested -- the IVIM instance of the established impossibility
+of distribution-free conditional coverage~\citep{barber2021limits}. The
+Cram\'er--Rao bound, which exceeds the regime resolution here, is a concomitant
+point-identifiability diagnostic rather than the demonstrated cause.
 Conformal prediction supplies the finite-sample marginal guarantee model-based
 IVIM UQ lacks -- and conformalizing a strong base is the sharpest valid recipe --
 but its deeper value here is diagnostic: it draws the line the data themselves
@@ -116,14 +128,18 @@ unstable $\Dstar$ (and secondarily $f$) compartment, exactly where model-based U
 is documented weak. The data reject the \emph{marginal} form of that hypothesis and
 replace it with a sharper, IVIM-specific finding. Our contributions are:
 \begin{enumerate}
-\item \textbf{An irreducible identifiability limit, characterized.} The genuine
+\item \textbf{An identifiability limit, characterized in IVIM.} The genuine
 IVIM-specific phenomenon is conditional: the high-$\Dstar$ regime under-covers
-universally, eleven label-free conditioning methods fail to close the gap, and a
-Fisher-information / Cram\'er--Rao analysis shows why -- the bound on $\Dstar$
-reaches the regime-bin width, so the compartment cannot be localized from the data
-(Secs.~\ref{sec:conditional}--\ref{sec:identifiability}). This is the central
-contribution; the conformal layer below is what renders the limit measurable and
-proves it is information-theoretic, not methodological.
+across eleven label-free conditioning methods
+(Secs.~\ref{sec:conditional}--\ref{sec:identifiability}). We separate two facts the
+regime ties together. (i) Coverage conditional on the true $\Dstar$ regime is not
+label-free-attainable because that regime is a latent axis the data do not reveal
+-- the IVIM instance of the known impossibility of distribution-free conditional
+coverage~\citep{barber2021limits}. (ii) Independently, a Fisher-information /
+Cram\'er--Rao analysis shows $\Dstar$ is poorly point-identified in the same regime
+(the CRLB reaches the regime-bin width). The conformal layer renders the
+conditional limit measurable; our evidence is that it is a property of the
+bi-exponential model class and the data, not of our particular estimator.
 \item \textbf{The first conformal/CQR coverage for IVIM, benchmarked.} We bring
 distribution-free conformal prediction to the ill-posed IVIM inverse problem with
 validated finite-sample marginal coverage for $(D,\Dstar,f)$, and the first
@@ -170,7 +186,11 @@ distribution-free coverage for any base predictor under exchangeability;
 conformalized quantile regression~\citep{romano2019} makes the intervals
 input-adaptive, and the framework extends to covariate
 shift~\citep{tibshirani2019,barber2023} and to localized and conditional
-guarantees~\citep{guan2023,gibbs2023}. In imaging it has been applied to
+guarantees~\citep{guan2023,gibbs2023}. Distribution-free \emph{conditional}
+coverage is, however, known to be unattainable in general without distributional
+assumptions~\citep{barber2021limits}; this impossibility is exactly what surfaces,
+in IVIM-specific form, when the conditioning axis is the unidentifiable $\Dstar$
+regime. In imaging it has been applied to
 distribution-free image-to-image regression and uncertainty
 maps~\citep{angelopoulos2022}, to deployment concerns such as fairness in
 medical-imaging predictors~\citep{lu2022}, and -- closest to this work -- to
@@ -214,7 +234,9 @@ Four standard, independent model-based UQ baselines emit per-parameter intervals
 the matched cohort: a single probabilistic NN (Gaussian NLL head); a deep ensemble
 of mixture-density networks~\citep{bishop1994,lakshminarayanan2017} following the
 Casali approach~\citep{casali2026} with an aleatoric/epistemic split; a plain deep
-ensemble of point regressors (epistemic-only; deliberately weak); and a per-voxel
+ensemble of point regressors (epistemic-only; deliberately weak, retained as a
+worst-case base for the conformal layer rather than as a representative model-based
+method); and a per-voxel
 Bayesian fit by component-wise adaptive Metropolis (fed the true noise level, so it
 is evaluated at its best). A parallel line of work uses normalizing-flow /
 simulation-based posterior estimation for microstructure inference; this work is
@@ -281,6 +303,11 @@ conformalized: Bayesian  & 0.895 (+0.005) & 0.894 (+0.006) & 0.876 (+0.024) \\
 Averaging the gap over $\alpha$, the marginal under-coverage is broad, not
 $\Dstar/f$-concentrated: per-method worst compartments are $f$ (PNN, $0.125$), $f$
 (MDN, $0.037$), $\Dstar$ (DeepEnsemble-Point, $0.452$), and $f$ (Bayesian, $0.045$).
+Excluding the deliberately weak DeepEnsemble-Point, the credible baselines are only
+mildly overconfident (worst-compartment gaps $0.037$ for the MDN ensemble and
+$0.045$ for Bayesian-MCMC); the weak ensemble (worst-compartment gap $0.452$) is
+retained solely as a stress case for the conformal layer, not as evidence that
+model-based UQ is severely overconfident.
 \textbf{$0/4$ methods} show $\Dstar/f$-concentrated under-coverage; for the MDN
 ensemble $\Dstar$ is in fact among the \emph{better}-covered parameters
 marginally (gap $0.029$), because its large aleatoric variance widens its band. The naive
@@ -373,9 +400,13 @@ localized to its own tercile from the data, so no observable can route it to a
 wider-interval stratum. Conformal interval width correctly tracks the per-voxel
 CRLB (log--log $r=0.76$\band{0.72}{0.77}): the intervals are honest, not broken.
 \end{itemize}
-\textbf{Verdict.} High-$\Dstar$ regime-conditional coverage in IVIM is an
-\emph{irreducible identifiability limit}. We therefore \emph{characterize} the
-limit; we do not claim to solve it.
+\textbf{Verdict.} High-$\Dstar$ regime-conditional coverage in IVIM is
+unrecoverable label-free for two compounding reasons. The conditioning axis (true
+$\Dstar$ regime) is latent and unidentifiable, so distribution-free conditional
+coverage on it is impossible~\citep{barber2021limits} -- this is the operative
+barrier to coverage. Separately, $\Dstar$ is poorly point-identified there
+(CRLB $\approx$ regime-bin width) -- this is why even the point map is
+untrustworthy. We \emph{characterize} the limit; we do not claim to solve it.
 
 \begin{figure}[t]
 \centering
@@ -565,7 +596,12 @@ inadvertently matched \emph{longitudinal} timepoints months apart, confounded by
 interval treatment.) Across $n{=}76$ tumors we ask, label-free, whether the
 conformal interval width \emph{tracks} the scan--rescan variability of the plug-in
 estimate (region-level over the whole-tumor ROI; the two repeats are unregistered,
-so this is not a per-voxel statement). For the well-identified tissue diffusion $D$,
+so this is not a per-voxel statement). The identifiability wall makes a directional
+prediction we fix before looking: the interval width should track measured
+scan--rescan repeatability for the well-identified diffusion compartment $D$, and
+should track it weakly or not at all for $\Dstar$, whose regime the data cannot
+resolve. A positive $\Dstar$ association would count against the wall. For the
+well-identified tissue diffusion $D$,
 the conformal $D$-width is associated with the measured scan--rescan
 $|\Delta\mathrm{ADC}|$ (Spearman $r=+0.60$, $p<0.001$, 95\% CI $[0.42,0.72]$ by
 BCa bootstrap): the interval \emph{widens where the real measurement is least
@@ -573,9 +609,10 @@ repeatable}. At $n{=}76$ the association is now \textbf{robust} (the CI excludes
 zero, versus the wide interval at the earlier $n{=}11$), and stable across field
 strength (1.5\,T $r{=}{+}0.58$, $n{=}49$; 3.0\,T $r{=}{+}0.50$, $n{=}27$) and
 pretreatment-only ($r{=}{+}0.61$, $n{=}65$). For $\Dstar$ the association is not
-significant ($r=-0.17$, $p=0.13$, 95\% CI $[-0.39,0.05]$ spanning zero), consistent
-with the identifiability wall---the relationship is demonstrable for the parameter
-the data identify and unresolvable for the one they do not. This is a
+significant ($r=-0.17$, $p=0.13$, 95\% CI $[-0.39,0.05]$ spanning zero), matching
+the pre-stated prediction: the association holds for the parameter the data
+identify ($D$) and is absent for the one they do not ($\Dstar$). The $\Dstar$ null
+is the predicted outcome, not a post-hoc reading. This is a
 repeatability-tracking check, \emph{not} a statement of validation, accuracy,
 calibration, or coverage.
 
@@ -669,10 +706,13 @@ at nominal ($0.899$\band{0.859}{0.931}). On the OSIPI ground truth at our
 acquisition the CRLB$(\Dstar)$/tercile-width ratio rises $0.46\!\to\!0.86\!\to\!1.53$
 (\band{1.407}{1.753} at high $\Dstar$) with the absolute CRLB growing
 $3.5\times$\band{3.1}{4.0} -- the same wall as Fig.~\ref{fig:crlb}, on a digital
-reference object we did not build. (In the native high-SNR regime the CRLB ratio
-stays below $1$, yet the conditional gap persists, consistent with the
-observable-vs-latent reading: the gap is about conditioning on an axis the data do
-not identify, not raw CRLB magnitude.) That the wall reproduces on an external
+reference object we did not build. This regime also dissociates the two mechanisms
+directly: in the native high-SNR setting the CRLB ratio stays below $1$, yet the
+conditional gap persists. The coverage failure therefore survives where the CRLB
+does \emph{not} exceed the bin width, so it is driven by conditioning on a latent
+axis the data do not identify~\citep{barber2021limits}, not by CRLB magnitude. CRLB
+magnitude governs point-identifiability; latent conditioning governs label-free
+coverage. That the wall reproduces on an external
 ground truth is strong evidence it is information-theoretic, intrinsic to the
 bi-exponential model and the data, rather than an artifact of our particular
 forward model or prior.
@@ -708,12 +748,19 @@ monitoring is provably blind to shifts that leave observable statistics unchange
 (a ``hidden channel''), and the absence of in-vivo ground truth (the ``Echo
 tension'') forecloses any direct coverage check on real data. We read these not as
 failures of conformal prediction -- whose guarantee is exactly as advertised -- but
-as a recurring \emph{identifiability} boundary: distribution-free tools deliver
-everything the data identify and nothing they do not. Practically, this argues for
-(i) conformalizing a strong model-based base (sharpest valid intervals), (ii)
-deploying an observable monitor to guard exchangeability, and (iii) reporting the
-high-$\Dstar$ compartment as characterized-but-unresolved rather than trusting a
-point map there.
+as the IVIM instance of a known boundary~\citep{barber2021limits}:
+distribution-free tools deliver everything the data identify and nothing they do
+not. On what this delivers, stated plainly: the finite-sample coverage guarantee is
+a property of the synthetic calibration and transfers in vivo only under an
+exchangeability assumption that cannot be verified where no ground truth exists --
+it is not an in-vivo coverage claim. What the method adds over the existing IVIM
+repeatability literature is mechanistic and operational, not a usable per-voxel
+in-vivo interval: (i) conformalizing a strong model-based base gives the sharpest
+valid intervals on synthetic data; (ii) an observable monitor guards exchangeability
+at deployment, while remaining blind to the latent high-$\Dstar$ gap by
+construction; and (iii) the high-$\Dstar$ compartment is reported as
+characterized-but-unresolved, with a per-voxel reason -- the identifiability wall --
+rather than a trusted point map.
 
 \section{Limitations}
 Our coverage results are \emph{synthetic-primary} by necessity: conformal
