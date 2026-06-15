@@ -31,3 +31,4 @@ gauge/paper/*.blg
 # redistributed here -- fetch with scripts/fetch_invivo.py; provenance manifest
 # results/invivo_real_provenance.json IS committed, the pixel data is not).
 data/
+gauge/paper/Gauge_MRM_cover_letter_B_enhanced.pdf
