@@ -722,7 +722,7 @@ def _make_figures(payload, cc, methods, dtrue, regime):
     ax.set_xticklabels(order, rotation=35, ha="right", fontsize=8)
     ax.set_ylabel("coverage on high-D* (top true-D* tercile)")
     ax.set_ylim(0.45, 1.0)
-    ax.set_title("Gauge 03: no label-free method closes the high-D* "
+    ax.set_title("No label-free method closes the high-D* "
                  "conditional-coverage gap")
     ax.legend(loc="lower right", fontsize=8)
     fig.tight_layout()
@@ -755,9 +755,8 @@ def _make_figures(payload, cc, methods, dtrue, regime):
     a2.set_ylabel(f"conformal interval width (1e-3)\n[{payload['best_method']}]")
     a2.set_xscale("log")
     a2.set_yscale("log")
-    a2.set_title(f"conformal width tracks CRLB (log-log r="
-                 f"{payload['width_corr']:.2f})\nintervals widen honestly "
-                 f"where D* is unidentifiable")
+    a2.set_title("conformal width tracks CRLB (log-log)\nintervals widen "
+                 "honestly where D* is unidentifiable")
     fig.colorbar(sc, ax=a2, label="true D* (1e-3)")
     fig.tight_layout()
     fig.savefig(os.path.join(_FIG_DIR, "crlb_identifiability.pdf"))
