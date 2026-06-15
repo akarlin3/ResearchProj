@@ -217,7 +217,7 @@ Casali approach~\citep{casali2026} with an aleatoric/epistemic split; a plain de
 ensemble of point regressors (epistemic-only; deliberately weak); and a per-voxel
 Bayesian fit by component-wise adaptive Metropolis (fed the true noise level, so it
 is evaluated at its best). A parallel line of work uses normalizing-flow /
-simulation-based posterior estimation for microstructure inference; Gauge is
+simulation-based posterior estimation for microstructure inference; this work is
 deliberately \emph{independent} of it (own forward model, own cohort, standard
 baselines) and does not use it as a baseline.
 
@@ -756,7 +756,7 @@ driver (\texttt{python -m gauge.multiseed}); seed-0 outputs are byte-identical
 across independent full re-runs.
 
 \section{Conclusion}
-Gauge brings distribution-free conformal coverage to the ill-posed IVIM inverse
+This work brings distribution-free conformal coverage to the ill-posed IVIM inverse
 problem and benchmarks it against model-based UQ. The naive hypothesis -- that the
 conformal advantage concentrates marginally in $\Dstar/f$ -- is rejected:
 model-based IVIM UQ is overconfident broadly, conformal restores coverage
@@ -775,7 +775,8 @@ in-vivo dataset is required to reproduce them. The complete source code, the gat
 checkpoint outputs from which every number in this paper is drawn, the figures, and
 a machine-checked consistency script (\texttt{gauge/paper/consistency.py}) are
 openly available in the project repository and permanently archived at
-\href{https://doi.org/10.5281/zenodo.20686274}{https://doi.org/10.5281/zenodo.20686274}.
+\href{https://doi.org/10.5281/zenodo.20686273}{https://doi.org/10.5281/zenodo.20686273}
+(the all-versions DOI, which resolves to the latest archived release).
 The qualitative in-vivo cross-check (Sec.~\ref{sec:invivo-real}) applies the
 as-deployed predictor and monitor to real multi-$b$ DWI from the publicly available
 ACRIN-6698 / I-SPY2 Breast DWI collection (The Cancer Imaging Archive;

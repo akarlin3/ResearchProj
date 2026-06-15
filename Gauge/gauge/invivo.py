@@ -672,7 +672,7 @@ def _make_figure_real(r):
                   f"{'FIRES' if r['monitor_fires'] else 'silent'} "
                   f"(AUC {r['monitor_auc']:.2f})")
     ax2.legend(fontsize=7)
-    fig.suptitle("Gauge in-vivo, qualitative, NO coverage claim "
+    fig.suptitle("In-vivo, qualitative, NO coverage claim "
                  "(real DWI; b={0,100,600,800} s/mm^2)", fontsize=9)
     fig.tight_layout(rect=(0, 0, 1, 0.96))
     fig.savefig(_REAL_FIG)
@@ -1185,7 +1185,7 @@ def make_real_image_maps(exam_dir, slice_idx=None, seed=SEED):
     ax.axis("off")
     fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 
-    fig.suptitle("Gauge in vivo (real DWI, qualitative -- NO coverage claim): "
+    fig.suptitle("In vivo (real DWI, qualitative -- NO coverage claim): "
                  "anatomy, perfusion estimate, and per-voxel conformal uncertainty",
                  fontsize=9)
     fig.tight_layout(rect=(0, 0, 1, 0.95))
