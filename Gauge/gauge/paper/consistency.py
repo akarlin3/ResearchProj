@@ -2,7 +2,7 @@
 
 This re-reads the committed, seeded checkpoint outputs (results/*.txt, POSITIONING.md,
 gauge/results*.md) from Gauge 01-04 and asserts that each headline number used in
-gauge/paper/gauge.tex appears VERBATIM in its source printout. It is the executable
+gauge/paper/gauge_v3_revised.tex appears VERBATIM in its source printout. It is the executable
 form of the "run-then-write; every number traces to a gated CP output" discipline.
 
 Run:  python gauge/paper/consistency.py     # prints per-claim PASS/FAIL + summary
@@ -96,11 +96,27 @@ CHECKS = [
      "results/invivo_real_report.txt", ["AUC(cal vs in-vivo) = 0.97"]),
     ("REAL in-vivo D* band widths 10/50/90th pct", "[63.7, 78.7, 86.4]",
      "results/invivo_real_report.txt", ["63.7", "78.7", "86.4"]),
-    ("REAL in-vivo test-retest D-width vs ADC repeatability (Spearman)",
-     "+0.69 (p=0.019, n=11)",
-     "results/invivo_real_retest_report.txt", ["+0.69 (p=0.019, n=11)"]),
-    ("REAL in-vivo test-retest D* not significant", "-0.49 (p=0.125, n=11)",
-     "results/invivo_real_retest_report.txt", ["-0.49 (p=0.125, n=11)"]),
+    ("REAL in-vivo same-day test-retest arm size (TrT0/TrT1; supersedes n=11)",
+     "n=76 pairs", "results/invivo_real_retest_report.txt",
+     ["n=76 pairs (ACRIN-6698 TrT0/TrT1, same-visit)"]),
+    ("REAL in-vivo test-retest D-width vs ADC repeatability (Spearman, 95% CI)",
+     "+0.60 (p=0.000, n=76), 95% CI [0.42, 0.72]",
+     "results/invivo_real_retest_report.txt",
+     ["+0.60 (p=0.000, n=76), 95% CI [0.42, 0.72]"]),
+    ("REAL in-vivo test-retest D* not significant (CI spans zero)",
+     "-0.17 (p=0.133, n=76), 95% CI [-0.39, 0.05]",
+     "results/invivo_real_retest_report.txt",
+     ["-0.17 (p=0.133, n=76), 95% CI [-0.39, 0.05]"]),
+    # --- Task 1: OSIPI external SYNTHETIC reference (qualitative, seed-robust) ---
+    # The numeric OSIPI coverage/wall values are banded across seeds (see [B]
+    # OSIPI band block); only the seed-robust qualitative claims trace verbatim.
+    ("OSIPI external reference is synthetic, NO in-vivo coverage claim",
+     "no in-vivo coverage claim", "results/osipi_report.txt",
+     ["No in-vivo coverage claim is made"]),
+    ("OSIPI naive-transfer deployment monitor fires (shift observable)", "FIRES",
+     "results/osipi_report.txt", ["deployment monitor on naive transfer: FIRES"]),
+    ("OSIPI high-D* identifiability wall replicates on external ground truth",
+     "replicates = True", "results/osipi_report.txt", ["replicates = True"]),
 ]
 
 
@@ -166,21 +182,41 @@ BAND_ASSERTIONS = [
     ("acq dense CRLB/width", "robustness/acq/dense (22 b)/crlb_over_width"),
 ]
 
+# Task 1: OSIPI external-phantom (E) headlines -> osipi_multiseed.json item keys.
+# Across-seed banded exactly like the attack/robustness (E) numbers above. The
+# point = across-seed mean lies in its own [5,95]/observed span by construction;
+# the gate confirms each shipped number carries a real multi-seed band.
+OSIPI_BAND_ASSERTIONS = [
+    ("OSIPI recal marg D", "osipi/controlled/recal/cqr_marg/D"),
+    ("OSIPI recal marg D*", "osipi/controlled/recal/cqr_marg/D*"),
+    ("OSIPI recal marg f", "osipi/controlled/recal/cqr_marg/f"),
+    ("OSIPI naive marg D* (breaks)", "osipi/controlled/naive/cqr_marg/D*"),
+    ("OSIPI recal hi-D* tercile", "osipi/controlled/recal/cqr_hiDstar"),
+    ("OSIPI naive monitor AUC", "osipi/controlled/naive/monitor_auc"),
+    ("OSIPI wall CRLB/width lo", "osipi/controlled/wall/crlb_over_width/lo"),
+    ("OSIPI wall CRLB/width mid", "osipi/controlled/wall/crlb_over_width/mid"),
+    ("OSIPI wall CRLB/width hi", "osipi/controlled/wall/crlb_over_width/hi"),
+    ("OSIPI wall abs-CRLB growth", "osipi/controlled/wall/abs_growth"),
+    ("OSIPI native recal marg D*", "osipi/native/recal/cqr_marg/D*"),
+    ("OSIPI native recal hi-D* tercile", "osipi/native/recal/cqr_hiDstar"),
+]
 
-def _band_checks():
-    """Validate the multi-seed bands. Returns (lines, n_fail, n_seeds)."""
+
+def _band_checks(rel_path="results/multiseed.json", assertions=BAND_ASSERTIONS,
+                 runner="python -m gauge.multiseed"):
+    """Validate the multi-seed bands in ``rel_path``. Returns (lines, n_fail, n_seeds)."""
     import json
-    path = os.path.join(ROOT, "results", "multiseed.json")
+    path = os.path.join(ROOT, rel_path)
     lines, n_fail = [], 0
     if not os.path.exists(path):
-        return (["  (results/multiseed.json absent -- run `python -m gauge.multiseed`"
+        return ([f"  ({rel_path} absent -- run `{runner}`"
                  " first; band checks skipped)"], 0, None)
     with open(path) as fh:
         ms = json.load(fh)
     items, n_seeds = ms["items"], ms["n_seeds"]
     eps = 1e-6
     n_tail = 0
-    for label, key in BAND_ASSERTIONS:
+    for label, key in assertions:
         it = items.get(key)
         if it is None:
             n_fail += 1
@@ -264,7 +300,21 @@ def main():
         print(f"[B] band checks: {len(BAND_ASSERTIONS)-band_fail}/"
               f"{len(BAND_ASSERTIONS)} valid (n_seeds={n_seeds}); {band_fail} failed.")
 
-    gate_fail = failed + band_fail
+    print("-" * 88)
+    print("[B-OSIPI] BAND VALIDITY -- OSIPI external-phantom (E) headlines lie in "
+          "their [5,95] band and carry an n_seeds")
+    print("-" * 88)
+    osipi_lines, osipi_fail, osipi_n = _band_checks(
+        "results/osipi_multiseed.json", OSIPI_BAND_ASSERTIONS,
+        "python -m gauge.osipi sweep 16")
+    for ln in osipi_lines:
+        print(ln)
+    if osipi_n is not None:
+        print(f"[B-OSIPI] band checks: {len(OSIPI_BAND_ASSERTIONS)-osipi_fail}/"
+              f"{len(OSIPI_BAND_ASSERTIONS)} valid (n_seeds={osipi_n}); "
+              f"{osipi_fail} failed.")
+
+    gate_fail = failed + band_fail + osipi_fail
     verdict = "PASS" if gate_fail == 0 else "FAIL"
     print("=" * 88)
     print("CONSISTENCY SUMMARY (GATE 3, Gauge-CI):")

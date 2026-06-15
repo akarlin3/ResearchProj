@@ -8,6 +8,8 @@ cd "$HERE"
 echo "[1/2] GATE 3 consistency check (numbers trace to gated CP printouts)"
 python consistency.py
 
-echo "[2/2] compiling gauge.tex with tectonic"
-tectonic gauge.tex
-echo "built: $HERE/gauge.pdf"
+echo "[2/2] compiling gauge_v3_revised.tex with tectonic"
+tectonic gauge_v3_revised.tex
+# Canonical committed artifact keeps its established name.
+cp -f gauge_v3_revised.pdf gauge_v3_revised_R2.pdf
+echo "built: $HERE/gauge_v3_revised_R2.pdf"
