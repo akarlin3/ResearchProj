@@ -30,12 +30,12 @@ Maps, and the Identifiability Wall in the Pseudo-Diffusion Compartment}}
 
 \begin{abstract}
 \noindent
-\textbf{Purpose:} To establish and characterize the irreducible identifiability
+\textbf{Purpose:} To establish and characterize the identifiability
 limit that governs per-voxel uncertainty in the ill-posed pseudo-diffusion
 compartment ($\Dstar$) of intravoxel incoherent motion (IVIM) imaging -- using
 distribution-free conformal prediction both as the finite-sample coverage tool
 that model-based uncertainty quantification (UQ) lacks and as the lens that
-exposes where \emph{no} label-free method can succeed -- and to benchmark that
+exposes where label-free conditioning cannot succeed -- and to benchmark that
 conformal layer head-to-head against model-based IVIM UQ.
 
 \noindent
@@ -385,7 +385,7 @@ highest SNR) and resists SNR-Mondrian.}
 \label{fig:heatmap}
 \end{figure}
 
-\subsection{The high-$\Dstar$ gap is an irreducible identifiability limit}
+\subsection{The high-$\Dstar$ gap is a latent-axis identifiability limit}
 \label{sec:identifiability}
 We attacked the high-$\Dstar$ gap with eleven \emph{label-free} conditioning
 methods -- plug-in Mondrian by estimated $\hat{\Dstar}$, localized conformal on
@@ -779,7 +779,11 @@ $\sim33\%$), so any coverage change would have to arise \emph{despite} routing, 
 by repairing it. Trading variance for bias buys point precision in the identified
 terciles but not conditional coverage where the conditioning axis is latent:
 consistent with the identifiability reading, the barrier is information, not point
-precision. This strengthens the claim within its scope -- it now holds even for a
+precision. The argument is mechanism-level -- any centre-pulling bias trades
+variance for bias, and in the high-$\Dstar$ tercile the bias dominates -- so it
+brackets the historically $\Dstar$-stabilizing prior-shrinkage Bayesian
+fit~\citep{gurneychampion2018} rather than hinging on one prior choice. This
+strengthens the claim within its scope -- it now holds even for a
 deliberately biased prior-shrinkage method -- but remains a statement about the
 label-free methods we tested, not about any conceivable estimator.
 
@@ -812,9 +816,12 @@ of Eq.~\eqref{eq:ivim} itself, we regenerate the cohort from a genuinely
 (coefficient of variation $0.5$, shape $k=4$) whose signal is \emph{not} a
 realization of Eq.~\eqref{eq:ivim}. Because such a signal has no single ``true''
 $\Dstar$, we report the effective pseudo-diffusion $\Dstar_{\mathrm{eff}}$ on two
-co-primary axes: (A) the analytic perfusion log-slope (the gamma mean, defined
-without reference to a bi-exponential fit, so the test is non-circular) and (B) the
-best-fit bi-exponential $\Dstar$. Calibration and recalibration use the OSIPI
+axes: a primary, non-circular axis (A) the analytic perfusion log-slope (the gamma
+mean, defined without reference to a bi-exponential fit) and a corroborating axis
+(B) the best-fit bi-exponential $\Dstar$. The non-circularity of the test rests on
+axis A; axis B, which defines the regime by fitting Eq.~\eqref{eq:ivim} to signals
+Eq.~\eqref{eq:ivim} did not generate, is reported only to confirm the two
+definitions agree. Calibration and recalibration use the OSIPI
 within-distribution harness (Sec.~\ref{sec:osipi}).
 
 After recalibrating \emph{within} the dispersion distribution, marginal coverage is
@@ -870,7 +877,7 @@ bi-exponential origin, rather than one probe.
 \caption{Alternative forward model. (A) Arm~1 -- $\Dstar_{\mathrm{eff}}$-tercile
 conditional coverage when the ground truth is a non-bi-exponential velocity-dispersion
 process: after within-distribution recalibration the high-$\Dstar_{\mathrm{eff}}$
-gap persists on both co-primary surrogates (gamma mean A, bi-exp-fit B), while naive
+gap persists on both surrogate axes (primary gamma mean A, corroborating bi-exp-fit B), while naive
 transfer breaks. (B) Arm~2 -- marginal $\Dstar$ coverage degrades monotonically as
 the forward model deviates from bi-exponential across three families, recovering to
 nominal at zero deviation. (C) Arm~2 -- the deployment monitor's AUC vs.\ deviation:
@@ -959,7 +966,8 @@ old$\to$new point map in \texttt{results/ci\_rebaseline\_table.txt}). The full
 pipeline regenerates deterministically from seed \texttt{20260613}
 (\texttt{python -m gauge.baselines}; \texttt{gauge.benchmark};
 \texttt{gauge.conditional}; \texttt{gauge.conditional\_attack};
-\texttt{gauge.robustness}; \texttt{gauge.invivo}), and the bands from the multi-seed
+\texttt{gauge.robustness}; \texttt{gauge.invivo}; \texttt{gauge.dissociation};
+\texttt{gauge.altmodel}), and the bands from the multi-seed
 driver (\texttt{python -m gauge.multiseed}); seed-0 outputs are byte-identical
 across independent full re-runs.
 
@@ -967,11 +975,17 @@ across independent full re-runs.
 This work brings distribution-free conformal coverage to the ill-posed IVIM inverse
 problem and benchmarks it against model-based UQ. The naive hypothesis -- that the
 conformal advantage concentrates marginally in $\Dstar/f$ -- is rejected:
-model-based IVIM UQ is overconfident broadly, conformal restores coverage
-everywhere, and conformalizing the MDN is the sharpest valid recipe. The genuine
+among credible model-based baselines the marginal overconfidence is mild and
+broad rather than $\Dstar$-specific, conformal restores coverage everywhere, and
+conformalizing the MDN is the sharpest valid recipe. The genuine
 IVIM-specific phenomenon is conditional: the high-$\Dstar$ regime under-covers
-universally, and a Fisher-information analysis shows this is an irreducible
-identifiability limit that no label-free method can close. We therefore characterize
+for every label-free method we tested -- including a deliberately biased
+shrinkage estimator -- and the gap replicates under a non-bi-exponential
+generator. This is the IVIM instance of the known impossibility of
+distribution-free conditional coverage~\citep{barber2021limits}: the conditioning
+axis, the true $\Dstar$ regime, is latent and unidentifiable. The Cram\'er--Rao
+bound, which exceeds the regime resolution here, is a concomitant
+point-identifiability diagnostic, not the demonstrated cause. We therefore characterize
 the limit -- and provide the robustness tooling, acquisition analysis, and
 qualitative in-vivo demonstration that frame how an honest, distribution-free IVIM
 uncertainty map should be deployed and monitored.
