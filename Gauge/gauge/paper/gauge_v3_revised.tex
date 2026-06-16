@@ -33,36 +33,32 @@ Maps, and the Identifiability Wall in the Pseudo-Diffusion Compartment}}
 uncertainty in the ill-posed pseudo-diffusion compartment ($\Dstar$) of intravoxel
 incoherent motion (IVIM) imaging, using distribution-free conformal prediction both
 as the finite-sample coverage tool model-based uncertainty quantification (UQ) lacks
-and as the lens exposing where label-free conditioning cannot succeed.
+and a lens on where label-free conditioning fails.
 
 \noindent
 \textbf{Methods:} On a controlled, seeded synthetic cohort, we compare
 split-conformal and conformalized quantile regression (CQR) against four model-based
 baselines (probabilistic network, mixture-density ensemble, deep ensemble, Bayesian
 MCMC), measuring marginal and (SNR $\times$ true-$\Dstar$-tercile) conditional
-coverage with 16-seed confidence bands; a Fisher-information / Cram\'er--Rao analysis
+coverage with 16-seed confidence bands; a Cram\'er--Rao (CRLB) analysis
 diagnoses the residual gap.
 
 \noindent
-\textbf{Results:} The genuine IVIM-specific failure is conditional: the
-high-$\Dstar$ regime under-covers for every label-free method we tested -- the IVIM
-instance of the known impossibility of distribution-free conditional
-coverage~\citep{barber2021limits}. The Cram\'er--Rao bound, which reaches the
-regime-bin width here, is a concomitant point-identifiability diagnostic, not the
-proven cause. Conformal and conformalized methods restore near-nominal marginal
-coverage ($|\text{gap}|\le 0.024$), and conformalizing the MDN is the sharpest valid
-recipe ($0.65$--$0.77\times$ pure-CQR width). The wall replicates on external OSIPI
-ground truth, under a non-bi-exponential generator, and under a clinically realistic
-prior.
+\textbf{Results:} The failure is conditional: the high-$\Dstar$ regime
+under-covers for every label-free method tested -- the IVIM instance of the
+impossibility of distribution-free conditional coverage~\citep{barber2021limits};
+the Cram\'er--Rao bound reaches the regime-bin width here, a concomitant diagnostic,
+not the cause. Conformal methods restore near-nominal marginal coverage
+($|\text{gap}|\le 0.024$), and conformalizing the MDN is the sharpest valid recipe
+($0.65$--$0.77\times$ pure-CQR width). The wall replicates on OSIPI ground truth,
+under a non-bi-exponential generator, and a clinically realistic prior.
 
 \noindent
-\textbf{Conclusion:} High-$\Dstar$ regime-conditional coverage is unrecoverable by
-the label-free methods we tested -- the IVIM instance of the established
-impossibility of distribution-free conditional coverage. We characterize this limit,
-not solve it, and make no in-vivo coverage claim. In practice this is a triage rule:
-trust the well-identified diffusion map $D$, read high-$\Dstar$ as
-characterized-but-unresolved, and rely on the label-free deployment monitor as the
-deployment safeguard.
+\textbf{Conclusion:} High-$\Dstar$ conditional coverage is unrecoverable by the
+label-free methods tested; we characterize this limit, not solve it, and make no
+in-vivo coverage claim. In practice this is a triage rule: trust the well-identified
+diffusion map $D$, read high-$\Dstar$ as unresolved, and rely on the label-free
+deployment monitor as a safeguard.
 \end{abstract}
 
 \vspace{0.5em}
