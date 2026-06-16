@@ -659,11 +659,14 @@ def _make_figure(payload, v):
     ax[1].set_title(f"(B) Arm A: hi-D* wall (prev={a['hi_prevalence_fixed']:.2f})")
     ax[1].legend(fontsize=8, loc="lower left")
 
-    # Panel C -- Arm B degradation + monitor AUC vs eta.
+    # Panel C -- Arm B degradation + monitor AUC vs eta. Plot D coverage (the
+    # parameter the nuisance actually biases; the already-wide D* interval is held).
     etas = [r["eta"] for r in arm_b]
-    covd = [r["cqr_marg"][DSTAR] for r in arm_b]
+    cov_d = [r["cqr_marg"][0] for r in arm_b]
+    cov_dstar = [r["cqr_marg"][DSTAR] for r in arm_b]
     aucs = [r["monitor_auc"] for r in arm_b]
-    ax[2].plot(etas, covd, "o-", c="#8e44ad", label="marg D* coverage")
+    ax[2].plot(etas, cov_d, "o-", c="#8e44ad", label="marg D coverage")
+    ax[2].plot(etas, cov_dstar, "o:", c="#9b59b6", lw=1, label="marg D* (held)")
     ax[2].axhline(NOMINAL, ls="--", c="k", lw=1, label=f"nominal {NOMINAL:.2f}")
     ax[2].plot(etas, aucs, "^-", c="#e67e22", label="monitor AUC")
     ax[2].set_xlabel("nuisance magnitude eta")
