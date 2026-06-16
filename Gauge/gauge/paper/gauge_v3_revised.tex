@@ -17,11 +17,10 @@
 
 \title{\textbf{Distribution-Free Conformal Coverage for IVIM Parameter
 Maps, and the Identifiability Wall in the Pseudo-Diffusion Compartment}}
-\author{Avery Karlin\\[2pt]
+\author{Avery Karlin\\[3pt]
+\small Department of Applied Physics and Applied Mathematics, Columbia University, New York, NY, USA\\[1pt]
+\small Department of Computer Science, University of Colorado Boulder, Boulder, CO, USA\\[1pt]
 \small The Annealing Signet Institute\\[3pt]
-\small \textit{Avery Karlin is a graduate student at Columbia University,}\\[1pt]
-\small \textit{Department of Applied Physics and Mathematics, and the}\\[1pt]
-\small \textit{University of Colorado Boulder, Department of Computer Science.}\\[3pt]
 \small ORCID: \href{https://orcid.org/0000-0003-3848-6782}{0000-0003-3848-6782}}
 \date{}
 
@@ -30,72 +29,40 @@ Maps, and the Identifiability Wall in the Pseudo-Diffusion Compartment}}
 
 \begin{abstract}
 \noindent
-\textbf{Purpose:} To establish and characterize the identifiability
-limit that governs per-voxel uncertainty in the ill-posed pseudo-diffusion
-compartment ($\Dstar$) of intravoxel incoherent motion (IVIM) imaging -- using
-distribution-free conformal prediction both as the finite-sample coverage tool
-that model-based uncertainty quantification (UQ) lacks and as the lens that
-exposes where label-free conditioning cannot succeed -- and to benchmark that
-conformal layer head-to-head against model-based IVIM UQ.
+\textbf{Purpose:} To characterize the identifiability limit governing per-voxel
+uncertainty in the ill-posed pseudo-diffusion compartment ($\Dstar$) of intravoxel
+incoherent motion (IVIM) imaging, using distribution-free conformal prediction both
+as the finite-sample coverage tool model-based uncertainty quantification (UQ) lacks
+and as the lens exposing where label-free conditioning cannot succeed.
 
 \noindent
-\textbf{Methods:} On a controlled, seeded synthetic cohort built from our own
-bi-exponential forward model with Rician noise, we compare split-conformal and
-conformalized quantile regression (CQR) against four model-based baselines
-(probabilistic neural network, mixture-density deep ensemble, deep ensemble,
-per-voxel Bayesian MCMC), measuring marginal and (SNR $\times$
-true-$\Dstar$-tercile) conditional coverage and sharpness, with empirical
-$[5,95]$ confidence bands on the conditional quantities from a 16-seed re-run. A
-Fisher-information / Cram\'er--Rao analysis diagnoses the residual gap; weighted
-(nonexchangeable) conformal and a label-free deployment monitor stress
-exchangeability; a qualitative in-vivo demonstration is included.
+\textbf{Methods:} On a controlled, seeded synthetic cohort, we compare
+split-conformal and conformalized quantile regression (CQR) against four model-based
+baselines (probabilistic network, mixture-density ensemble, deep ensemble, Bayesian
+MCMC), measuring marginal and (SNR $\times$ true-$\Dstar$-tercile) conditional
+coverage with 16-seed confidence bands; a Fisher-information / Cram\'er--Rao analysis
+diagnoses the residual gap.
 
 \noindent
 \textbf{Results:} The genuine IVIM-specific failure is conditional: the
-high-$\Dstar$ regime under-covers for every method we tested (robustly at
-low-to-moderate SNR). The barrier is latent-axis conditioning -- coverage
-conditional on the true $\Dstar$ regime, an axis the data do not reveal -- i.e.\ the
-IVIM instance of the known impossibility of distribution-free conditional
-coverage~\citep{barber2021limits}. A Fisher-information / Cram\'er--Rao analysis
-shows $\Dstar$ point-identifiability also collapses in the same regime (the CRLB
-reaches the regime-bin width): a concomitant diagnostic, not the proven cause of the
-coverage failure. Marginally, among credible model-based baselines (MDN deep
-ensemble, per-voxel Bayesian MCMC) overconfidence is mild and broad rather than
-$\Dstar$-specific (gaps $0.024$--$0.045$); a deliberately weak point ensemble
-under-covers severely and is reported only to show the conformal layer restores
-coverage from a poor base. The naive $\Dstar$-concentrated hypothesis is rejected,
-and the conformal layer's value is the finite-sample guarantee, not the magnitude of
-correction. Conformal and conformalized methods restore near-nominal marginal
-coverage everywhere ($|\text{gap}|\le 0.024$), and conformalizing the MDN is the
-sharpest valid recipe ($0.65$--$0.77\times$ pure-CQR width).
-The wall is robust to the b-value scheme; weighted conformal recovers covariate
-shift but not forward-model misspecification; the monitor fires before coverage
-fails but is blind to the latent gap. The wall is not an artifact of our generator:
-a deliberately biased shrinkage estimator buys $\Dstar$ point precision in the
-identified terciles without lifting high-$\Dstar$ conditional coverage, and the gap
-replicates when the ground truth is a genuinely non-bi-exponential
-(velocity-dispersion) mechanism; we additionally chart the off-model validity
-envelope across three deviation families, with a graceful, partly monitored
-degradation and a recovered bi-exponential origin, and confirm the wall persists
-under a clinically realistic correlated, skewed prior with measurement-level
-nuisance, where it concentrates in a clinically rare high-$\Dstar$ tail.
+high-$\Dstar$ regime under-covers for every label-free method we tested -- the IVIM
+instance of the known impossibility of distribution-free conditional
+coverage~\citep{barber2021limits}. The Cram\'er--Rao bound, which reaches the
+regime-bin width here, is a concomitant point-identifiability diagnostic, not the
+proven cause. Conformal and conformalized methods restore near-nominal marginal
+coverage ($|\text{gap}|\le 0.024$), and conformalizing the MDN is the sharpest valid
+recipe ($0.65$--$0.77\times$ pure-CQR width). The wall replicates on external OSIPI
+ground truth, under a non-bi-exponential generator, and under a clinically realistic
+prior.
 
 \noindent
-\textbf{Conclusion:} The central finding is an IVIM-specific identifiability
-boundary: high-$\Dstar$ regime-conditional coverage is unrecoverable by the
-label-free methods we tested -- now including a deliberately biased shrinkage
-estimator, and replicating under a non-bi-exponential generator -- the IVIM instance
-of the established impossibility of distribution-free conditional
-coverage~\citep{barber2021limits}. The
-Cram\'er--Rao bound, which exceeds the regime resolution here, is a concomitant
-point-identifiability diagnostic rather than the demonstrated cause.
-Conformal prediction supplies the finite-sample marginal guarantee model-based
-IVIM UQ lacks -- and conformalizing a strong base is the sharpest valid recipe --
-but its deeper value here is diagnostic: it draws the line the data themselves
-impose. We characterize that limit; we do not claim to solve it. In practice this is
-a triage rule: trust the well-identified diffusion map $D$, read high-$\Dstar$ as
+\textbf{Conclusion:} High-$\Dstar$ regime-conditional coverage is unrecoverable by
+the label-free methods we tested -- the IVIM instance of the established
+impossibility of distribution-free conditional coverage. We characterize this limit,
+not solve it, and make no in-vivo coverage claim. In practice this is a triage rule:
+trust the well-identified diffusion map $D$, read high-$\Dstar$ as
 characterized-but-unresolved, and rely on the label-free deployment monitor as the
-safeguard that flags when the synthetic guarantee must not be transferred.
+deployment safeguard.
 \end{abstract}
 
 \vspace{0.5em}
@@ -1162,10 +1129,10 @@ the methods and software, performed the analysis, produced the figures, and wrot
 the manuscript.
 
 \section*{Generative AI Use Disclosure}
-During the preparation of this work the author used [TOOL(S)] for [purpose,
-e.g.\ code scaffolding / drafting assistance / copy-editing]. After using these
-tools the author reviewed and edited the content as needed and takes full
-responsibility for the content of the publication.
+During the preparation of this work the author used Claude (Anthropic), incl.\
+Claude Code for code scaffolding, manuscript drafting assistance, and copy-editing.
+After using these tools the author reviewed and edited the content as needed and
+takes full responsibility for the content of the publication.
 
 \section*{ORCID}
 Avery Karlin \quad \href{https://orcid.org/0000-0003-3848-6782}{https://orcid.org/0000-0003-3848-6782}
