@@ -21,6 +21,21 @@ bands = empirical [5, 95] percentile across seeds; r aggregated in Fisher-z.
   conformalized-MDN hi-D* worst-SNR              0.786 [0.751, 0.826] (mean 0.786 sd 0.027)*
 
 ----------------------------------------------------------------------------------------------------
+(E) DISSOCIATION -- Bayesian-shrinkage point RMSE vs hi-D* coverage
+----------------------------------------------------------------------------------------------------
+  Bayesian-shrinkage hi-D* RMSE (1e-3 x1e3)      0.025 [0.024, 0.025] (mean 0.025 sd 0.000) 
+  Bayesian-shrinkage hi-D* conf marg             0.827 [0.801, 0.845] (mean 0.827 sd 0.014) 
+  Bayesian-shrinkage hi-D* conf worst-SNR        0.721 [0.663, 0.765] (mean 0.721 sd 0.034) 
+  Bayesian-MCMC hi-D* RMSE (1e-3 x1e3)           0.021 [0.020, 0.021] (mean 0.021 sd 0.000) 
+  Bayesian-MCMC hi-D* conf marg                  0.889 [0.872, 0.903] (mean 0.889 sd 0.010) 
+  Bayesian-MCMC hi-D* conf worst-SNR             0.857 [0.826, 0.875] (mean 0.857 sd 0.017) 
+  conformalized-MDN hi-D* RMSE (1e-3 x1e3)       0.020 [0.020, 0.021] (mean 0.020 sd 0.000)*
+  conformalized-MDN hi-D* conf marg              0.867 [0.853, 0.884] (mean 0.867 sd 0.010)*
+  conformalized-MDN hi-D* conf worst-SNR         0.784 [0.742, 0.819] (mean 0.784 sd 0.028)*
+  shrinkage hi-D* bias                           -0.019 [-0.019, -0.018] (mean -0.019 sd 0.000) 
+  shrinkage misroute %                           33.950 [31.875, 35.525] (mean 33.950 sd 1.407) 
+
+----------------------------------------------------------------------------------------------------
 (E) FIG 4 -- 11 label-free hi-D* methods (marg + worst-SNR)
 ----------------------------------------------------------------------------------------------------
   CQR (plain) hi-D* marg                         0.826 [0.809, 0.851] (mean 0.826 sd 0.014) 

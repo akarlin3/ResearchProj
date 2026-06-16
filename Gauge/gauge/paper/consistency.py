@@ -198,6 +198,21 @@ BAND_ASSERTIONS = [
     ("acq clinical CRLB/width", "robustness/acq/clinical (11 b)/crlb_over_width"),
     ("acq CRLB-optimal CRLB/width", "robustness/acq/CRLB-optimal (11 b)/crlb_over_width"),
     ("acq dense CRLB/width", "robustness/acq/dense (22 b)/crlb_over_width"),
+    # --- Bayesian-shrinkage dissociation test (point accuracy vs conditional
+    #     coverage). The two Bayesian rows are pure-numpy (data-resampling) (E);
+    #     the conformalized-MDN row is torch-NN-derived (*). All ship the
+    #     across-seed mean and are validated by their [5,95] band. -------------
+    ("dissoc shrinkage hi-D* RMSE", "dissoc/Bayesian-shrinkage/hi_rmse"),
+    ("dissoc shrinkage hi-D* conf marg", "dissoc/Bayesian-shrinkage/conf_hi_marg"),
+    ("dissoc shrinkage hi-D* conf worst-SNR",
+     "dissoc/Bayesian-shrinkage/conf_hi_worst"),
+    ("dissoc shrinkage hi-D* bias", "dissoc/Bayesian-shrinkage/hi_bias"),
+    ("dissoc shrinkage misroute %", "dissoc/Bayesian-shrinkage/misroute_pct"),
+    ("dissoc MCMC hi-D* RMSE", "dissoc/Bayesian-MCMC/hi_rmse"),
+    ("dissoc MCMC hi-D* conf worst-SNR", "dissoc/Bayesian-MCMC/conf_hi_worst"),
+    ("dissoc MDN hi-D* RMSE *", "dissoc/conformalized-MDN/hi_rmse"),
+    ("dissoc MDN hi-D* conf worst-SNR *",
+     "dissoc/conformalized-MDN/conf_hi_worst"),
 ]
 
 # Task 1: OSIPI external-phantom (E) headlines -> osipi_multiseed.json item keys.

@@ -38,6 +38,7 @@ from gauge.conditional import mondrian_split
 from gauge.conformal import interval_width, empirical_coverage
 from gauge import robustness as rob
 from gauge import benchmark as bench
+from gauge import dissociation as dis
 from gauge.baselines import PARAM_NAMES
 
 _RESULTS_DIR = os.path.join(
@@ -71,6 +72,10 @@ _NN_MARG_ARMS = {"raw:PNN-Gaussian", "raw:MDN-DeepEnsemble",
 def _is_nn(key):
     if key == "attack/width_crlb_r":
         return True                                  # computed on MDN+LCP widths
+    if key.startswith("dissoc/"):
+        # the conformalized-MDN dissociation row is torch-NN-derived; the two
+        # Bayesian (MCMC / shrinkage) rows are pure-numpy and data-resampling-only.
+        return "/conformalized-MDN/" in key
     if key.startswith("attack/method/"):
         # method names themselves contain '/', so match the full method path prefix
         # rather than positional splitting.
@@ -186,6 +191,22 @@ def collect_seed(seed, verbose=True):
     for (arm, j, aa), met in M.items():
         if abs(aa - A) < 1e-12:
             flat[f"marginalG/{arm}/{PARAM_NAMES[j]}"] = float(met["coverage"])
+
+    # ---- Bayesian-shrinkage DISSOCIATION (point accuracy vs conditional cov) ----
+    dev = dis.evaluate(R)
+    for arm in ("Bayesian-shrinkage", "Bayesian-MCMC", "conformalized-MDN"):
+        r = dev["rows"][arm]
+        flat[f"dissoc/{arm}/hi_rmse"] = float(r["hi_rmse"])
+        flat[f"dissoc/{arm}/hi_mae"] = float(r["hi_mae"])
+        flat[f"dissoc/{arm}/hi_bias"] = float(r["hi_bias"])
+        flat[f"dissoc/{arm}/rmse_lo"] = float(r["rmse_lo"])
+        flat[f"dissoc/{arm}/rmse_hi"] = float(r["rmse_hi"])
+        flat[f"dissoc/{arm}/all_rmse"] = float(r["all_rmse"])
+        flat[f"dissoc/{arm}/conf_hi_marg"] = float(r["conf_hi_marg"])
+        flat[f"dissoc/{arm}/conf_hi_worst"] = float(r["conf_hi_worst"])
+        flat[f"dissoc/{arm}/conf_hi_width"] = float(r["conf_hi_width"])
+        if "misroute_pct" in r:
+            flat[f"dissoc/{arm}/misroute_pct"] = float(r["misroute_pct"])
 
     counts = np.asarray(cc["conformalized-MDN"]["hi_counts"])
     meta = {
@@ -335,6 +356,16 @@ def _write_report(out, recs):
         t2.append((f"{m} hi-D* marg", f"attack/method/{m}/hi_marg"))
         t2.append((f"{m} hi-D* worst-SNR", f"attack/method/{m}/hi_worst"))
     block("(E) TABLE 2 -- high-D* tercile coverage per method", t2)
+
+    # ---- (E) DISSOCIATION: point accuracy vs conditional coverage ------------
+    ds = []
+    for m in ["Bayesian-shrinkage", "Bayesian-MCMC", "conformalized-MDN"]:
+        ds.append((f"{m} hi-D* RMSE (1e-3 x1e3)", f"dissoc/{m}/hi_rmse"))
+        ds.append((f"{m} hi-D* conf marg", f"dissoc/{m}/conf_hi_marg"))
+        ds.append((f"{m} hi-D* conf worst-SNR", f"dissoc/{m}/conf_hi_worst"))
+    ds.append(("shrinkage hi-D* bias", "dissoc/Bayesian-shrinkage/hi_bias"))
+    ds.append(("shrinkage misroute %", "dissoc/Bayesian-shrinkage/misroute_pct"))
+    block("(E) DISSOCIATION -- Bayesian-shrinkage point RMSE vs hi-D* coverage", ds)
 
     # ---- (E) Fig 4: 11 label-free methods -----------------------------------
     f4 = []

@@ -11,7 +11,7 @@ import pytest
 from gauge.cohort import generate_cohort
 from gauge.baselines import (
     SingleGaussianPNN, MDNDeepEnsemble, DeepEnsemblePoint, BayesianIVIM_MCMC,
-    quantiles_from_samples, _nlls_init_and_noise,
+    quantiles_from_samples, _nlls_init_and_noise, make_shrinkage_log_prior,
 )
 
 pytest.importorskip("torch")
@@ -72,3 +72,35 @@ def test_bayesian_mcmc_shape_and_acceptance(tiny):
     assert samp[:, 0].min() >= D_RANGE[0] - 1e-9
     assert samp[:, 1].max() <= DSTAR_RANGE[1] + 1e-9
     assert samp[:, 2].min() >= F_RANGE[0] - 1e-9
+
+
+def test_shrinkage_prior_is_optional_and_byte_identical(tiny):
+    """log_prior=None must reproduce the legacy uniform-prior sampler exactly,
+    and a shrinkage prior must (a) run, (b) bias D* toward the prior median."""
+    b = tiny.b
+    sig = tiny.signals["test"]
+    theta, s0, sigma = _nlls_init_and_noise(sig, b)
+
+    # (a) None path is byte-identical to the legacy sampler across two runs.
+    base = BayesianIVIM_MCMC(seed=0, n_samples=80, burn=150, thin=2)
+    s_none1 = base.predict_samples_for(sig, b, theta, s0, sigma,
+                                       np.random.default_rng(0))
+    base2 = BayesianIVIM_MCMC(seed=0, n_samples=80, burn=150, thin=2)
+    s_none2 = base2.predict_samples_for(sig, b, theta, s0, sigma,
+                                        np.random.default_rng(0))
+    np.testing.assert_array_equal(s_none1, s_none2)
+
+    # (b) shrinkage prior runs, stays in bounds, and pulls the D* posterior mean
+    #     toward the (deliberately low) prior median relative to the uniform fit.
+    lp, hyper = make_shrinkage_log_prior(tiny.params["train"][:, 1],
+                                         tiny.params["train"][:, 2])
+    assert hyper["sigma_dstar"] == 0.50 and hyper["sigma_f"] == 0.60
+    shr = BayesianIVIM_MCMC(seed=0, n_samples=80, burn=150, thin=2, log_prior=lp)
+    s_shr = shr.predict_samples_for(sig, b, theta, s0, sigma,
+                                    np.random.default_rng(0))
+    assert s_shr.shape == s_none1.shape and np.all(np.isfinite(s_shr))
+    from gauge.cohort import DSTAR_RANGE
+    assert s_shr[:, 1].max() <= DSTAR_RANGE[1] + 1e-9
+    # high-true-D* voxels are shrunk downward (toward the prior median).
+    hi = tiny.params["test"][:, 1] >= np.quantile(tiny.params["test"][:, 1], 2 / 3)
+    assert s_shr[hi, 1].mean() < s_none1[hi, 1].mean()

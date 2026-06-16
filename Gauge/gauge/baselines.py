@@ -275,6 +275,62 @@ def _nlls_init_and_noise(signals, b):
     return theta, s0, sigma
 
 
+# --------------------------------------------------------------------------- #
+# Informative shrinkage prior (Gauge -- the Bayesian-shrinkage falsification arm)
+#
+# The deliberately BIASED, prior-shrinkage estimator. A reviewer-grade objection
+# (Gurney-Champion et al. 2018, ref 8) is that a biased prior-shrinkage Bayesian
+# fit was the one IVIM method that kept D* precision under control where the
+# unbiased methods failed -- and a biased estimator can sit below the *unbiased*
+# Cramer-Rao bound. This run pushes exactly such an estimator through Gauge's
+# conditional-coverage machinery to test whether the high-D* coverage wall holds.
+#
+# Prior family (FIXED before any conditional evaluation; do not re-tune):
+#   * D* ~ LogNormal(mu = log GM_cohort(D*), sigma = 0.50). The location is the
+#     cohort (train-split) geometric mean -- the population tendency the prior
+#     pulls toward; sigma=0.50 is deliberately TIGHTER than the cohort's empirical
+#     log-SD (~0.63) -> an informative, documented downward bias on high D*.
+#   * f  ~ LogNormal(mu = log GM_cohort(f),  sigma = 0.60). A weak pull (sigma ~
+#     the cohort log-SD), following the prior-distribution IVIM literature
+#     (Gustafsson et al. 2018 [13]; Spinner et al. 2021 [14]).
+# The prior is applied INSIDE the physiological box (the hard uniform bounds are
+# retained), i.e. a truncated-lognormal. Constants independent of the parameters
+# are dropped (only differences enter the Metropolis acceptance ratio).
+# --------------------------------------------------------------------------- #
+SHRINK_SIGMA_DSTAR = 0.50
+SHRINK_SIGMA_F = 0.60
+
+
+def make_shrinkage_log_prior(dstar_train, f_train,
+                             sigma_dstar=SHRINK_SIGMA_DSTAR,
+                             sigma_f=SHRINK_SIGMA_F):
+    """Build the log-prior callable for the Bayesian-shrinkage arm.
+
+    Location = geometric mean of the cohort (train-split) D* and f; scale fixed
+    by the module constants above. Returns ``lp(th) -> (Nv,)`` log-density (up to
+    an additive constant) for the lognormal shrinkage prior on D* (col 1) and f
+    (col 2) of ``th = [D, D*, f, S0]``. Also returns the hyperparameters used so
+    they can be logged for provenance.
+    """
+    mu_dstar = float(np.mean(np.log(np.clip(np.asarray(dstar_train, float),
+                                            1e-12, None))))
+    mu_f = float(np.mean(np.log(np.clip(np.asarray(f_train, float), 1e-12, None))))
+
+    def lp(th):
+        ds = np.clip(th[:, 1], 1e-12, None)
+        ff = np.clip(th[:, 2], 1e-12, None)
+        zd = (np.log(ds) - mu_dstar) / sigma_dstar
+        zf = (np.log(ff) - mu_f) / sigma_f
+        return -np.log(ds) - 0.5 * zd * zd - np.log(ff) - 0.5 * zf * zf
+
+    hyper = {"family": "lognormal(D*) x lognormal(f), truncated to box",
+             "mu_dstar": mu_dstar, "sigma_dstar": float(sigma_dstar),
+             "median_dstar": float(np.exp(mu_dstar)),
+             "mu_f": mu_f, "sigma_f": float(sigma_f),
+             "median_f": float(np.exp(mu_f))}
+    return lp, hyper
+
+
 class BayesianIVIM_MCMC:
     """Per-voxel Bayesian fit of the bi-exponential model.
 
@@ -284,14 +340,21 @@ class BayesianIVIM_MCMC:
     ill-posed D*. The noise level is supplied (we feed the TRUE per-voxel sigma
     so the Bayesian baseline is evaluated at its best, not handicapped by a
     plug-in noise estimate). Uniform priors over the physiological ranges.
+
+    ``log_prior`` (default ``None``) optionally adds a per-voxel log-prior term
+    ``lp(th) -> (Nv,)`` to the Gaussian log-likelihood, turning the uniform-prior
+    posterior into an informative one (the Bayesian-shrinkage arm). With
+    ``log_prior=None`` the acceptance ratio is byte-identical to the legacy
+    uniform-prior sampler.
     """
     name = "Bayesian-MCMC"
 
     def __init__(self, seed=0, n_samples=N_SAMPLES, burn=1500, thin=4,
-                 step_scale=0.3, target_accept=0.30):
+                 step_scale=0.3, target_accept=0.30, log_prior=None):
         self.seed, self.n_samples = seed, n_samples
         self.burn, self.thin, self.step_scale = burn, thin, step_scale
         self.target_accept = target_accept
+        self.log_prior = log_prior
         self.accept_rate = None
         self.accept_per_dim = None
         self.convergence_drift = None  # |mean(1st half)-mean(2nd half)|/post-std
@@ -313,7 +376,14 @@ class BayesianIVIM_MCMC:
                                 S0=th[:, 3:4])
             return -np.sum((model - signals) ** 2, axis=1) * inv2s2
 
-        cur_ll = loglik(state)
+        _lp = self.log_prior
+        if _lp is None:
+            logpost = loglik                       # byte-identical legacy path
+        else:
+            def logpost(th):
+                return loglik(th) + _lp(th)
+
+        cur_ll = logpost(state)
         total = self.burn + self.n_samples * self.thin
         kept = []
         adapt_win = 100
@@ -325,7 +395,7 @@ class BayesianIVIM_MCMC:
                 prop = state.copy()
                 prop[:, d] = state[:, d] + step[d] * rng.standard_normal(Nv)
                 inb = (prop[:, d] >= lb[d]) & (prop[:, d] <= ub[d])
-                pll = np.where(inb, loglik(prop), -np.inf)
+                pll = np.where(inb, logpost(prop), -np.inf)
                 a = np.log(rng.uniform(size=Nv)) < (pll - cur_ll)
                 state[a] = prop[a]
                 cur_ll[a] = pll[a]
@@ -436,6 +506,7 @@ def build_predictions(alphas=ALPHAS, seed=DEFAULT_SEED, cache_path=None,
         R["methods"].append(model.name)
         for sname, Xs in splits.items():
             samp = model.predict_samples(Xs, rng=np.random.default_rng(seed + 7))
+            R[f"{model.name}_{sname}_mean"] = samp.mean(axis=2)   # predictive mean
             for a in alphas:
                 lo, hi = quantiles_from_samples(samp, a)
                 R[f"{model.name}_{sname}_lo_{a}"] = lo
@@ -457,6 +528,7 @@ def build_predictions(alphas=ALPHAS, seed=DEFAULT_SEED, cache_path=None,
         sigma_true = 1.0 / np.asarray(snr_of[sname], float)   # S0 = 1
         samp = bayes.predict_samples_for(
             Xs, b, theta, s0, sigma_true, np.random.default_rng(seed + 11))
+        R[f"{bayes.name}_{sname}_mean"] = samp.mean(axis=2)   # posterior mean
         for a in alphas:
             lo, hi = quantiles_from_samples(samp, a)
             R[f"{bayes.name}_{sname}_lo_{a}"] = lo
@@ -467,6 +539,33 @@ def build_predictions(alphas=ALPHAS, seed=DEFAULT_SEED, cache_path=None,
     if verbose:
         print(f"[build] {bayes.name} done ({time.time()-tt:.0f}s, "
               f"accept={bayes.accept_rate:.2f})")
+
+    # --- Bayesian SHRINKAGE: the deliberately biased, label-free arm ----------
+    # Single manipulated variable vs Bayesian-MCMC is the PRIOR (informative
+    # lognormal shrinkage on D* and f); plus, to be genuinely label-free, sigma
+    # is the NON-oracle NLLS-residual estimate (mcmc_init[*][2]) -- NOT 1/SNR.
+    tt = time.time()
+    shr_log_prior, shr_hyper = make_shrinkage_log_prior(Ytr[:, 1], Ytr[:, 2])
+    bshr = BayesianIVIM_MCMC(seed=0, log_prior=shr_log_prior)
+    bshr.name = "Bayesian-shrinkage"               # instance-level name override
+    R["methods"].append(bshr.name)
+    for sname, Xs in splits.items():
+        theta, s0, sigma_hat = mcmc_init[sname]     # sigma_hat = NLLS residual std
+        samp = bshr.predict_samples_for(
+            Xs, b, theta, s0, sigma_hat, np.random.default_rng(seed + 13))
+        R[f"{bshr.name}_{sname}_mean"] = samp.mean(axis=2)   # posterior mean
+        for a in alphas:
+            lo, hi = quantiles_from_samples(samp, a)
+            R[f"{bshr.name}_{sname}_lo_{a}"] = lo
+            R[f"{bshr.name}_{sname}_hi_{a}"] = hi
+    R["diag"]["shrinkage_accept_rate"] = bshr.accept_rate
+    R["diag"]["shrinkage_convergence_drift"] = bshr.convergence_drift
+    R["diag"]["shrinkage_prior"] = shr_hyper
+    if verbose:
+        print(f"[build] {bshr.name} done ({time.time()-tt:.0f}s, "
+              f"accept={bshr.accept_rate:.2f}; prior median D*="
+              f"{shr_hyper['median_dstar']*1e3:.1f}e-3, f="
+              f"{shr_hyper['median_f']:.3f})")
 
     with open(cache_path, "wb") as fh:
         pickle.dump(R, fh)

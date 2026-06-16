@@ -1,0 +1,37 @@
+====================================================================================================
+DISSOCIATION TABLE -- high-D* point accuracy vs conditional coverage (alpha=0.1, nominal=0.90)
+====================================================================================================
+shrinkage prior (FIXED pre-eval): D* ~ LogNormal(median 48.0e-3, sigma 0.50); f ~ LogNormal(median 0.196, sigma 0.60); sigma = NLLS-residual (label-free).
+high-D* tercile n=1000; coverage = CONFORMALIZED D* band; point = posterior/predictive mean of D*.
+----------------------------------------------------------------------------------------------------
+                 arm |  hiD* RMSE |  hiD* MAE |  cond cov | worst-SNR | med width | misroute%
+                     |   (1e-3) v |    (1e-3) |    (marg) |      cell |    (1e-3) |   true-hi
+----------------------------------------------------------------------------------------------------
+  Bayesian-shrinkage |      24.15 |     19.61 |     0.841 |     0.762 |      54.2 |        35
+       Bayesian-MCMC |      20.54 |     15.96 |     0.889 |     0.865 |      49.0 |        33
+   conformalized-MDN |      20.60 |     15.81 |     0.867 |     0.798 |      47.5 |        30
+----------------------------------------------------------------------------------------------------
+  (NLLS plug-in routing misroute of true-high-D* voxels: 31% -- the shared identifiability metric.)
+
+POINT-ACCURACY DECOMPOSITION of D* (1e-3 mm^2/s) -- where does the shrinkage prior help vs hurt?
+                 arm |  RMSE lo | RMSE mid |  RMSE hi | RMSE all |  hi bias |   hi std |  all std
+  Bayesian-shrinkage |    15.37 |    11.40 |    24.15 |    17.79 |   -18.41 |    15.64 |    17.41
+       Bayesian-MCMC |    18.19 |    11.90 |    20.54 |    17.27 |   -14.24 |    14.80 |    17.26
+   conformalized-MDN |    16.99 |    13.06 |    20.60 |    17.16 |   -14.37 |    14.75 |    17.14
+  (hi bias = E[D*_hat - D*] in the high-D* tercile; a center-pulling shrinkage prior shows a large
+   negative hi-bias. 'all std' is the global precision proxy -- lower = more precise estimator.)
+
+RAW (un-conformalized) high-D* coverage / width, for reference (shows the prior's bare effect):
+    Bayesian-shrinkage: raw hi-D* marg 0.688, worst-SNR 0.596, med width 44.9e-3
+         Bayesian-MCMC: raw hi-D* marg 0.863, worst-SNR 0.845, med width 47.8e-3
+     conformalized-MDN: raw hi-D* marg 0.839, worst-SNR 0.751, med width 45.2e-3
+
+SANITY GATES:
+  [width]   shrinkage conformalized median hi-D* width = 54.2e-3 = 1.14x the comparator (min of MCMC 49.0e-3, MDN 47.5e-3). no collapse.
+  [routing] shrinkage point misroutes 35% of true-high-D* voxels (NLLS plug-in 31%); coverage must rise DESPITE routing, not by fixing it.
+
+====================================================================================================
+VERDICT: A -- DISSOCIATION / WALL HOLDS
+  the deliberately biased shrinkage prior lowers D* point RMSE in the lo/mid terciles (lo 15.4 vs 18.2e-3) but does NOT improve it in the HIGH-D* tercile (RMSE 24.15 vs 20.54e-3; hi-bias -18.4e-3 from pulling toward the cohort center) -- and high-D* regime-conditional coverage stays below nominal (conformalized worst-SNR cell 0.762, marginal 0.841 vs nominal 0.90), no better than the unbiased arms. Trading variance for bias cannot buy coverage conditional on a latent axis the data do not identify: the barrier is information, not point precision.
+  Deciding numbers -- high-D* point RMSE: shrinkage 24.15e-3 vs Bayesian-MCMC 20.54e-3; high-D* conformalized worst-SNR-cell coverage: shrinkage 0.762 vs nominal 0.90.
+====================================================================================================
