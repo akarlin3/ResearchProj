@@ -185,7 +185,7 @@ s5_cleft_filter:
 #      The Vina search is seeded from the global random_seed (never hardcoded).
 docking:
   ligand: BHET                          # PET-mimic: bis(2-hydroxyethyl) terephthalate
-  ligand_pdbqt: ""                      # prepared ligand PDBQT (host-local; blank => prep first, e.g. via Meeko)
+  ligand_pdbqt: "controls/ligands/bhet.pdbqt"                      # prepared ligand PDBQT (host-local; blank => prep first, e.g. via Meeko)
   box_center: catalytic_ser_og          # catalytic_ser_og | pocket_center — box centred on the active site
   box_size: [20.0, 20.0, 20.0]          # Angstrom search box (x,y,z)
   exhaustiveness: 8
@@ -214,10 +214,10 @@ compute:
     # on n1-standard-4, or nvidia-l4 on g2-standard-4) and accelerator_count: 1.
     accelerator: ""
     accelerator_count: 0
-    image: ""                           # Artifact Registry fold image (e.g. REGION-docker.pkg.dev/PROJ/REPO/proteus-fold:cu124); blank => set per host
+    image: "us-central1-docker.pkg.dev/projproteus/proteus/proteus-fold:cpu"                           # Artifact Registry fold image (e.g. REGION-docker.pkg.dev/PROJ/REPO/proteus-fold:cu124); blank => set per host
     boot_disk_gb: 100
-    spot: true                          # SPOT/preemptible for cost; outputs staged to the bucket survive preemption
-    bucket: ""                          # gs://BUCKET staging for in/out (set per host); survives a preempted VM
+    spot: false                          # SPOT/preemptible for cost; outputs staged to the bucket survive preemption
+    bucket: "gs://projproteus-fold"                          # gs://BUCKET staging for in/out (set per host); survives a preempted VM
     vm_workdir: /tmp/proteus            # WRITABLE on-VM dir (COS root fs is read-only); bind-mounted into the containers at /data/proteus
     remote_in: /data/proteus/in         # on-VM dir inputs are pulled (gcloud storage) before folding
     remote_out: /data/proteus/out       # on-VM dir folded PDBs + pLDDT land in (pushed to the bucket via gcloud storage)
