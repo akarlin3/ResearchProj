@@ -1,0 +1,41 @@
+############################################################################################
+GAUGE -- REAL IN-VIVO SAME-DAY TEST-RETEST REPEATABILITY (Checkpoint D)
+############################################################################################
+** REPEATABILITY-TRACKING CHECK -- NOT a coverage claim. ** No ground truth is used. This asks
+   whether the conformal interval WIDTH (predicted uncertainty) tracks the real scan-rescan
+   variability of the plug-in diffusion estimate across tumors. Region-level (whole-tumor ROI);
+   the two same-day ACRIN-6698 repeats are NOT registered, so this is not a per-voxel claim.
+   dataset: ACRIN-6698 / I-SPY2 Breast DWI (TCIA, CC-BY-4.0, DOI 10.7937/tcia.kk02-6d95); b=[0.0, 100.0, 600.0, 800.0] s/mm^2.
+Genuine same-day test-retest arm: n=76 pairs (ACRIN-6698 TrT0/TrT1, same-visit)
+--------------------------------------------------------------------------------------------
+[D.1] Tissue diffusion D (well-identified even by the 4-b ADC scheme; the ADC-like quantity):
+      D-width vs scan-rescan |ΔADC| (Spearman) = +0.60 (p=0.000, n=76), 95% CI [0.42, 0.72]
+      (Fisher-z 95% CI [0.44, 0.73]; CI = BCa bootstrap, seed=20260613)
+      median conformal D-width = 0.38; median scan-rescan |ΔADC| = 0.008  (1e-3 mm^2/s)
+      READING: the conformal D interval WIDENS where the real ADC is LEAST repeatable -- the band
+      tracks / adapts to / is consistent with the measured scan-rescan variability. This is explicitly
+      NOT validation, accuracy, calibration, or coverage (no in-vivo ground truth exists); it is an
+      honest width-vs-repeatability association only.
+[D.2] Pseudo-diffusion D* (under-identified by the 4-b ADC scheme):
+      D* (Spearman) = -0.17 (p=0.133, n=76), 95% CI [-0.39, 0.05] -- not significant
+      (Fisher-z 95% CI [-0.38, 0.05])
+--------------------------------------------------------------------------------------------
+[D.3] SENSITIVITY (subgroup Spearman of D-width vs scan-rescan |ΔADC|):
+      field strength 1.5T: r=+0.58 (n=49)
+      field strength 3.0T: r=+0.50 (n=27)
+      pretreatment-only (T0): r=+0.61 (n=65)
+      full arm: r=+0.60 (n=76)
+      (Sensitivity table only; the HEADLINE is the full-arm n=76. Subgroups are smaller and
+       carry wider CIs -- reported for transparency, not as separate claims.)
+--------------------------------------------------------------------------------------------
+      ON-THESIS SPLIT: for the well-identified D the width-vs-repeatability relationship is
+      DEMONSTRABLE; for D*, consistent with the identifiability wall (Gauge 03), it is UNRESOLVABLE
+      and its 95% CI spans zero. The D* negative is EVIDENCE for the thesis, not a gap.
+      CAVEAT: this is a region-level whole-tumor-ROI association on UNREGISTERED same-day repeats
+      (no per-voxel correspondence), and a repeatability-tracking check -- NOT an in-vivo coverage claim.
+--------------------------------------------------------------------------------------------
+HONESTY DISCLAIMER: repeatability-tracking only; this is NOT validation, accuracy, calibration, or
+   coverage (no in-vivo ground truth exists). This genuine same-day TrT0/TrT1 arm SUPERSEDES the
+   earlier longitudinal n=11 pairing (timepoints months apart, treatment-confounded).
+   skipped 2 patient(s): ACRIN-6698-663144 (0 usable tumor voxels after S0-norm (TrT0=47, TrT1=0)); ACRIN-6698-950742 (0 usable tumor voxels after S0-norm (TrT0=297, TrT1=0))
+############################################################################################

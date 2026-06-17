@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# OS
+.DS_Store
+
+# Regenerable prediction caches (large; rebuilt by gauge.baselines.build_predictions)
+results/*.pkl
+
+# Regenerable per-seed multiseed raw quantities (aggregated into results/multiseed.json)
+results/seeds/
+
+# Regenerable per-seed OSIPI external-phantom raw quantities (aggregated into
+# results/osipi_multiseed.json)
+results/osipi_seeds/
+
+# LaTeX build intermediate (the committed canonical PDF is gauge_v3_revised_R2.pdf)
+gauge/paper/gauge_v3_revised.pdf
+gauge/paper/*.aux
+gauge/paper/*.log
+gauge/paper/*.out
+gauge/paper/*.bbl
+gauge/paper/*.blg
+
+# Real in-vivo DWI: download-on-demand pixel data (CC-BY-4.0 ACRIN-6698, NOT
+# redistributed here -- fetch with scripts/fetch_invivo.py; provenance manifest
+# results/invivo_real_provenance.json IS committed, the pixel data is not).
+data/
+# Generated cover-letter PDFs (source: gauge/paper/Gauge_MRM_cover_letter.tex)
+gauge/paper/Gauge_MRM_cover_letter*.pdf
+
+# Regenerable per-seed alt-forward-model raw quantities (aggregated into
+# results/altmodel_multiseed.json)
+results/altmodel_seeds/
+
+# Regenerable per-seed realism-cohort raw quantities (aggregated into
+# results/realism_multiseed.json)
+results/realism_seeds/

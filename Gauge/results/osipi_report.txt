@@ -1,0 +1,38 @@
+============================================================================================
+GAUGE TASK 1 -- EXTERNAL-PHANTOM REPLICATION ON THE OSIPI IVIM REFERENCE DRO
+============================================================================================
+OSIPI TF2.4 IVIM DRO -- external community-standard SYNTHETIC reference (NOT in vivo).
+Ground-truth (D, D*, f) from OSIPI (Zenodo doi:10.5281/zenodo.14605039, CC-BY-4.0); seed=20260613; nominal coverage 0.90.
+No in-vivo coverage claim is made. The bi-exponential model is the OSIPI consensus model (shared); the ground-truth distribution is external.
+
+--------------------------------------------------------------------------------------------
+REGIME: controlled  (Gauge 22-b + SNR grid); n_test=1500
+--------------------------------------------------------------------------------------------
+  naive-transfer  CQR  marginal coverage (D, D*, f) = [0.599, 0.317, 0.473]  vs nominal 0.90
+  recalibrated    CQR  marginal coverage (D, D*, f) = [0.895, 0.891, 0.893]  vs nominal 0.90
+  naive-transfer  split-conformal marginal (D, D*, f) = [0.901, 0.719, 0.938]
+  recalibrated    split-conformal marginal (D, D*, f) = [0.902, 0.900, 0.909]
+  conditional CQR coverage by true-D* tercile [lo, mid, hi]:
+      naive        = [0.908, 0.042, 0.000]
+      recalibrated = [0.890, 0.994, 0.788]
+  deployment monitor on naive transfer: FIRES (AUC=0.75)
+  identifiability wall: CRLB(D*)/tercile-width [lo, mid, hi] = [0.501, 0.845, 1.525]; abs-CRLB growth lo->hi = 3.4x; replicates = True
+
+--------------------------------------------------------------------------------------------
+REGIME: native  (OSIPI native 7-b, pre-noised ~SNR 80); n_test=1500
+--------------------------------------------------------------------------------------------
+  naive-transfer  CQR  marginal coverage (D, D*, f) = [0.659, 0.299, 0.534]  vs nominal 0.90
+  recalibrated    CQR  marginal coverage (D, D*, f) = [0.907, 0.895, 0.888]  vs nominal 0.90
+  naive-transfer  split-conformal marginal (D, D*, f) = [0.993, 0.924, 0.982]
+  recalibrated    split-conformal marginal (D, D*, f) = [0.891, 0.897, 0.909]
+  conditional CQR coverage by true-D* tercile [lo, mid, hi]:
+      naive        = [0.832, 0.066, 0.000]
+      recalibrated = [0.926, 0.966, 0.794]
+  deployment monitor on naive transfer: FIRES (AUC=0.69)
+  identifiability wall: CRLB(D*)/tercile-width [lo, mid, hi] = [0.234, 0.299, 0.464]; abs-CRLB growth lo->hi = 2.2x; replicates = False
+
+HEADLINES (controlled regime, seed point; banded across seeds in osipi_multiseed.json):
+  OSIPI recalibrated marginal coverage at nominal 0.90 (within-distribution conformal holds on external ground truth).
+  OSIPI naive-transfer monitor fires = True (AUC=0.75) -- the D* shift is observable.
+  OSIPI high-D* wall replicates = True (CRLB/width hi = 1.52); the high-D* conditional gap persists even after recalibration (recal hi-D* CQR coverage = 0.788).
+============================================================================================

@@ -1,0 +1,241 @@
+{
+ "run": {
+  "seed": 20260613,
+  "alpha": 0.1,
+  "nominal_coverage": 0.9,
+  "mechanism": "gamma velocity-dispersion perfusion (non-bi-exponential)",
+  "arm1_cv": 0.5,
+  "arm1_gamma_k": 4.0,
+  "dstar_eff_surrogates": {
+   "A": "analytic perfusion log-slope = gamma mean mu",
+   "B": "best-fit bi-exp D* to clean dispersion signal"
+  },
+  "arm1_verdict_branch": "A",
+  "arm1_verdict_text": "BRANCH A -- WALL IS GENERAL / CIRCULARITY BROKEN: the high-D*eff conditional gap PERSISTS after within-distribution recalibration on the non-bi-exponential dispersion ground truth (surrogate A recal hi-D*eff = 0.850, gap +0.050 vs nominal 0.90). The wall is a property of perfusion estimation, not of Eq. (1).",
+  "arm1": {
+   "A": {
+    "naive_cqr_marg": [
+     0.898,
+     0.888,
+     0.872
+    ],
+    "recal_cqr_marg": [
+     0.901,
+     0.904,
+     0.91
+    ],
+    "recal_cqr_tercile_lo_mid_hi": [
+     0.8768768768768769,
+     0.984984984984985,
+     0.8502994011976048
+    ],
+    "naive_monitor_fires": true,
+    "naive_monitor_auc": 0.508731
+   },
+   "B": {
+    "naive_cqr_marg": [
+     0.898,
+     0.955,
+     0.872
+    ],
+    "recal_cqr_marg": [
+     0.901,
+     0.904,
+     0.91
+    ],
+    "recal_cqr_tercile_lo_mid_hi": [
+     0.8888888888888888,
+     0.993993993993994,
+     0.8293413173652695
+    ],
+    "naive_monitor_fires": true,
+    "naive_monitor_auc": 0.508731
+   }
+  },
+  "arm1_wall_dispersion_jacobian": [
+   0.49086953799606226,
+   0.7481025429445161,
+   1.2582071336565
+  ],
+  "arm1_wall_biexp_fitted_jacobian": [
+   0.4043699300557466,
+   0.6775441529617133,
+   1.0690004709170426
+  ],
+  "arm1_lognormal_confirmation": {
+   "kernel": "log-normal dispersion (mean=mu, CV=ARM1_CV), surrogate-A axis",
+   "recal_cqr_marg": [
+    0.895,
+    0.913,
+    0.905
+   ],
+   "recal_cqr_tercile_lo_mid_hi": [
+    0.9159159159159159,
+    0.9819819819819819,
+    0.8413173652694611
+   ],
+   "naive_monitor_auc": 0.508297
+  },
+  "continuity_gen_max_abs_err": 0.0,
+  "continuity_cv0_recal_hiDstar_A": 0.8383233532934131,
+  "arm2": {
+   "dispersion": [
+    {
+     "dev": 0.0,
+     "cqr_marg": [
+      0.913,
+      0.909,
+      0.908
+     ],
+     "monitor_auc": 0.510893,
+     "monitor_fires": true
+    },
+    {
+     "dev": 0.2,
+     "cqr_marg": [
+      0.89,
+      0.92,
+      0.887
+     ],
+     "monitor_auc": 0.5111455,
+     "monitor_fires": true
+    },
+    {
+     "dev": 0.4,
+     "cqr_marg": [
+      0.889,
+      0.907,
+      0.874
+     ],
+     "monitor_auc": 0.501347,
+     "monitor_fires": true
+    },
+    {
+     "dev": 0.6,
+     "cqr_marg": [
+      0.896,
+      0.908,
+      0.855
+     ],
+     "monitor_auc": 0.5072794999999999,
+     "monitor_fires": true
+    },
+    {
+     "dev": 0.8,
+     "cqr_marg": [
+      0.885,
+      0.893,
+      0.782
+     ],
+     "monitor_auc": 0.49223500000000003,
+     "monitor_fires": false
+    }
+   ],
+   "triexp": [
+    {
+     "dev": 0.0,
+     "cqr_marg": [
+      0.898,
+      0.924,
+      0.893
+     ],
+     "monitor_auc": 0.4895965,
+     "monitor_fires": false
+    },
+    {
+     "dev": 0.1,
+     "cqr_marg": [
+      0.912,
+      0.872,
+      0.9
+     ],
+     "monitor_auc": 0.4966465,
+     "monitor_fires": false
+    },
+    {
+     "dev": 0.2,
+     "cqr_marg": [
+      0.885,
+      0.836,
+      0.903
+     ],
+     "monitor_auc": 0.509151,
+     "monitor_fires": true
+    },
+    {
+     "dev": 0.3,
+     "cqr_marg": [
+      0.92,
+      0.823,
+      0.908
+     ],
+     "monitor_auc": 0.5117345,
+     "monitor_fires": true
+    },
+    {
+     "dev": 0.4,
+     "cqr_marg": [
+      0.895,
+      0.762,
+      0.897
+     ],
+     "monitor_auc": 0.5401455,
+     "monitor_fires": true
+    }
+   ],
+   "stretched": [
+    {
+     "dev": 0.0,
+     "cqr_marg": [
+      0.899,
+      0.914,
+      0.9
+     ],
+     "monitor_auc": 0.4996205,
+     "monitor_fires": true
+    },
+    {
+     "dev": 0.15,
+     "cqr_marg": [
+      0.91,
+      0.888,
+      0.884
+     ],
+     "monitor_auc": 0.496787,
+     "monitor_fires": false
+    },
+    {
+     "dev": 0.3,
+     "cqr_marg": [
+      0.9,
+      0.834,
+      0.853
+     ],
+     "monitor_auc": 0.507449,
+     "monitor_fires": true
+    },
+    {
+     "dev": 0.45,
+     "cqr_marg": [
+      0.916,
+      0.799,
+      0.84
+     ],
+     "monitor_auc": 0.5169865,
+     "monitor_fires": true
+    },
+    {
+     "dev": 0.6,
+     "cqr_marg": [
+      0.897,
+      0.792,
+      0.754
+     ],
+     "monitor_auc": 0.5291379999999999,
+     "monitor_fires": true
+    }
+   ]
+  },
+  "computed_utc": "2026-06-16T04:05:19.607194+00:00"
+ }
+}
