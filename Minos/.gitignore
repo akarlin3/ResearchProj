@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Vendored upstream dependency (kept on disk, imported via .pth; not tracked here)
+uGUIDE/
+
+# Experiment outputs / trained models / figures
+results/
+*.pkl
+*.pt
+*.png
+
+# Real imaging data (downloaded separately via NBIA; never committed)
+data/acrin/
+data/raw/
+*.nii
+*.nii.gz
+*.dcm
+*.tcia
+
+# Session / tooling
+.remember/
+.claude/
+.DS_Store
+
+# Theory module dedicated venv (not tracked)
+.venv-theory/
