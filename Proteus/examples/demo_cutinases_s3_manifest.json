@@ -1,0 +1,125 @@
+{
+  "schema": "proteus.s3_fold.job_manifest/v1",
+  "generated": "2026-06-12T07:51:02.266834+00:00",
+  "stage": "S3_esmfold_batch",
+  "run_location": "gce",
+  "note": "Ship this manifest + the shortlist FASTA to the GCE burst box (gce/Dockerfile.fold). Do NOT fold on MPS. See gce/sync.md.",
+  "input_fasta": "examples/demo_cutinases_shortlist.fasta",
+  "random_seed": 1729,
+  "fold_params": {
+    "model": "esmfold_v1",
+    "device": "cpu",
+    "plddt_min": 70.0,
+    "chunk_size": 400,
+    "max_recycles": 3
+  },
+  "n_sequences": 15,
+  "total_residues": 3892,
+  "sequences": [
+    {
+      "id": "sp_A0A024SC78_CUTI1_TRIR3",
+      "length": 248,
+      "sha256": "cdd6636a08e783e6e2bd71516d883f5fce8b8768ad7620191b9aaa825318784a",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_G4MZV6_CUTI2_PYRO7",
+      "length": 214,
+      "sha256": "069edb2505e4d1d4036988a4c6f54627eb03859ce9b6c430e0b82e683feac54a",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_P11373_CUTI1_COLGL",
+      "length": 224,
+      "sha256": "06f653e55ea41ae7af74ab0131a309a51cb5ad87f2a159d4def18a2dc6d12499",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_P00590_CUTI1_FUSVN",
+      "length": 230,
+      "sha256": "42bcb00678451cbf30f5e7a79996d91b306f1c0d96481a4a4d65430771434d92",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_Q5AVY9_CUTI2_EMENI",
+      "length": 255,
+      "sha256": "2fb3e9c08d9ec0c8050a496b3de8388a3abe919acd9256024dc78011b249183c",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_A6WFI5_CUTI_KINRD",
+      "length": 294,
+      "sha256": "c27387cd87d888334ed904822bb38400bbff8a269cb4caf9c4885e1db8459ed5",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_O06319_CULP4_MYCTU",
+      "length": 226,
+      "sha256": "34b7a00be28d9c0f3e0984ad2f6913501eddc626b793890b2b25eae8ff0327ff",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_G9BY57_PETH_UNKP",
+      "length": 293,
+      "sha256": "4459cb1cff927d45ca1b9c354914af28ae78f15d75424d440c8dc9b2a4c729d2",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_P52956_CUTI1_ASPOR",
+      "length": 213,
+      "sha256": "4ad823e35a7ad542702ad3baddc39ff5d9a5ac4e56a98593f6eec5b8885c34b8",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_P0DX29_PETH1_AMYMS",
+      "length": 309,
+      "sha256": "0648a86b70f37a21404f710c213ca66eced895a77738e4d10d3d3926e99df410",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_Q47RJ6_PETH2_THEFY",
+      "length": 301,
+      "sha256": "a54bad3ec73c049eb45a846ac4803088b66fd0b38ad407d9090357fa20b68cc9",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_A0A2J8C362_CUTI1_VERDV",
+      "length": 295,
+      "sha256": "d809e4938d0344e9a24239eb98350d10effa59170e309e162fc4772f2bf4945f",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_F7IX06_PETH2_THEAE",
+      "length": 300,
+      "sha256": "e806085a30d0427b3ece1df8dfbb0979a1f8f32a7f8f50a1fd5f29c61cc3f0a7",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_E9LVH9_PETH2_THECS",
+      "length": 262,
+      "sha256": "cc22df287b07a27f8b1001783a75005360a14cd97a8e37182b355b8b36a7bc27",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    },
+    {
+      "id": "sp_P10951_CUTI_COLTU",
+      "length": 228,
+      "sha256": "5d4b768a4015b662642add2da24ea6d724fd1502385556ed95cabb19f774d2f9",
+      "below_min_length": false,
+      "exceeds_max_length": false
+    }
+  ]
+}

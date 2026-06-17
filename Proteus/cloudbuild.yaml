@@ -1,0 +1,19 @@
+# Cloud Build — build the CPU ESMFold fold image (gce/Dockerfile.fold) and push it
+# to Artifact Registry. Cloud Build runs on x86, so the image is linux/amd64 and runs
+# on the x86 GCE fold VM even though you submit from an arm64 Mac (no local Docker or
+# buildx needed). From the repo root:
+#
+#   gcloud builds submit --config cloudbuild.yaml .
+#
+# Override the image tag if needed:
+#   gcloud builds submit --config cloudbuild.yaml --substitutions=_IMAGE=REGION-docker.pkg.dev/PROJ/REPO/proteus-fold:cpu .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "gce/Dockerfile.fold", "-t", "${_IMAGE}", "."]
+images:
+  - "${_IMAGE}"
+substitutions:
+  _IMAGE: "us-central1-docker.pkg.dev/projproteus/proteus/proteus-fold:cpu"
+options:
+  machineType: "E2_HIGHCPU_8"   # roomier builder; the torch + transformers install is heavy
+timeout: "3600s"

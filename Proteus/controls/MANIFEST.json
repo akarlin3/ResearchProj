@@ -1,0 +1,143 @@
+{
+  "generated": "2026-06-12T04:49:42.830915+00:00",
+  "source": "RCSB files.rcsb.org",
+  "format": "pdb",
+  "structures": [
+    {
+      "id": "IsPETase",
+      "role": "positive",
+      "note": "apo 0.92A; alt 5XJH/5XG0; triad S160/H237/D206",
+      "accession": "6EQE",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/6EQE.pdb",
+      "status": "ok",
+      "path": "../structures/6EQE.pdb",
+      "bytes": 614952,
+      "sha256": "08f76ad84526d2050c2f91f002374fb82a6a76e6a5fc7c2df1e691b096daf363"
+    },
+    {
+      "id": "LCC_WT",
+      "role": "reference",
+      "note": "wild-type leaf-branch compost cutinase; catalytic S165",
+      "accession": "4EB0",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/4EB0.pdb",
+      "status": "ok",
+      "path": "../structures/4EB0.pdb",
+      "bytes": 217647,
+      "sha256": "952288d4a49893ee259638bc72e17868b6903f0027c4bd4d207f76b9ddf85718"
+    },
+    {
+      "id": "LCC_ICCG",
+      "role": "positive",
+      "note": "S165A inactivated \u2014 revert A165S in silico for docking",
+      "accession": "6THS",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/6THS.pdb",
+      "status": "ok",
+      "path": "../structures/6THS.pdb",
+      "bytes": 404676,
+      "sha256": "cee37883ac411cc7cdf9f1481d2b51b71f78b186304a112ac38fb29653549270"
+    },
+    {
+      "id": "PET46",
+      "role": "recovery",
+      "note": "archaeal PETase from Candidatus Bathyarchaeota (Erickson/Streit 2023); most-divergent positive STRUCTURE standing in for the unresolvable GuaPA/MG8; held out from the IsPETase/LCC anchor",
+      "accession": "8B4U",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/8B4U.pdb",
+      "status": "ok",
+      "path": "../structures/8B4U.pdb",
+      "bytes": 622566,
+      "sha256": "43039aa71bfc67b7aa4fe5f2956cbec18cd460c9de3cff6d0f75e21fb8390ad4"
+    },
+    {
+      "id": "Cut190",
+      "role": "recovery",
+      "note": "thermostable cutinase Cut190 from Saccharomonospora viridis; PET-active actinomycete cutinase; divergent positive (held out)",
+      "accession": "4WFI",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/4WFI.pdb",
+      "status": "ok",
+      "path": "../structures/4WFI.pdb",
+      "bytes": 211005,
+      "sha256": "c968cc3d4c5dc6267fd4ec61eb6491a9a550e5beff67b4743b4bc39e022617aa"
+    },
+    {
+      "id": "TfCut2",
+      "role": "recovery",
+      "note": "cutinase TfCut2 from Thermobifida fusca; PET-active actinomycete cutinase; divergent positive (held out)",
+      "accession": "4CG1",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/4CG1.pdb",
+      "status": "ok",
+      "path": "../structures/4CG1.pdb",
+      "bytes": 571860,
+      "sha256": "a8d38c5c059f4a1256bccc7867c088377c5fb37c9ec700caf993ff42cc661649"
+    },
+    {
+      "id": "CalB",
+      "role": "negative",
+      "note": "Candida antarctica lipase B; lid-bearing lipase; alpha/beta-hydrolase; no PET activity",
+      "accession": "1TCA",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/1TCA.pdb",
+      "status": "ok",
+      "path": "../structures/1TCA.pdb",
+      "bytes": 244863,
+      "sha256": "8950b5f7a08c6e8be8506de6af728ec7c28583aa28362cb7886726f757d70d56"
+    },
+    {
+      "id": "AChE_Tc",
+      "role": "negative",
+      "note": "Torpedo californica acetylcholinesterase; deep-gorge serine hydrolase S200/H440/E327; no PET activity",
+      "accession": "1EA5",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/1EA5.pdb",
+      "status": "ok",
+      "path": "../structures/1EA5.pdb",
+      "bytes": 480330,
+      "sha256": "7a8f3683fe879e44edb82e80dc9d3cdac213fa573818131fafd80cf9945f8d81"
+    },
+    {
+      "id": "CRL",
+      "role": "negative",
+      "note": "Candida rugosa lipase 1; lid-bearing alpha/beta-hydrolase S209/H449/E341; no PET activity",
+      "accession": "1CRL",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/1CRL.pdb",
+      "status": "ok",
+      "path": "../structures/1CRL.pdb",
+      "bytes": 394308,
+      "sha256": "7bf7f0216241960496e09e83038d7d0baa8bc79a56fc1c3173ed9437f26ad7b8"
+    },
+    {
+      "id": "Est2",
+      "role": "negative",
+      "note": "Alicyclobacillus acidocaldarius esterase-2 Est2; bacterial carboxylesterase; alpha/beta-hydrolase; no PET activity",
+      "accession": "1EVQ",
+      "format": "pdb",
+      "url": "https://files.rcsb.org/download/1EVQ.pdb",
+      "status": "ok",
+      "path": "../structures/1EVQ.pdb",
+      "bytes": 247374,
+      "sha256": "b56aead84190b0074f07a97993c151aa06631a15f498b66e7f2a3de0cf286722"
+    }
+  ],
+  "sequences": [
+    {
+      "id": "GuaPA",
+      "type": "sequence",
+      "accession": "marcottelab/GuaPA",
+      "status": "manual",
+      "note": "archaeal PETase (Acosta 2025); UNRESOLVED \u2014 GitHub repo not reachable; needs GCE fold to enter S4/S5 calibration"
+    },
+    {
+      "id": "MG8",
+      "type": "sequence",
+      "accession": "EIAMTHONG_2022_SI",
+      "status": "manual",
+      "note": "saliva-metagenome PETase (Angew Chem 2022); UNRESOLVED \u2014 no PDB and SI accession not located; needs GCE fold"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+# Proteus — GCE BURST fold image (S3). ESMFold batch fold, CPU build. Build/push ONLY
+# when bursting; this is NOT part of the local M4 env and must NOT be built on the Mac.
+# The local pipeline narrows S0–S2 and ships only the S2 shortlist up here (see gce/sync.md).
+#
+# CPU fold: this project has no GPU quota, so we fold ESMFold on CPU on a C4 VM. ESMFold
+# on CPU runs fp32 and is RAM-heavy + slow, but the narrowed shortlist is small. (To move
+# to GPU later: switch the base to nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04, install the
+# +cu124 torch wheel, set compute.gce_burst.accelerator, and proteus.launch builds the GPU plan.)
+#
+# Versions are pinned for a buildable CPU image; verify + capture the exact resolved
+# set into envlog/ on the first real build (`pip freeze`).
+
+# CPU base — no CUDA. Slim Debian + Python 3.11.
+FROM python:3.11-slim-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1 \
+    OMP_NUM_THREADS=8 \
+    HF_HOME=/data/hf-cache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/proteus
+
+RUN python3 -m pip install --upgrade pip
+
+# --- ESMFold (S3 — the reason this box exists), CPU build ----------------------
+# We run ESMFold (facebook/esmfold_v1) via HuggingFace transformers' EsmForProteinFolding
+# — deliberately NOT fair-esm, because that pulls OpenFold's CUDA-only kernels that won't
+# build on a CPU box. transformers needs only a CPU torch wheel; the ~2.5 GB esmfold_v1
+# weights download from the Hub on first run (cached under HF_HOME on the mounted volume).
+RUN pip3 install "torch==2.2.2" --index-url https://download.pytorch.org/whl/cpu
+# Pin numpy < 2: torch 2.2.2 is built against NumPy 1.x, and NumPy 2.x breaks its C
+# bridge ("module compiled using NumPy 1.x cannot run in NumPy 2.x" -> "Could not infer
+# dtype of numpy.int64" at fold time). transformers/accelerate are happy on 1.26.
+RUN pip3 install "numpy==1.26.4" "transformers==4.44.2" "accelerate==0.34.2"
+
+# --- GPU docking (GNINA / DiffDock) lives in the P4 burst, kept out of this image.
+
+# The burst runner: read the S3 job manifest, fold the shortlist (CPU), write PDBs +
+# per-model pLDDT to /data/proteus/out — checkpointed per sequence (a preempted SPOT VM
+# resumes from the bucket, not refolds). Invoked with --device cpu. See gce/sync.md.
+COPY gce/run_fold.py /opt/proteus/run_fold.py
+ENTRYPOINT ["python3", "/opt/proteus/run_fold.py"]
+# Default args (override at `docker run` / `gcloud` time):
+CMD ["--help"]

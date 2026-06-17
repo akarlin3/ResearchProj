@@ -1,0 +1,319 @@
+# Proteus — central config
+# Structure-first dark-proteome mining for divergent PET-hydrolase candidates.
+# Target LOCAL host: M4 MacBook Air (Apple Silicon, MPS/CPU, no CUDA).
+# Every stochastic step (S0 MMseqs2, S3 ESMFold/torch on GCE, docking) MUST read
+# random_seed from here — never hardcode a seed in stage code.
+
+# ---------------------------------------------------------------------------
+# Global reproducibility
+# ---------------------------------------------------------------------------
+random_seed: 1729            # referenced by every stochastic stage (S0, S3, docking)
+
+# ---------------------------------------------------------------------------
+# Device — LOCAL Apple Silicon. mps when available, else cpu. Never cuda locally.
+# ---------------------------------------------------------------------------
+device: mps                  # mps | cpu  (auto-fallback to cpu if MPS unavailable)
+
+# ---------------------------------------------------------------------------
+# Paths (relative to repo root unless absolute)
+# ---------------------------------------------------------------------------
+paths:
+  data_raw:        data/raw
+  data_interim:    data/interim
+  data_processed:  data/processed
+  structures:      structures          # gitignored; fetched controls + folded PDBs returned from GCE
+  models:          models              # gitignored; downloaded weights (ProstT5 local; ESMFold lives on GCE)
+  controls:        controls
+  envlog:          envlog
+  # external weight locations (populated when downloaded; left blank to avoid guessing)
+  prostt5_weights: ""                  # e.g. "Rostlab/ProstT5" (HF id) or a local cache path
+  # NOTE: no esmfold_weights here — ESMFold runs on the GCE burst box, not locally.
+
+# ---------------------------------------------------------------------------
+# Corpus selection — which dark-proteome sources to mine
+# ---------------------------------------------------------------------------
+corpus:
+  # Dark-proteome sources, resolved into data/raw shards by `proteus.fetch_corpus`.
+  # Each entry is a dict:
+  #   {name: <id>, type: uniprot, query: "<UniProtKB query>", limit: <N<=500>}
+  #   {name: <id>, type: url,     url: "https://.../shard.fasta(.gz)"}
+  # Left empty by default (no network dependency); bulk MGnify/GTDB shards are too
+  # large to auto-fetch — point a `url` source at a prepared shard or drop FASTA(.gz)
+  # in data/raw directly. Example:
+  #   sources:
+  #     - {name: sprot_cutinases, type: uniprot, query: "cutinase AND reviewed:true", limit: 50}
+  sources: []
+  min_length: 80                       # residues; below this, skip
+  max_length: 1000                     # length cap; longer seqs chunked on GCE (S3)
+  fasta_glob: "data/raw/*.fasta.gz"
+
+# ---------------------------------------------------------------------------
+# Stage thresholds
+# ---------------------------------------------------------------------------
+# S0 — dereplicate (MMseqs2). This is dereplication, NOT a homology gate:
+#      we collapse near-identical sequences only; we do NOT filter by similarity
+#      to known PETases (that would defeat dark-tail mining).  [LOCAL]
+s0_dereplicate:
+  min_seq_id: 0.95                     # cluster members at >=95% identity collapse
+  coverage: 0.90
+  cov_mode: 1
+
+# S1 — ProstT5 sequence -> 3Di tokenization.  [LOCAL]
+s1_tokenize:
+  batch_size: 16                       # modest: 16 GB unified RAM on the M4 Air is tight
+  device: auto                         # auto -> mps if available else cpu (see top-level `device`)
+
+# S2 — Foldseek fold-CLASS triage against the alpha/beta-hydrolase fold (UNSEEDED:
+#      we match the fold class, not specific PETase templates).  [LOCAL]
+#      DECISION: search against BOTH references — a curated precision set AND a
+#      broad AF-DB/PDB set with a fold-class post-filter — and UNION the survivors.
+#      (See envlog/env-failures.md "S2 fold-class reference — USE BOTH".)
+s2_foldclass_triage:
+  target_fold: alpha_beta_hydrolase
+  evalue: 0.01                         # Foldseek hit e-value cutoff (<= keeps)
+  min_bits: 50                         # minimum Foldseek bit score (>= keeps)
+  # Inputs produced by S1/S0 (the Foldseek query DB and the representative FASTA).
+  query_db: data/interim/s1_3di/querydb
+  representatives_fasta: data/interim/s0_representatives.fasta
+  # Outputs.
+  shortlist_fasta: data/interim/s2_shortlist.fasta   # shipped UP to GCE (S3)
+  triage_tsv: data/interim/s2_triage.tsv             # per-query audit (refs hit, best e/bits)
+  # BOTH references (union of survivors). `db` is a PRE-BUILT Foldseek 3Di DB;
+  # left blank here to avoid guessing a path — populate per host. For a broad
+  # reference, `post_filter.fold_class_allowlist` is a text file of target IDs in
+  # `db` that ARE the alpha/beta-hydrolase fold class (one id per line, '#'
+  # comments allowed); broad hits to anything NOT on that list are discarded.
+  references:
+    - name: curated_alpha_beta_hydrolase   # curated ESTHER/representative precision anchors
+      kind: curated
+      db: ""
+    - name: broad_afdb_pdb                  # broad AF-DB/PDB search, fold-class post-filtered
+      kind: broad
+      db: ""
+      post_filter:
+        fold_class_allowlist: ""
+
+# S3 — ESMFold batch. RUNS ON GCE, NOT locally. On the Mac this stage is DRY-RUN
+#      ONLY: validate the input FASTA and emit a job manifest. NEVER fold on MPS.  [GCE]
+s3_fold:
+  run_location: gce                   # gce | local-dry-run. Local execution is dry-run only.
+  device: cpu                          # the *GCE* device — cpu (no GPU quota) | cuda (when GPU)
+  plddt_min: 70.0                      # mean pLDDT cutoff to keep a returned model
+  chunk_size: 400                      # residue chunk for long sequences (applied on GCE)
+  max_recycles: 3
+  manifest_out: data/interim/s3_job_manifest.json
+
+# S4 — catalytic geometry gate: Ser-His-Asp triad + oxyanion hole, on the
+#      structures RETURNED from GCE.  [LOCAL]
+s4_geometry:
+  triad_serine_resname: SER
+  triad_his_resname: HIS
+  triad_acid_resnames: [ASP, GLU]
+  # distance windows (Angstrom) — catalytic triad hydrogen-bonding geometry
+  ser_og_his_ne2_max: 3.5              # Ser OG -- His NE2
+  his_nd1_acid_max: 3.5                # His ND1 -- Asp/Glu carboxylate O
+  oxyanion_hole_max: 3.5               # backbone-NH donor distance to oxyanion position
+  # Oxyanion-hole probe: the anion sits in the hemisphere AWAY from the His, in the
+  # region ~2.5-3.5 A from Ser OG. We search that shell for the point with the most
+  # backbone amide N within oxyanion_hole_max, and require >= oxyanion_min_donors that
+  # co-localize there (scattered amides near OG do not count — they must share a point).
+  oxyanion_probe_min: 2.5              # Angstrom from Ser OG (near edge of the region)
+  oxyanion_probe_max: 3.5             # Angstrom from Ser OG (far edge of the region)
+  oxyanion_min_donors: 2               # distinct backbone-NH donors required
+
+# S5 — cleft metrics A-E + two discriminators, control-anchored scoring (scored
+#      RELATIVE to the positive controls, not to absolute cutoffs).  [LOCAL]
+s5_cleft_filter:
+  fpocket_min_pockets: 1
+  metrics: [volume, hydrophobicity, depth, polarity, druggability]   # A-E base set
+  control_anchor: IsPETase             # reference for relative cleft scoring
+  # Positive anchor set for z-scoring (LCC_WT=4EB0 is the LCC positive; 6THS is the
+  # S165A trap and is NOT a positive). Calibration centres metrics on these.
+  positive_controls: [IsPETase, LCC_WT]
+  # Catalytic-pocket selection: pick the fpocket pocket whose centre is nearest the
+  # catalytic Ser OG; skip the model if none is within this distance.
+  catalytic_pocket_max_dist: 12.0      # Angstrom
+  # Added discriminator 1 — active-site EXPOSURE / lid-absence (primary).
+  # Robust proxy: peripherality of the catalytic Ser relative to the protein CA
+  # centroid. Lid-less PET hydrolases sit on a surface groove (Ser far from the
+  # core); lid/gorge enzymes bury the Ser near the core. This avoids the confound
+  # that raw OG SASA is dominated by open-vs-closed crystal lid state.
+  exposure_metric: peripherality       # peripherality | og_sasa
+  # How to express that peripherality. The dark proteome spans all sizes, so the
+  # PRODUCTION metric must be size-invariant — an absolute Angstrom distance cannot
+  # transfer across proteins of different size. Chosen a priori on principle, NOT
+  # tuned to the 6 controls (see the normalization section of calibration-report.md).
+  #   percentile : fraction of CA atoms closer to the CA centroid than the catalytic
+  #                Ser CA is (0 = dead centre, 1 = most peripheral). Size- AND
+  #                shape-invariant. PRODUCTION default.
+  #   rg_norm    : (Ser OG -> CA centroid) / Rg, Rg = sqrt(mean_i ||CA_i-centroid||^2).
+  #                Dimensionless; size-invariant continuous cross-check.
+  #   absolute   : Ser OG -> CA centroid in Angstrom. Size-DEPENDENT; kept for
+  #                comparison only — do NOT use in production.
+  peripherality_mode: percentile       # percentile | rg_norm | absolute
+  sasa_probe_radius: 1.4               # for the reported (diagnostic) OG SASA
+  # Added discriminator 2 — aromatic subsites (Trp/Tyr/Phe) flanking the cleft.
+  aromatic_resnames: [TRP, TYR, PHE]
+  aromatic_shell_min: 6.0              # Angstrom from Ser OG
+  aromatic_shell_max: 10.0             # Angstrom from Ser OG
+  # Composite weights (sum to 1). Exposure dominates (the lid-absence signal);
+  # druggability/volume separate the big-pocket lipases; aromatics down-weighted
+  # because raw aromatic count is noisy and can favour aromatic-gorge esterases.
+  weights:
+    exposure: 0.40
+    druggability: 0.20
+    depth: 0.10
+    volume: 0.10
+    hydrophobicity: 0.075
+    polarity: 0.075
+    aromatics: 0.05
+  # PETase-favourable orientation per metric, set from biology (NOT tuned to the 6
+  # controls): +1 higher is more PETase-like, -1 lower is, 0 penalise deviation from
+  # the positive profile (|z|). depth = pocket buriedness (1 - solvent access).
+  orientation:
+    exposure: 1
+    druggability: -1
+    depth: -1
+    aromatics: 1
+    volume: 0
+    hydrophobicity: 0
+    polarity: 0
+
+# ---------------------------------------------------------------------------
+# ESM Metagenomic Atlas retrieval (inverted discovery front-end)
+# ---------------------------------------------------------------------------
+# The Atlas is PRE-FOLDED structures, so discovery inverts the pipeline: Foldseek
+# the alpha/beta-hydrolase fold-class query AGAINST the Atlas, fetch the hit
+# structures, and feed them straight into `screen` (S4->S5 at the widened operating
+# point). S0/S1/S3 sit out. Resolved endpoints + provenance: envlog/atlas-endpoints.md
+# (the API drifts — re-resolve before large runs). See src/proteus/atlas.py.
+atlas:
+  backend: api                 # api | local_db
+  version: v2023_02            # Atlas version; recorded with every run for provenance
+  query_set: foldclass_union   # curated + broad alpha/beta-hydrolase union (UNSEEDED)
+  hit_cap: 2000                # pilot cap on retrieved hits; raise for the local-DB sweep
+  min_bits: 50                 # Foldseek bit-score threshold (>= keeps)
+  local_db_path: ""            # set when scaling to the downloaded HQ clust30 Foldseek DB
+  operating_point: widened     # screen at the -1.156 widened line (max divergent recall)
+  # Query set: the fold-class union is the curated alpha/beta-hydrolase reference
+  # STRUCTURES in `structures/` (controls/references.csv). The api backend submits
+  # these PDBs directly to the Atlas search (server-side 3Di), so it needs no local
+  # Foldseek. `exclude_trap` drops the S165A inactive duplicate (6THS/LCC_ICCG).
+  query_exclude_ids: [LCC_ICCG]     # drop the inactive-mutant near-duplicate from the query
+  # Resolved Atlas endpoints (in config so drift is fixable without code edits).
+  endpoints:
+    base: "https://api.esmatlas.com"
+    search_structure: "https://api.esmatlas.com/searchStructure"   # /ticket, /ticket/{id}, /result/{id}/0
+    fetch_structure: "https://api.esmatlas.com/fetchPredictedStructure"  # /{MGYP}.pdb
+    search_db: highquality_clust30   # FOLDSEEK_DB token passed as database[] in the search body
+    search_mode: 3diaa
+  # MGnify metadata for biome tagging (non-blocking; unresolved -> unknown).
+  mgnify_api: "https://www.ebi.ac.uk/metagenomics/api/v1"
+  # Pilot-only degraded fallback: when the hosted search is unavailable AND no
+  # local_db is configured, draw a bounded UNSEEDED slice of the HQ clust30
+  # representative set (the Foldseek DB's own id list) so the fetch->screen
+  # machinery runs end-to-end on real Atlas structures. Honestly NOT fold-class
+  # targeted — labelled as such in the report. Turn off for a real sweep.
+  allow_representative_fallback: true
+  representative_lookup_url: "https://foldcomp.steineggerlab.workers.dev/highquality_clust30.lookup"
+  pilot_sample_size: 60        # representative-fallback slice size for the pilot
+  request_timeout_s: 60        # per-HTTP-call timeout
+  poll_interval_s: 3           # ticket poll interval
+  poll_max_s: 180              # give up on a ticket after this many seconds
+
+# ---------------------------------------------------------------------------
+# Random-floor measurement (proteus.floor) — re-measure the null + decompose lift
+# ---------------------------------------------------------------------------
+# Replaces the statistically-thin 1/60 pilot floor (1.7%) with a properly-sampled
+# uniform draw from the SAME HQ clust30 universe the enriched sweep searched, then
+# screens it through the UNCHANGED S4->S5 pipeline at the enriched run's widened
+# line and decomposes the enrichment lift into S4 (triad/fold-class) vs S5 (cleft
+# line) contributions. Runs on the Mac off the existing GCS artifacts (no GCE,
+# no re-search). See envlog/floor-measurement.md.
+floor:
+  n: 1500                      # uniform random accessions to draw from HQ clust30
+  # The enriched comparison line. Pinned to the enriched sweep's widened threshold
+  # (atlas-sweep/2026-06-14/funnel.json) so the floor and the enriched 23/300 are
+  # judged at the IDENTICAL line. Local re-derivation jitters ~+/-0.005 (fpocket
+  # non-determinism), so we pin rather than recompute to keep the comparison fair.
+  enriched_line: -1.1587
+  fetch_workers: 16            # parallel HTTP fetches (network-bound)
+  screen_workers: 8            # parallel screens (fpocket subprocess per triad+)
+  rescreen_enriched: true      # re-screen the enriched 300 locally (jitter-immune match)
+  # Uniform sampler reads the Foldseek DB's own representative list by HTTP Range.
+  lookup_url: "https://foldcomp.steineggerlab.workers.dev/highquality_clust30.lookup"
+
+# Per-query tiering — re-tier the enriched sweep WITHIN each query anchor (not by
+#      GLOBAL bits, which let the AChE/1EA5 branch dominate the top tier: the enriched
+#      300 was 96% AChE-branch, 0% PETase-branch). Best-match-partition every Atlas
+#      target in result.m8 by its nearest query, then screen the PETase/cutinase
+#      branch the thesis cares about. Mac-only, off the GCS sweep artifacts; reuses
+#      screen/S4/S5 untouched at the pinned line. The random floor (floor.json) is the
+#      third arm — reused AS MEASURED, not re-screened.  [LOCAL]
+per_query:
+  branch_n: 300                # top hits to screen per anchor branch (or all if smaller)
+  # Pinned decision line — IDENTICAL to floor.enriched_line so PETASE/ACHE/floor are
+  # all judged at one line (local re-derivation jitters with fpocket; we pin).
+  enriched_line: -1.1587
+  fetch_workers: 16            # parallel HTTP fetches (network-bound)
+  screen_workers: 8            # parallel screens (fpocket subprocess per triad+)
+  # result.m8 alignment table (query -> Atlas target) from the enriched sweep. Pulled
+  # from GCS if absent; gitignored locally (data/**, *.m8). 8-col foldseek custom
+  # format: query, target(.pdb.gz), evalue, bits, fident, alnlen, qlen, tlen.
+  result_m8: data/interim/result.m8.gz
+  result_m8_gcs: "gs://projproteus-fold/atlas-sweep/2026-06-14/result.m8.gz"
+  # Query -> anchor-class map, keyed by the query id as it appears in result.m8 col1.
+  # PETASE = the PET-active queries (IsPETase/LCC + cutinases); ACHE = Torpedo
+  # acetylcholinesterase (deep-gorge negative, the branch that dominated by bits);
+  # OTHER_NEG = the remaining negatives. Must cover every query in result.m8.
+  anchor_classes:
+    PETASE:    [6EQE, 4EB0, 8B4U, 4WFI, 4CG1]   # IsPETase, LCC, PET46, Cut190, TfCut2
+    ACHE:      [1EA5]                            # AChE_Tc (Torpedo californica)
+    OTHER_NEG: [1TCA_A, 1CRL_A, 1EVQ]           # CalB, CRL, Est2
+  # Live ESM Atlas model fetch (structurally identical to the GCE foldcomp models —
+  # triads reproduce exactly). The foldcomp worker Range path is the documented fallback.
+  fetch_url: "https://api.esmatlas.com/fetchPredictedStructure/{acc}.pdb"
+
+# Docking (P4) — small AutoDock Vina pass on the S5/screen survivors: dock a
+#      PET-mimic ligand into the catalytic cleft and rank by binding affinity.
+#      LOCAL CPU Vina here; GPU docking (GNINA/DiffDock) is a GCE burst (see gce/).
+#      The Vina search is seeded from the global random_seed (never hardcoded).
+docking:
+  ligand: BHET                          # PET-mimic: bis(2-hydroxyethyl) terephthalate
+  ligand_pdbqt: ""                      # prepared ligand PDBQT (host-local; blank => prep first, e.g. via Meeko)
+  box_center: catalytic_ser_og          # catalytic_ser_og | pocket_center — box centred on the active site
+  box_size: [20.0, 20.0, 20.0]          # Angstrom search box (x,y,z)
+  exhaustiveness: 8
+  n_poses: 9
+  top_n: 25                             # keep the best N candidates by affinity (most negative kcal/mol)
+
+# ---------------------------------------------------------------------------
+# Compute split — LOCAL Mac (triage/analysis) vs GCE burst (folding/GPU dock)
+# ---------------------------------------------------------------------------
+compute:
+  local:
+    description: "M4 MacBook Air (Apple Silicon, MPS/CPU, no CUDA, 16 GB unified). Runs S0–S2 narrowing, S4–S5 geometry/cleft, small Vina docking."
+    device: mps                        # mps | cpu
+  gce_burst:
+    description: "Google Compute Engine burst: ESMFold batch fold (S3). CPU fold (no GPU quota in this project) on a C4 VM; the narrowed S2 shortlist is small enough to fold on CPU. Only the shortlist is shipped up."
+    dockerfile: gce/Dockerfile.fold     # build context for the fold image (push to Artifact Registry)
+    # Burst launch parameters (proteus.launch plans the up-fold-down cycle from these).
+    project: "projproteus"              # GCP project id
+    zone: us-central1-a
+    instance_name: proteus-fold
+    # CPU fold: ESMFold runs fp32 on CPU, so RAM is the binding constraint (~30-40 GB for
+    # typical lengths, more for long seqs). c4-highmem-8 = 8 vCPU / 62 GB gives headroom.
+    machine_type: c4-highmem-8          # bump to c4-highmem-16 if OOM on long sequences
+    # GPU is OFF (empty accelerator => proteus.launch builds the CPU plan: COS image, no
+    # --gpus). To switch to GPU once quota is granted: set accelerator (e.g. nvidia-tesla-t4
+    # on n1-standard-4, or nvidia-l4 on g2-standard-4) and accelerator_count: 1.
+    accelerator: ""
+    accelerator_count: 0
+    image: ""                           # Artifact Registry fold image (e.g. REGION-docker.pkg.dev/PROJ/REPO/proteus-fold:cu124); blank => set per host
+    boot_disk_gb: 100
+    spot: true                          # SPOT/preemptible for cost; outputs staged to the bucket survive preemption
+    bucket: ""                          # gs://BUCKET staging for in/out (set per host); survives a preempted VM
+    vm_workdir: /tmp/proteus            # WRITABLE on-VM dir (COS root fs is read-only); bind-mounted into the containers at /data/proteus
+    remote_in: /data/proteus/in         # on-VM dir inputs are pulled (gcloud storage) before folding
+    remote_out: /data/proteus/out       # on-VM dir folded PDBs + pLDDT land in (pushed to the bucket via gcloud storage)
+    local_out: structures/folded        # where the returned models are pulled DOWN to
