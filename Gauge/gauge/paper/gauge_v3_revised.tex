@@ -66,6 +66,11 @@ deployment monitor as a safeguard.
 quantification; conformal prediction; identifiability; pseudo-diffusion;
 quantitative MRI.
 
+\vspace{0.5em}
+\noindent\textbf{Word count (Introduction--Conclusions):} 4,933
+(\texttt{texcount} ``Words in text''; excludes title page, abstract, section
+headings, float captions, tables, and references). Confirmed $\le 5000$.
+
 \section{Introduction}
 IVIM imaging~\citep{lebihan1988} separates microcirculatory perfusion from tissue
 diffusion by fitting the bi-exponential signal
@@ -81,22 +86,40 @@ low $b$, and small perfusion fractions make it nearly unidentifiable. Clinical u
 of IVIM parameter maps therefore demands trustworthy \emph{per-voxel uncertainty},
 not just point estimates.
 
-The dominant approach to IVIM UQ is \emph{model-based}: probabilistic neural
-networks, deep ensembles, mixture-density networks, and Bayesian fitting place a
-distribution over parameters and read intervals from it. These methods make
-distributional assumptions and carry \emph{no finite-sample coverage guarantee};
-the most comprehensive IVIM-UQ study to date~\citep{casali2026} documents that
-such models are well-calibrated for $D$ and $f$ but \emph{overconfident in
-$\Dstar$}. \emph{Conformal prediction}~\citep{vovk2005,lei2018,angelopoulos2023}
-offers the complementary property: under exchangeability of calibration and test
-data, it produces intervals with finite-sample, distribution-free marginal
-coverage for \emph{any} base predictor -- a biased base only widens the interval,
-it does not break coverage. Conformalized quantile regression
-(CQR)~\citep{romano2019} makes these intervals input-adaptive. Conformal UQ has
-been applied to quantitative MRI relaxometry and field
-mapping~\citep{birk2024}, but never to the ill-posed IVIM inverse problem, and
-never benchmarked head-to-head against model-based IVIM UQ. We situate both
-literatures in Sec.~\ref{sec:related}.
+\subsection{Related work}\label{sec:related}
+\textbf{IVIM estimation and its model-based uncertainty.} The bi-exponential fit is
+long known to be ill-posed in the perfusion compartment; a substantial literature
+addresses the resulting $\Dstar$ instability through segmented and constrained
+non-linear least squares, multi-algorithm comparisons documenting wide
+between-method disagreement~\citep{gurneychampion2018}, Cram\'er--Rao-guided
+acquisition design~\citep{lemke2011}, and supervised or physics-informed deep
+networks~\citep{barbieri2020,kaandorp2021,mastropietro2022} that sharpen point
+estimates without certifying their own reliability. Uncertainty quantification for
+IVIM is accordingly \emph{model-based}: Bayesian fitting with informative or spatial
+priors~\citep{gustafsson2018,spinner2021}, posterior estimation with explicit
+uncertainty~\citep{zhang2019}, and, most comprehensively, deep ensembles of
+mixture-density networks that split aleatoric and epistemic
+uncertainty~\citep{casali2026}. Every such method places a distribution over
+parameters and reads intervals from it; none carries a finite-sample,
+distribution-free coverage guarantee, and the most thorough documents residual
+overconfidence in $\Dstar$~\citep{casali2026}.
+
+\textbf{Conformal prediction and imaging.} Conformal
+prediction~\citep{vovk2005,lei2018,angelopoulos2023} yields finite-sample,
+distribution-free \emph{marginal} coverage for \emph{any} base predictor under
+exchangeability -- a biased base only widens the interval, it does not break
+coverage -- and conformalized quantile regression (CQR)~\citep{romano2019} makes the
+intervals input-adaptive; the framework extends to covariate
+shift~\citep{tibshirani2019,barber2023} and localized/conditional
+guarantees~\citep{guan2023,gibbs2023}. Distribution-free \emph{conditional} coverage
+is, however, known to be unattainable in general without distributional
+assumptions~\citep{barber2021limits} -- exactly the boundary that surfaces, in
+IVIM-specific form, when the conditioning axis is the unidentifiable $\Dstar$
+regime. Conformal UQ has been applied to distribution-free image-to-image
+regression~\citep{angelopoulos2022}, fairness in medical-imaging
+predictors~\citep{lu2022}, and -- closest to this work -- quantitative-MRI
+relaxometry and field mapping via CQR~\citep{birk2024}, but never to the ill-posed
+IVIM inverse problem and never benchmarked head-to-head against model-based IVIM UQ.
 
 This paper closes that gap and, in doing so, \emph{reframes} the question. We began
 with the hypothesis that conformal prediction's advantage would concentrate in the
@@ -108,19 +131,17 @@ replace it with a sharper, IVIM-specific finding. Our contributions are:
 IVIM-specific phenomenon is conditional: the high-$\Dstar$ regime under-covers
 across eleven label-free conditioning methods
 (Secs.~\ref{sec:conditional}--\ref{sec:identifiability}). We separate two facts the
-regime ties together. (i) Coverage conditional on the true $\Dstar$ regime is not
-label-free-attainable because that regime is a latent axis the data do not reveal
--- the IVIM instance of the known impossibility of distribution-free conditional
-coverage~\citep{barber2021limits}. (ii) Independently, a Fisher-information /
-Cram\'er--Rao analysis shows $\Dstar$ is poorly point-identified in the same regime
-(the CRLB reaches the regime-bin width). The conformal layer renders the
-conditional limit measurable; our evidence is that it is a property of the
-perfusion-estimation problem and the data, not of our particular estimator -- it
-persists for a deliberately biased shrinkage estimator and replicates when the
-ground truth is generated by a non-bi-exponential (velocity-dispersion) mechanism
-(Secs.~\ref{sec:dissociation-shrinkage},~\ref{sec:altmodel}), and we chart the
-off-model validity envelope around the bi-exponential model
-(Sec.~\ref{sec:envelope}).
+regime ties together: (i) coverage conditional on the true $\Dstar$ regime is not
+label-free-attainable because that regime is a latent axis the data do not reveal --
+the IVIM instance of the known impossibility of distribution-free conditional
+coverage~\citep{barber2021limits}; and (ii) independently, a Cram\'er--Rao (CRLB)
+analysis shows $\Dstar$ is poorly point-identified in the same regime (the CRLB
+reaches the regime-bin width). The conformal layer renders the conditional limit
+measurable, and our evidence is that it is a property of the perfusion-estimation
+problem, not our estimator: it persists for a deliberately biased shrinkage
+estimator and replicates under a non-bi-exponential (velocity-dispersion) generator
+(Secs.~\ref{sec:dissociation-shrinkage},~\ref{sec:altmodel}), with the off-model
+validity envelope charted in Sec.~\ref{sec:envelope}.
 \item \textbf{The first conformal/CQR coverage for IVIM, benchmarked.} We bring
 distribution-free conformal prediction to the ill-posed IVIM inverse problem with
 validated finite-sample marginal coverage for $(D,\Dstar,f)$, and the first
@@ -135,53 +156,8 @@ breaks before coverage fails, the wall is robust to the b-value scheme, and the
 in-vivo component is explicitly qualitative with no coverage claim
 (Secs.~\ref{sec:robustness}--\ref{sec:invivo}).
 \end{enumerate}
-Every number in this paper traces to a gated, seeded checkpoint output; a
-machine-checked consistency report is included (Sec.~\ref{sec:consistency}).
-
-\section{Related work}\label{sec:related}
-\textbf{IVIM estimation and its uncertainty.} The bi-exponential IVIM fit is long
-known to be ill-posed in the perfusion compartment, and a substantial literature
-addresses the resulting instability of $\Dstar$: segmented and constrained
-non-linear least squares, multi-algorithm comparisons that document wide
-between-method disagreement~\citep{gurneychampion2018}, and acquisition design that
-places b-values to minimize parameter error, including Cram\'er--Rao-guided
-schemes~\citep{lemke2011}. A parallel line replaces fitting with learning --
-supervised and physics-informed deep networks for IVIM
-estimation~\citep{barbieri2020,kaandorp2021,mastropietro2022} -- which sharpen
-point estimates but do not by themselves certify their own reliability.
-Uncertainty quantification for IVIM is accordingly \emph{model-based}: Bayesian
-fitting with informative or spatial priors~\citep{gustafsson2018,spinner2021},
-posterior estimation with explicit uncertainty~\citep{zhang2019}, and, most
-comprehensively, deep ensembles of mixture-density networks that decompose
-aleatoric and epistemic uncertainty and report calibration on simulated and in-vivo
-data~\citep{casali2026}. Every such method places a distribution over parameters
-and reads intervals from it; none carries a finite-sample, distribution-free
-coverage guarantee, and the most thorough of them documents residual overconfidence
-in $\Dstar$~\citep{casali2026}. A guarantee that holds regardless of how well the
-model is specified is exactly what conformal prediction supplies -- and is what
-motivates asking where even a guaranteed method must fail.
-
-\textbf{Conformal prediction and its imaging applications.} Conformal
-prediction~\citep{vovk2005,lei2018,angelopoulos2023} yields finite-sample,
-distribution-free coverage for any base predictor under exchangeability;
-conformalized quantile regression~\citep{romano2019} makes the intervals
-input-adaptive, and the framework extends to covariate
-shift~\citep{tibshirani2019,barber2023} and to localized and conditional
-guarantees~\citep{guan2023,gibbs2023}. Distribution-free \emph{conditional}
-coverage is, however, known to be unattainable in general without distributional
-assumptions~\citep{barber2021limits}; this impossibility is exactly what surfaces,
-in IVIM-specific form, when the conditioning axis is the unidentifiable $\Dstar$
-regime. In imaging it has been applied to
-distribution-free image-to-image regression and uncertainty
-maps~\citep{angelopoulos2022}, to deployment concerns such as fairness in
-medical-imaging predictors~\citep{lu2022}, and -- closest to this work -- to
-quantitative-MRI relaxometry and field mapping via conformalized quantile
-regression~\citep{birk2024}. None of these targets the IVIM inverse problem, none
-is benchmarked against model-based IVIM UQ, and -- the point of this paper -- none
-asks what conformal prediction \emph{reveals} when the data cannot identify the
-estimand: a finite-sample-valid interval that is honest precisely because it
-balloons where the parameter is unrecoverable. We turn that honesty into a
-diagnostic for the IVIM identifiability wall.
+Every number in this paper traces to a gated, seeded checkpoint output, verified by a
+machine-checked consistency report (Sec.~\ref{sec:consistency}).
 
 \section{Methods}
 \label{sec:methods}
@@ -219,10 +195,8 @@ ensemble of point regressors (epistemic-only; deliberately weak, retained as a
 worst-case base for the conformal layer rather than as a representative model-based
 method); and a per-voxel
 Bayesian fit by component-wise adaptive Metropolis (fed the true noise level, so it
-is evaluated at its best). A parallel line of work uses normalizing-flow /
-simulation-based posterior estimation for microstructure inference; this work is
-deliberately \emph{independent} of it (own forward model, own cohort, standard
-baselines) and does not use it as a baseline.
+is evaluated at its best). This work is deliberately independent of normalizing-flow /
+simulation-based posterior estimation and does not use it as a baseline.
 
 \paragraph{Conditional coverage and the identifiability diagnostic.}
 We measure coverage on a (true-$\Dstar$ tercile $\times$ SNR) grid -- the terciles
@@ -235,14 +209,25 @@ $\mathrm{CRLB}(\theta_k)=\sqrt{[\mathcal{I}^{-1}]_{kk}}$.
 
 \paragraph{Robustness tooling.}
 To stress exchangeability we use \emph{weighted / nonexchangeable
-conformal}~\citep{tibshirani2019,barber2023}, with importance weights
-$w(x)=\mathrm{d}P_{\text{test}}/\mathrm{d}P_{\text{cal}}$ estimated by a domain
-classifier on observable features, and \emph{localized}~\citep{guan2023} and
-\emph{conditional}~\citep{gibbs2023} conformal for the label-free conditioning
-attack. We also build a label-free \emph{deployment-validity monitor} with two
-detector families (a Mahalanobis distance on observable signal-summary features and
-a residual-conformal test on NLLS fit residuals) that fires when an aggregate drift
-score exceeds a calibration-derived null threshold.
+conformal}~\citep{tibshirani2019,barber2023} (importance weights
+$w(x)=\mathrm{d}P_{\text{test}}/\mathrm{d}P_{\text{cal}}$ from a domain classifier on
+observable features) and \emph{localized}~\citep{guan2023} /
+\emph{conditional}~\citep{gibbs2023} conformal for the label-free conditioning attack.
+We also build a label-free \emph{deployment-validity monitor} with two detector
+families (Mahalanobis distance on observable signal-summary features;
+residual-conformal test on NLLS fit residuals) firing when an aggregate drift score
+exceeds a calibration-derived null threshold.
+
+\subsection{Reproducibility and consistency}
+\label{sec:consistency}
+Every numeric claim is drawn from a gated, seeded checkpoint printout and is held to
+two machine-checked contracts: every finite-sample-guaranteed marginal value and
+every determinism-gated quantity must appear \emph{verbatim} in its
+seed-\texttt{20260613} report, and every conditional / empirical (E) headline ships
+as the across-seed mean over a 16-seed re-run and must lie within its empirical
+$[5,95]$ band (carrying an \texttt{n\_seeds}). Seed-0 outputs are byte-identical
+across independent full re-runs. The enforcing script, the seed, and the exact
+regeneration commands are listed in the Data and Code Availability Statement.
 
 \section{Results}
 
@@ -284,45 +269,32 @@ conformalized: Bayesian  & 0.895 (+0.005) & 0.894 (+0.006) & 0.876 (+0.024) \\
 Averaging the gap over $\alpha$, the marginal under-coverage is broad, not
 $\Dstar/f$-concentrated: per-method worst compartments are $f$ (PNN, $0.125$), $f$
 (MDN, $0.037$), $\Dstar$ (DeepEnsemble-Point, $0.452$), and $f$ (Bayesian, $0.045$).
-Excluding the deliberately weak DeepEnsemble-Point, the credible baselines are only
-mildly overconfident (worst-compartment gaps $0.037$ for the MDN ensemble and
-$0.045$ for Bayesian-MCMC); the weak ensemble (worst-compartment gap $0.452$) is
-retained solely as a stress case for the conformal layer, not as evidence that
-model-based UQ is severely overconfident.
-\textbf{$0/4$ methods} show $\Dstar/f$-concentrated under-coverage; for the MDN
-ensemble $\Dstar$ is in fact among the \emph{better}-covered parameters
-marginally (gap $0.029$), because its large aleatoric variance widens its band. The naive
-marginal hypothesis is therefore \emph{rejected}. Conformal and conformalized
-variants restore near-nominal coverage everywhere, with maximum conformalized gap
-$0.024$ (Fig.~\ref{fig:coverage}). On sharpness (Fig.~\ref{fig:sharpness}), the
-cost of restoring coverage is cheap for strong bases (MDN $1.05$--$1.07\times$,
-Bayesian $1.02$--$1.05\times$ the raw width) and ruinous for the overconfident
-weak base (DeepEnsemble-Point $3.23$--$3.76\times$). Crucially, the model's band
-helps: \emph{conformalized-MDN is $0.73/0.77/0.65\times$ the width of pure CQR} for
+Excluding the deliberately weak DeepEnsemble-Point (retained solely as a stress case
+for the conformal layer), the credible baselines are only mildly overconfident
+(worst-compartment gaps $0.037$ and $0.045$); \textbf{$0/4$ methods} show
+$\Dstar/f$-concentrated under-coverage -- for the MDN ensemble $\Dstar$ is in fact
+among the \emph{better}-covered parameters marginally (gap $0.029$), its large
+aleatoric variance widening the band -- so the naive marginal hypothesis is
+\emph{rejected}. Conformal and conformalized variants restore near-nominal coverage
+everywhere, with maximum conformalized gap $0.024$ (Supporting Information
+Fig.~\ref{fig:coverage}). On sharpness (Supporting Information
+Fig.~\ref{fig:sharpness}), restoring coverage is cheap for strong bases (MDN
+$1.05$--$1.07\times$, Bayesian $1.02$--$1.05\times$ the raw width) and ruinous for the
+weak base (DeepEnsemble-Point $3.23$--$3.76\times$); crucially the model's band helps:
+\emph{conformalized-MDN is $0.73/0.77/0.65\times$ the width of pure CQR} for
 $D/\Dstar/f$ at equal guaranteed coverage -- the sharpest valid recipe.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.78\linewidth]{figures/coverage_vs_nominal.pdf}
-\caption{Realized vs nominal coverage per parameter. Raw model-based methods sit
-below the diagonal (overconfident); conformal and conformalized methods sit on it.}
-\label{fig:coverage}
-\end{figure}
-
-% [Fig. sharpness relocated to Supporting Information]
 
 \subsection{The conditional finding: high-$\Dstar$ under-covers universally}
 \label{sec:conditional}
-Marginal coverage hides a compartment-specific failure
-(Fig.~\ref{fig:heatmap}). On the (SNR $\times$ $\Dstar$-tercile) grid, the
-high-$\Dstar$ tercile under-covers for \emph{every} method at \emph{every} SNR,
-while the mid-$\Dstar$ tercile over-covers ($\approx0.99$). Table~\ref{tab:hidstar}
-gives the high-$\Dstar$ slice: even the best method (conformalized-MDN) reaches
-only $0.868$\band{0.856}{0.889} marginal-in-regime and $0.786$\band{0.751}{0.826}
-in its worst-SNR cell (16-seed mean and $[5,95]$ band). Critically,
-\emph{Mondrian stratification by the known SNR does not fix it} -- the failure axis
-is the \emph{unknown} true $\Dstar$, not SNR. This is the refined, IVIM-specific
-form of the original hypothesis.
+Marginal coverage hides a compartment-specific failure (Fig.~\ref{fig:heatmap}). On
+the (SNR $\times$ $\Dstar$-tercile) grid the high-$\Dstar$ tercile under-covers for
+\emph{every} method at \emph{every} SNR while the mid-$\Dstar$ tercile over-covers
+($\approx0.99$); Table~\ref{tab:hidstar} gives the high-$\Dstar$ slice, where even the
+best method (conformalized-MDN) reaches only $0.868$\band{0.856}{0.889}
+marginal-in-regime and $0.786$\band{0.751}{0.826} in its worst-SNR cell. Critically,
+\emph{Mondrian stratification by the known SNR does not fix it} -- the failure axis is
+the \emph{unknown} true $\Dstar$, not SNR, the refined IVIM-specific form of the
+original hypothesis.
 
 \begin{table}[t]
 \centering
@@ -367,27 +339,25 @@ methodological:
 \begin{itemize}
 \item \textbf{Routing error.} A plug-in $\hat{\Dstar}$ misroutes $\sim33\%$
 ($[30,35]\%$ over 16 seeds) of true high-$\Dstar$ voxels to a lower-$\Dstar$
-(smaller-radius) stratum: the estimate is least reliable exactly where it must
-route correctly. Mondrian-by-$\hat{\Dstar}$ attains nominal coverage
-\emph{conditional on the observed stratum} ($[0.90,0.89,0.90]$) yet craters on the
-\emph{true} high-$\Dstar$ tercile ($0.78$\band{0.76}{0.80}) -- it controls the
-observable, not the latent axis.
-\item \textbf{The CRLB wall.} The CRLB on $\Dstar$ grows $\sim6\times$ from low to
-high $\Dstar$ (an analytic, seed-invariant bound); the ratio of median
-CRLB($\Dstar$) to the tercile bin width rises $0.34\to0.67\to1.10$ across terciles,
-the high tercile band $[1.02,1.15]$ (Fig.~\ref{fig:crlb}). In the high-$\Dstar$
-regime the CRLB \emph{exceeds} the bin width: a voxel's $\Dstar$ cannot be
-localized to its own tercile from the data, so no observable can route it to a
-wider-interval stratum. Conformal interval width correctly tracks the per-voxel
-CRLB (log--log $r=0.76$\band{0.72}{0.77}): the intervals are honest, not broken.
+(smaller-radius) stratum -- least reliable exactly where it must route correctly.
+Mondrian-by-$\hat{\Dstar}$ attains nominal coverage \emph{conditional on the observed
+stratum} ($[0.90,0.89,0.90]$) yet craters on the \emph{true} high-$\Dstar$ tercile
+($0.78$\band{0.76}{0.80}): it controls the observable, not the latent axis.
+\item \textbf{The CRLB wall.} The CRLB on $\Dstar$ grows $\sim6\times$ from low to high
+$\Dstar$ (an analytic, seed-invariant bound), and the ratio of median CRLB($\Dstar$)
+to the tercile bin width rises $0.34\to0.67\to1.10$ across terciles (high-tercile band
+$[1.02,1.15]$, Fig.~\ref{fig:crlb}). Where the CRLB \emph{exceeds} the bin width a
+voxel's $\Dstar$ cannot be localized to its own tercile, so no observable can route it
+to a wider-interval stratum; conformal width correctly tracks the per-voxel CRLB
+(log--log $r=0.76$\band{0.72}{0.77}), so the intervals are honest, not broken.
 \end{itemize}
-\textbf{Verdict.} High-$\Dstar$ regime-conditional coverage in IVIM is
-unrecoverable label-free for two compounding reasons. The conditioning axis (true
-$\Dstar$ regime) is latent and unidentifiable, so distribution-free conditional
-coverage on it is impossible~\citep{barber2021limits} -- this is the operative
-barrier to coverage. Separately, $\Dstar$ is poorly point-identified there
-(CRLB $\approx$ regime-bin width) -- this is why even the point map is
-untrustworthy. We \emph{characterize} the limit; we do not claim to solve it.
+\textbf{Verdict.} High-$\Dstar$ regime-conditional coverage is unrecoverable
+label-free for two compounding reasons: the conditioning axis (true $\Dstar$ regime)
+is latent and unidentifiable, so distribution-free conditional coverage on it is
+impossible~\citep{barber2021limits} -- the operative barrier to coverage -- and,
+separately, $\Dstar$ is poorly point-identified there (CRLB $\approx$ regime-bin
+width), which is why even the point map is untrustworthy. We \emph{characterize} the
+limit; we do not claim to solve it.
 
 \begin{figure}[t]
 \centering
@@ -409,192 +379,105 @@ conditioning methods; every bar sits below the nominal $0.90$.}
 \subsection{Robustness under deliberate exchangeability breaks}
 \label{sec:robustness}
 We deploy one conformal predictor and one monitor, calibrated on the i.i.d.\ Rician
-cohort, against four deliberate breaks (Table~\ref{tab:shift},
-Fig.~\ref{fig:shift}). Every break miscalibrates coverage; the dangerous
-under-coverage reaches $\Dstar=0.508$\band{0.479}{0.543} under a harder-tissue prior
-shift and the worst parameter $0.592$\band{0.557}{0.637} under a low-SNR covariate
-shift. \emph{Weighted / nonexchangeable conformal}~\citep{tibshirani2019,barber2023}
-recovers the covariate shifts (SNR worst-parameter $0.592\to0.882$, all within
-$0.018$ of nominal; prior $\Dstar$ $0.508\to0.991$\band{0.974}{1.000}) and is
-honestly limited on the tri-exponential forward-model misspecification: a shift in
-the conditional law $P(y\mid x)$ is, in general, not repairable by an $x$-space
-likelihood ratio (weighting over-corrects $\Dstar$ to $0.933$\band{0.924}{0.941},
-leaving a per-parameter spread of $0.033$).
-
-\begin{table}[t]
-\centering
-\caption{Per-parameter coverage under each break, naive vs.\ weighted conformal
-($\alpha=0.10$, nominal $0.90$), with the deployment monitor's verdict. Across-seed
-means (16 seeds); per-entry $[5,95]$ bands are in the supplementary CI table
-(\texttt{results/ci\_for\_latex.json}). Monitor AUCs are the deterministic seed-0
-values. From \texttt{results/multiseed\_report.txt}.}
-\label{tab:shift}
-\small
-\begin{tabular}{llccc l}
-\toprule
-scenario & method & $D$ & $\Dstar$ & $f$ & monitor \\
-\midrule
-in-dist (control)   & naive    & 0.898 & 0.898 & 0.901 & silent (AUC 0.50) \\
-SNR shift (low)      & naive    & \textbf{0.592} & 0.739 & \textbf{0.614} & FIRES (AUC 0.91) \\
-                     & weighted & 0.882 & 0.901 & 0.909 & \\
-prior shift (harder) & naive    & 0.972 & \textbf{0.508} & 0.909 & FIRES (AUC 0.71) \\
-                     & weighted & 0.919 & 0.991 & 0.902 & \\
-tri-exp misspec      & naive    & 0.907 & 0.843 & 0.912 & FIRES (AUC 0.51) \\
-                     & weighted & 0.891 & 0.933 & 0.898 & \\
-noise-model swap     & naive    & 0.912 & 0.893 & 0.906 & FIRES (AUC 0.52) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The label-free monitor (reusing the deployment-validity concept of a sibling
-project) \textbf{fires on all four observable breaks before coverage fails}: in an
-SNR-severity sweep, it raises the alarm at SNR $20$ (coverage still $0.866$) while
-coverage first crosses the failure line at SNR $13$. Yet it is constitutively
-\emph{blind} to the latent high-$\Dstar$ gap: on an in-distribution (exchangeable)
-test the monitor is silent (AUC $0.50$) and marginal $\Dstar$ coverage is nominal
-($0.898$\band{0.880}{0.913}), while the high-$\Dstar$ conditional coverage is
-$0.814$\band{0.787}{0.839}. Observable
-shifts are caught; the within-distribution latent-axis failure is not -- the same
-observable-vs-hidden split that recurs across this line of work.
-
-% [Fig. shift relocated to Supporting Information]
+cohort, against four deliberate breaks; per-parameter naive-vs-weighted coverage and
+the monitor verdict for each break are tabulated in Supporting Information
+Table~\ref{tab:shift} (and Fig.~\ref{fig:shift}). Every break miscalibrates coverage:
+the dangerous under-coverage reaches $\Dstar=0.508$\band{0.479}{0.543} under a
+harder-tissue prior shift and the worst parameter $0.592$\band{0.557}{0.637} under a
+low-SNR covariate shift. \emph{Weighted / nonexchangeable
+conformal}~\citep{tibshirani2019,barber2023} recovers the covariate shifts (SNR
+worst-parameter $0.592\to0.882$, all within $0.018$ of nominal; prior $\Dstar$
+$0.508\to0.991$\band{0.974}{1.000}) but is honestly limited on tri-exponential
+forward-model misspecification -- a shift in the conditional law $P(y\mid x)$ is not
+repairable by an $x$-space likelihood ratio (weighting over-corrects $\Dstar$ to
+$0.933$\band{0.924}{0.941}, a per-parameter spread of $0.033$). The label-free
+monitor \textbf{fires on all four observable breaks before coverage fails}: in an
+SNR-severity sweep it alarms at SNR $20$ (coverage still $0.866$) while coverage
+first crosses the failure line at SNR $13$. Yet it is constitutively \emph{blind} to
+the latent high-$\Dstar$ gap: on an in-distribution test the monitor is silent (AUC
+$0.50$) and marginal $\Dstar$ coverage is nominal ($0.898$\band{0.880}{0.913}) while
+the high-$\Dstar$ conditional coverage is $0.814$\band{0.787}{0.839} -- the same
+observable-vs-hidden split that recurs across this work.
 
 
 \subsection{Acquisition sensitivity: the wall is b-scheme-robust}
 \label{sec:acquisition}
 Does the high-$\Dstar$ wall move with the b-value scheme? We compare a clinical
 ($11$-value), a CRLB-optimal ($11$-value, greedy $\Dstar$-CRLB design), and a dense
-($22$-value) scheme at fixed prior/SNR/seed (Table~\ref{tab:acq},
-Fig.~\ref{fig:acq}). The high-$\Dstar$ marginal coverage barely moves
-($0.821\to0.835\to0.808$). The resolution ratio CRLB($\Dstar$)/tercile-width stays
-at or above unity: even a CRLB-optimal design only reaches $\sim$unity
-($1.03$\band{0.97}{1.16}); acquisition shifts the wall to threshold, not past it,
-while the clinical and dense schemes stay above it ($1.24$, $1.11$). A CRLB-optimal
-design lowers the ratio ($1.24\to1.03$) but does not remove the wall. Acquisition
-design \emph{shifts} the wall; it does not erase it -- a concrete, honestly negative
-handoff to acquisition-aware experiment design.
-
-\begin{table}[t]
-\centering
-\caption{High-$\Dstar$ coverage and resolution ratio by b-value scheme. Across-seed
-means with 16-seed $[5,95]$ bands; the CRLB-optimal ratio band crosses unity. From
-\texttt{results/multiseed\_report.txt}.}
-\label{tab:acq}
-\small
-\begin{tabular}{lcccc}
-\toprule
-scheme & $n_b$ & hi-$\Dstar$ marg & hi-$\Dstar$ worst-SNR & CRLB/tercile-width \\
-\midrule
-clinical      & 11 & 0.821\band{0.794}{0.845} & 0.596\band{0.542}{0.702} & 1.24\band{1.17}{1.37} \\
-CRLB-optimal  & 11 & 0.835\band{0.795}{0.862} & 0.603\band{0.541}{0.678} & \textbf{1.03}\band{0.97}{1.16} \\
-dense         & 22 & 0.808\band{0.788}{0.836} & 0.551\band{0.508}{0.597} & 1.11\band{1.05}{1.21} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.92\linewidth]{figures/acquisition_wall.pdf}
-\caption{(Left) high-$\Dstar$ coverage vs.\ b-scheme. (Right) the resolution ratio
-CRLB($\Dstar$)/tercile-width stays at or above unity for every scheme (the
-CRLB-optimal band dips to $0.97$): acquisition moves the regime to the resolution
-threshold, not past it.}
-\label{fig:acq}
-\end{figure}
+($22$-value) scheme at fixed prior/SNR/seed; high-$\Dstar$ coverage and the
+resolution ratio per scheme are in Supporting Information Table~\ref{tab:acq} and
+Fig.~\ref{fig:acq}. The high-$\Dstar$ marginal coverage barely moves
+($0.821\to0.835\to0.808$), and the resolution ratio CRLB($\Dstar$)/tercile-width
+stays at or above unity: even a CRLB-optimal design only reaches $\sim$unity
+($1.03$\band{0.97}{1.16}, down from the clinical $1.24$ and dense $1.11$). A
+CRLB-optimal design lowers the ratio ($1.24\to1.03$) but does not remove the wall:
+acquisition design \emph{shifts} the wall, it does not erase it -- a concrete,
+honestly negative handoff to acquisition-aware experiment design.
 
 \subsection{In-vivo: a qualitative demonstration, no coverage claim}
 \label{sec:invivo}
 In vivo there are no ground-truth parameters, so realized coverage is
 \emph{unmeasurable} and the finite-sample guarantee is \emph{not asserted}. We
-demonstrate the deployed pipeline qualitatively (Fig.~\ref{fig:invivo}): the
-conformalized $\Dstar$ band widths are wide and heavy-tailed ($10/50/90$th
-percentile $=47/64/79\times10^{-3}\unit{mm^2/s}$; widest-to-narrowest decile ratio
-$1.7\times$), ballooning on voxels where the perfusion compartment is
-under-identified -- the wall, now on signal. Pointed at the deployment data with a
-synthetic calibration, the deployment monitor \textbf{fires} (AUC $0.84$):
-synthetic$\to$deployment is itself a large exchangeability break, and the monitor
-detects it. That firing is the honest, label-free reason the synthetic guarantee
-must not be transferred in vivo without re-calibration on matched labeled data --
-which in vivo does not exist. The monitor turns ``no ground truth'' into an
-observable stop sign. The demonstration above uses a clearly labeled synthetic
-stand-in; Sec.~\ref{sec:invivo-real} repeats the \emph{as-deployed} pipeline on a
-real, permissively-licensed in-vivo collection, where the monitor fires on the
-synthetic$\to$real transfer for the same reason.
-
-% [Fig. synthetic in-vivo demo relocated to Supporting Information]
+demonstrate the deployed pipeline qualitatively (Supporting Information
+Fig.~\ref{fig:invivo}): the conformalized $\Dstar$ band widths are wide and
+heavy-tailed ($10/50/90$th percentile $=47/64/79\times10^{-3}\unit{mm^2/s}$;
+widest-to-narrowest decile ratio $1.7\times$), ballooning where the perfusion
+compartment is under-identified -- the wall, now on signal. Pointed at the deployment
+data with a synthetic calibration, the deployment monitor \textbf{fires} (AUC $0.84$):
+synthetic$\to$deployment is itself a large exchangeability break, turning ``no ground
+truth'' into an observable stop sign and giving the honest, label-free reason the
+synthetic guarantee must not be transferred in vivo without re-calibration on matched
+labeled data, which in vivo does not exist.
 
 
 \subsection{Real in-vivo data: the same pipeline, the monitor fires on transfer}
 \label{sec:invivo-real}
 We additionally run the as-deployed pipeline on real multi-$b$ in-vivo DWI from the
 public ACRIN-6698 / I-SPY2 Breast DWI collection (The Cancer Imaging Archive;
-CC-BY-4.0)~\cite{acrin6698,clark2013tcia}, retrieved on demand (no pixel data are
-redistributed with this work). This is a 4-$b$ ADC protocol
-($b=\{0,100,600,800\}\unit{s/mm^2}$), \emph{not} IVIM-optimized, with no
-ground-truth IVIM parameters; it therefore supports only qualitative
-pipeline/monitor behavior and makes \textbf{no in-vivo coverage claim}. A predictor
-trained on the synthetic 22-value scheme cannot ingest a 4-$b$ signal, and
-interpolation would fabricate unacquired $b$-values, so we keep the deployment
-\emph{monitor} as-deployed---its observable features are $b$-independent---and
-re-fit only the CQR band at the real 4-$b$ scheme; the resulting bands are
-qualitative, not coverage intervals.
+CC-BY-4.0)~\cite{acrin6698,clark2013tcia}, retrieved on demand. This is a 4-$b$ ADC
+protocol ($b=\{0,100,600,800\}\unit{s/mm^2}$), \emph{not} IVIM-optimized, with no
+ground-truth IVIM parameters, so it supports only qualitative pipeline/monitor
+behavior and makes \textbf{no in-vivo coverage claim}. A predictor trained on the
+synthetic 22-value scheme cannot ingest a 4-$b$ signal and interpolation would
+fabricate unacquired $b$-values, so we keep the deployment \emph{monitor} as-deployed
+(its observable features are $b$-independent) and re-fit only the CQR band at the real
+4-$b$ scheme; the resulting bands are qualitative, not coverage intervals.
 
-Figure~\ref{fig:invivo-maps} shows the actual images on a representative slice: the
-real $b{=}0$ breast DWI, the plug-in $\hat{\Dstar}$ map, and the per-voxel conformal
-$\Dstar$ band-width (uncertainty) map, with the whole-tumor ROI outlined. The
-uncertainty map is spatially heterogeneous and widens exactly where the perfusion
-compartment is under-identified---the identifiability wall, now visible on real
-tissue.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{figures/invivo_real_maps.pdf}
-\caption{Actual in-vivo images (ACRIN-6698 / I-SPY2 Breast DWI; one slice;
-qualitative, no coverage claim). (Left) real $b{=}0$ DWI with the whole-tumor ROI in
-red; (middle) the plug-in $\hat{\Dstar}$ perfusion map; (right) the per-voxel
-conformal $\Dstar$ band-width map---wider where the perfusion compartment is
-under-identified. The synthetic 22-value-calibrated monitor (not shown here) fires
-on this data; see Fig.~\ref{fig:invivo-real}.}
-\label{fig:invivo-maps}
-\end{figure}
+The real $b{=}0$ breast DWI, the plug-in $\hat{\Dstar}$ map, and the per-voxel
+conformal $\Dstar$ band-width (uncertainty) map with the whole-tumor ROI are shown in
+Supporting Information Figure~\ref{fig:invivo-maps}; the uncertainty map is spatially
+heterogeneous and widens where the perfusion compartment is under-identified, the wall
+now visible on real tissue.
 
 On $4000$ foreground voxels the as-deployed monitor \textbf{fires} (AUC $0.97$) and
 the $\Dstar$ band stays wide ($10/50/90$th percentile
 $=64/79/86\times10^{-3}\unit{mm^2/s}$; Fig.~\ref{fig:invivo-real}). The firing is
-carried entirely by the $b$-independent Mahalanobis family (Family-1); the residual
-family (Family-2) is silent because a 4-$b$ acquisition exactly-determines the
-four-parameter IVIM fit, collapsing the fit-residual norm to zero. The monitor has
-therefore \emph{not} half-failed---it has localized the break to the feature
-distribution. The sparse-protocol-plus-real-tissue gap is a large exchangeability
-break, which is exactly why the synthetic guarantee \emph{correctly refuses} to
-transfer.
+carried entirely by the $b$-independent Mahalanobis family; the residual family is
+silent because a 4-$b$ acquisition exactly-determines the four-parameter fit,
+collapsing the residual norm to zero -- so the monitor has \emph{not} half-failed but
+localized the break to the feature distribution. The sparse-protocol-plus-real-tissue
+gap is a large exchangeability break, which is exactly why the synthetic guarantee
+\emph{correctly refuses} to transfer.
 
 \paragraph{Test--retest repeatability.}
-ACRIN-6698 includes a same-day test--retest arm: two coffee-break repeat DWI exams
-acquired in a single visit (tagged \texttt{TrT0}/\texttt{TrT1}), which we use here.
-(This genuine same-visit arm supersedes an earlier $n{=}11$ pairing that had
-inadvertently matched \emph{longitudinal} timepoints months apart, confounded by
-interval treatment.) Across $n{=}76$ tumors we ask, label-free, whether the
+ACRIN-6698 includes a same-day test--retest arm -- two coffee-break repeat DWI exams
+in a single visit (\texttt{TrT0}/\texttt{TrT1}; this genuine same-visit arm supersedes
+an earlier $n{=}11$ pairing that had inadvertently matched \emph{longitudinal}
+timepoints months apart). Across $n{=}76$ tumors we ask, label-free, whether the
 conformal interval width \emph{tracks} the scan--rescan variability of the plug-in
-estimate (region-level over the whole-tumor ROI; the two repeats are unregistered,
-so this is not a per-voxel statement). The identifiability wall makes a directional
-prediction we fix before looking: the interval width should track measured
-scan--rescan repeatability for the well-identified diffusion compartment $D$, and
-should track it weakly or not at all for $\Dstar$, whose regime the data cannot
-resolve. A positive $\Dstar$ association would count against the wall. For the
-well-identified tissue diffusion $D$,
-the conformal $D$-width is associated with the measured scan--rescan
-$|\Delta\mathrm{ADC}|$ (Spearman $r=+0.60$, $p<0.001$, 95\% CI $[0.42,0.72]$ by
-BCa bootstrap): the interval \emph{widens where the real measurement is least
-repeatable}. At $n{=}76$ the association is now \textbf{robust} (the CI excludes
-zero, versus the wide interval at the earlier $n{=}11$), and stable across field
-strength (1.5\,T $r{=}{+}0.58$, $n{=}49$; 3.0\,T $r{=}{+}0.50$, $n{=}27$) and
-pretreatment-only ($r{=}{+}0.61$, $n{=}65$). For $\Dstar$ the association is not
-significant ($r=-0.17$, $p=0.13$, 95\% CI $[-0.39,0.05]$ spanning zero), matching
-the pre-stated prediction: the association holds for the parameter the data
-identify ($D$) and is absent for the one they do not ($\Dstar$). The $\Dstar$ null
-is the predicted outcome, not a post-hoc reading. This is a
-repeatability-tracking check, \emph{not} a statement of validation, accuracy,
+estimate (region-level over the whole-tumor ROI; the repeats are unregistered, so not
+a per-voxel statement). The wall makes a directional prediction we fix before looking:
+width should track measured scan--rescan repeatability for the well-identified $D$ and
+weakly or not at all for $\Dstar$, whose regime the data cannot resolve -- a positive
+$\Dstar$ association would count against the wall. For $D$, the conformal $D$-width is
+associated with the measured scan--rescan $|\Delta\mathrm{ADC}|$ (Spearman $r=+0.60$,
+$p<0.001$, 95\% CI $[0.42,0.72]$ by BCa bootstrap): the interval \emph{widens where
+the real measurement is least repeatable}. At $n{=}76$ this is now \textbf{robust} (CI
+excludes zero, versus the wide interval at $n{=}11$) and stable across field strength
+(1.5\,T $r{=}{+}0.58$, $n{=}49$; 3.0\,T $r{=}{+}0.50$, $n{=}27$) and pretreatment-only
+($r{=}{+}0.61$, $n{=}65$). For $\Dstar$ the association is not significant
+($r=-0.17$, $p=0.13$, 95\% CI $[-0.39,0.05]$ spanning zero), matching the pre-stated
+prediction. This is a repeatability-tracking check, \emph{not} validation, accuracy,
 calibration, or coverage.
 
 \begin{figure}[t]
@@ -613,87 +496,58 @@ robust, repeatability-tracking only---not validation or coverage).}
 
 \subsection{External-phantom replication on the OSIPI IVIM reference}
 \label{sec:osipi}
-Every coverage number above is computed on \emph{our} labeled synthetic cohort --
-our forward model and our parameter prior. To neutralise the ``validated only on the
-authors' own forward model'' concern, we replicate the coverage results and the
-high-$\Dstar$ wall against an \textbf{external, community-standard \emph{synthetic}
-reference}: the OSIPI (ISMRM Open Science Initiative for Perfusion Imaging) TF2.4
-IVIM digital reference object (DRO), $5000$ voxels with ground-truth $(D,\Dstar,f)$
-that \emph{we did not generate}~\citep{osipi_ivim} (Zenodo
-\texttt{doi:10.5281/zenodo.14605039}, CC-BY-4.0; fetched on demand, provenance only
-committed). This is an \emph{independent synthetic} reference, \textbf{not} in vivo,
-so no in-vivo coverage claim is made here. The bi-exponential signal model is the
-field's consensus and is shared by construction; what is external is the
-ground-truth \emph{parameter distribution}, and it is genuinely shifted from ours:
-the OSIPI true $\Dstar$ spans $\sim\!0.05$--$0.20\,\mathrm{mm^2/s}$, above our
-calibration prior ($0.01$--$0.10$), so transferring our calibration onto it is a real
-out-of-distribution test. All numbers are across-seed means with $[5,95]$ bands over
-$16$ seeds; nominal coverage is $0.90$.
+Every coverage number above is computed on \emph{our} labeled synthetic cohort. To
+neutralise the ``validated only on the authors' own forward model'' concern, we
+replicate the coverage results and the high-$\Dstar$ wall against an \textbf{external,
+community-standard \emph{synthetic} reference}: the OSIPI (ISMRM Open Science
+Initiative for Perfusion Imaging) TF2.4 IVIM digital reference object (DRO), $5000$
+voxels with ground-truth $(D,\Dstar,f)$ \emph{we did not generate}~\citep{osipi_ivim}
+(Zenodo \texttt{doi:10.5281/zenodo.14605039}, CC-BY-4.0; fetched on demand). This is
+an \emph{independent synthetic} reference, \textbf{not} in vivo, so no in-vivo
+coverage claim is made. The bi-exponential signal model is the field's consensus and
+shared by construction; what is external is the ground-truth \emph{parameter
+distribution}, genuinely shifted from ours: the OSIPI true $\Dstar$ spans
+$\sim\!0.05$--$0.20\,\mathrm{mm^2/s}$, above our calibration prior ($0.01$--$0.10$),
+so transferring our calibration onto it is a real out-of-distribution test. All
+numbers are across-seed means with $[5,95]$ bands over $16$ seeds; nominal coverage
+is $0.90$.
 
-We evaluate two regimes -- \emph{controlled} (OSIPI ground truth, re-synthesised at
+We evaluate two regimes -- \emph{controlled} (OSIPI ground truth re-synthesised at
 \emph{our} 22-$b$ acquisition and SNR grid, so only the parameter distribution is
 swapped) and \emph{native} (the DRO's own pre-noised signals at its native sparse
-7-$b$ scheme) -- each under \emph{naive transfer} (calibrate on our synthetic
-cohort, test on OSIPI) and \emph{recalibrated} (split the OSIPI DRO and calibrate
-within its distribution). Table~\ref{tab:osipi} gives the marginal coverage and the
-top-$\Dstar$-tercile conditional coverage; Fig.~\ref{fig:osipi} plots them with the
+7-$b$ scheme) -- each under \emph{naive transfer} (calibrate on our cohort, test on
+OSIPI) and \emph{recalibrated} (split the OSIPI DRO and calibrate within its
+distribution). The full marginal and top-$\Dstar$-tercile coverage grid is in
+Supporting Information Table~\ref{tab:osipi}; Fig.~\ref{fig:osipi} plots it with the
 wall metric.
-
-\begin{table}[t]
-\centering\small
-\begin{tabular}{llcccc}
-\toprule
-regime & calibration & $D$ & $\Dstar$ & $f$ & hi-$\Dstar$ tercile \\
-\midrule
-controlled & naive transfer & 0.597\band{0.567}{0.621} & 0.304\band{0.285}{0.315} & 0.495\band{0.472}{0.512} & 0.000\band{0.000}{0.000} \\
-controlled & recalibrated   & 0.899\band{0.881}{0.913} & 0.905\band{0.889}{0.921} & 0.904\band{0.892}{0.919} & 0.823\band{0.786}{0.853} \\
-native     & naive transfer & 0.693\band{0.643}{0.758} & 0.291\band{0.263}{0.312} & 0.524\band{0.497}{0.542} & 0.000\band{0.000}{0.000} \\
-native     & recalibrated   & 0.898\band{0.888}{0.913} & 0.899\band{0.884}{0.909} & 0.894\band{0.882}{0.908} & 0.831\band{0.798}{0.869} \\
-\bottomrule
-\end{tabular}
-\caption{Conformal/CQR coverage on the OSIPI external \emph{synthetic} DRO at
-nominal $0.90$ (CQR; across-seed mean over $16$ seeds, $[5,95]$ band). \emph{Naive
-transfer} of our synthetic calibration breaks under the real $\Dstar$ distribution
-shift; \emph{recalibrating} within the OSIPI distribution restores marginal coverage
-to nominal on independent ground truth, yet the high-$\Dstar$ conditional coverage
-stays below nominal -- the identifiability wall, on data we did not generate.}
-\label{tab:osipi}
-\end{table}
 
 \paragraph{Naive transfer breaks, and the monitor says so.} Transferring our
 synthetic calibration onto the OSIPI ground truth breaks marginal coverage
 (controlled $\Dstar$ $0.304$\band{0.285}{0.315}, $D$ $0.597$\band{0.567}{0.621}),
-exactly as the exchangeability theory predicts for a real distribution shift.
-Critically, the label-free deployment monitor \emph{fires on every one of the $16$
-seeds} (Mahalanobis AUC $0.737$\band{0.726}{0.750}, controlled): the shift is
-observable, so the monitor correctly refuses the transfer. As in the sparse-protocol
-in-vivo case (\S\ref{sec:invivo-real}), a fired monitor here is the system working,
-not failing.
+exactly as exchangeability theory predicts for a real distribution shift, and the
+label-free deployment monitor \emph{fires on every one of the $16$ seeds}
+(Mahalanobis AUC $0.737$\band{0.726}{0.750}, controlled): the shift is observable, so
+the monitor correctly refuses the transfer (cf.\ \S\ref{sec:invivo-real}).
 
-\paragraph{Recalibrated coverage holds on independent ground truth.} Splitting the
-OSIPI DRO and recalibrating within its own distribution restores marginal coverage
-to nominal for all three parameters ($D$ $0.899$\band{0.881}{0.913}, $\Dstar$
-$0.905$\band{0.889}{0.921}, $f$ $0.904$\band{0.892}{0.919}; native nearly
-identical) -- the finite-sample conformal guarantee transfers cleanly to a forward
-model and parameter distribution we did not author.
-
-\paragraph{The high-$\Dstar$ wall replicates -- it is information, not our model.}
-Even after within-distribution recalibration, coverage conditional on the true
-$\Dstar$ tercile craters in the high-$\Dstar$ regime ($0.823$\band{0.786}{0.853}
-controlled, $0.831$\band{0.798}{0.869} native) while the low-$\Dstar$ tercile sits
-at nominal ($0.899$\band{0.859}{0.931}). On the OSIPI ground truth at our
-acquisition the CRLB$(\Dstar)$/tercile-width ratio rises $0.46\!\to\!0.86\!\to\!1.53$
+\paragraph{Recalibrated coverage holds, yet the high-$\Dstar$ wall replicates.}
+Splitting the OSIPI DRO and recalibrating within its own distribution restores
+marginal coverage to nominal for all three parameters ($D$ $0.899$\band{0.881}{0.913},
+$\Dstar$ $0.905$\band{0.889}{0.921}, $f$ $0.904$\band{0.892}{0.919}; native nearly
+identical) -- the finite-sample guarantee transfers cleanly to a forward model and
+prior we did not author. Yet coverage conditional on the true $\Dstar$ tercile still
+craters in the high-$\Dstar$ regime ($0.823$\band{0.786}{0.853} controlled,
+$0.831$\band{0.798}{0.869} native) while the low-$\Dstar$ tercile sits at nominal
+($0.899$\band{0.859}{0.931}). On the OSIPI ground truth at our acquisition the
+CRLB$(\Dstar)$/tercile-width ratio rises $0.46\!\to\!0.86\!\to\!1.53$
 (\band{1.407}{1.753} at high $\Dstar$) with the absolute CRLB growing
-$3.5\times$\band{3.1}{4.0} -- the same wall as Fig.~\ref{fig:crlb}, on a digital
-reference object we did not build. This regime also dissociates the two mechanisms
-directly: in the native high-SNR setting the CRLB ratio stays below $1$, yet the
-conditional gap persists. The coverage failure therefore survives where the CRLB
-does \emph{not} exceed the bin width, so it is driven by conditioning on a latent
-axis the data do not identify~\citep{barber2021limits}, not by CRLB magnitude. CRLB
-magnitude governs point-identifiability; latent conditioning governs label-free
-coverage. That the wall reproduces on an external ground truth is strong evidence it
-is information-theoretic -- intrinsic to the perfusion-estimation problem and the
-data -- rather than an artifact of our particular forward model or prior.
+$3.5\times$\band{3.1}{4.0} -- the same wall as Fig.~\ref{fig:crlb}, on a reference we
+did not build. The regime also dissociates the two mechanisms: in the native
+high-SNR setting the CRLB ratio stays below $1$ yet the conditional gap persists, so
+the coverage failure survives where the CRLB does \emph{not} exceed the bin width --
+driven by conditioning on a latent axis the data do not
+identify~\citep{barber2021limits}, not by CRLB magnitude -- strong evidence the wall
+is information-theoretic, intrinsic to the perfusion-estimation problem rather than
+our forward model or prior.
 
 \begin{figure}[t]
 \centering
@@ -711,16 +565,15 @@ fires (AUC $0.74$), so the break is flagged.}
 \subsection{Point accuracy does not buy conditional coverage: a deliberately
 biased estimator}
 \label{sec:dissociation-shrinkage}
-A natural objection to the identifiability reading (Sec.~\ref{sec:identifiability})
-is that the unbiased baselines merely leave precision on the table: a \emph{biased},
-prior-shrinkage Bayesian fit was historically the one IVIM estimator that kept
-$\Dstar$ variance under control where unbiased fits failed, and a biased estimator
-can legitimately sit below the \emph{unbiased} Cram\'er--Rao
+A natural objection to the identifiability reading is that the unbiased baselines
+merely leave precision on the table: a \emph{biased} prior-shrinkage Bayesian fit was
+historically the one IVIM estimator that kept $\Dstar$ variance under control, and a
+biased estimator can legitimately sit below the \emph{unbiased} Cram\'er--Rao
 bound~\citep{gurneychampion2018}. If the high-$\Dstar$ wall were a point-precision
 artifact, such an estimator should breach it. We pushed a deliberately biased,
 label-free shrinkage prior (a fixed log-normal $\Dstar$/$f$ prior with the
-NLLS-residual noise scale -- it uses no labels) through the same
-conditional-coverage machinery (Table~\ref{tab:dissociation}).
+NLLS-residual noise scale, using no labels) through the same conditional-coverage
+machinery (Table~\ref{tab:dissociation}).
 
 The prior behaves as a shrinkage prior should: it lowers $\Dstar$ point RMSE in the
 low tercile ($15.1$\band{14.7}{15.6} vs.\ the unbiased MCMC's
@@ -728,27 +581,22 @@ $17.8$\band{17.2}{18.5}, in $10^{-3}$\,mm$^2$/s) by trading variance for a
 centre-pulling bias. But in the deciding high-$\Dstar$ tercile that bias dominates:
 point RMSE does \emph{not} improve ($24.6$\band{24.1}{25.3} vs.\
 $20.5$\band{19.9}{21.1}), carried by a large negative bias
-($-18.8$\band{-19.2}{-18.3} vs.\ $-14.2$\band{-14.5}{-13.7}) from pulling
-high-$\Dstar$ voxels toward the cohort centre. Crucially, high-$\Dstar$
+($-18.8$\band{-19.2}{-18.3} vs.\ $-14.2$\band{-14.5}{-13.7}). Crucially, high-$\Dstar$
 regime-conditional coverage does not rise: the conformalized marginal
 $0.827$\band{0.801}{0.845} and worst-SNR cell $0.721$\band{0.663}{0.765} sit at or
 below the unbiased arms ($0.889$\band{0.872}{0.903} / $0.857$\band{0.826}{0.875} for
-MCMC), nowhere near nominal $0.90$. Two pre-registered sanity gates exclude the
-artifactual readings: the shrinkage interval does \emph{not} collapse (median
-high-$\Dstar$ width $55.0$\band{53.6}{56.6} vs.\ comparator $47.9$, in
-$10^{-3}$; $1.15\times$), and the estimator's own point still misroutes
-$34$\band{32}{36}\% of true-high-$\Dstar$ voxels (the NLLS plug-in misroutes
-$\sim33\%$), so any coverage change would have to arise \emph{despite} routing, not
-by repairing it. Trading variance for bias buys point precision in the identified
-terciles but not conditional coverage where the conditioning axis is latent:
-consistent with the identifiability reading, the barrier is information, not point
-precision. The argument is mechanism-level -- any centre-pulling bias trades variance
-for bias, which dominates in the high-$\Dstar$ tercile -- so it brackets the
-historically $\Dstar$-stabilizing prior-shrinkage Bayesian
-fit~\citep{gurneychampion2018} rather than hinging on one prior choice. It thus
-strengthens the claim within its scope -- now holding even for a deliberately biased
-prior-shrinkage method -- while remaining a statement about the label-free methods we
-tested, not about any conceivable estimator.
+MCMC), nowhere near nominal $0.90$. Two pre-registered sanity gates exclude artifacts:
+the shrinkage interval does \emph{not} collapse (median high-$\Dstar$ width
+$55.0$\band{53.6}{56.6} vs.\ comparator $47.9$, in $10^{-3}$; $1.15\times$), and the
+estimator still misroutes $34$\band{32}{36}\% of true-high-$\Dstar$ voxels (the NLLS
+plug-in misroutes $\sim33\%$), so any coverage change would arise \emph{despite}
+routing, not by repairing it. Trading variance for bias buys point precision in the
+identified terciles but not conditional coverage where the conditioning axis is
+latent: the barrier is information, not point precision. The argument is
+mechanism-level -- any centre-pulling bias dominates in the high-$\Dstar$ tercile, so
+it brackets the historically $\Dstar$-stabilizing prior-shrinkage Bayesian
+fit~\citep{gurneychampion2018} rather than one prior choice, while remaining a
+statement about the label-free methods we tested.
 
 \begin{table}[t]
 \centering
@@ -772,66 +620,55 @@ conformalized-MDN  & 20.3\band{19.6}{21.0} & $-13.4$\band{-14.2}{-12.8} & 0.867\
 
 \subsection{The wall replicates under a non-bi-exponential generator}
 \label{sec:altmodel}
-The external-phantom replication (Sec.~\ref{sec:osipi}) still draws its ground truth
-from a bi-exponential model. To test whether the high-$\Dstar$ wall is an artifact
-of Eq.~\eqref{eq:ivim} itself, we regenerate the cohort from a genuinely
-\emph{non}-bi-exponential mechanism: a gamma velocity-dispersion perfusion process
-(coefficient of variation $0.5$, shape $k=4$) whose signal is \emph{not} a
-realization of Eq.~\eqref{eq:ivim}. Because such a signal has no single ``true''
+The external-phantom replication still draws its ground truth from a bi-exponential
+model. To test whether the high-$\Dstar$ wall is an artifact of Eq.~\eqref{eq:ivim}
+itself, we regenerate the cohort from a genuinely \emph{non}-bi-exponential mechanism:
+a gamma velocity-dispersion perfusion process (coefficient of variation $0.5$, shape
+$k=4$) whose signal is \emph{not} a realization of Eq.~\eqref{eq:ivim}. Because such a
+signal has no single ``true''
 $\Dstar$, we report the effective pseudo-diffusion $\Dstar_{\mathrm{eff}}$ on two
-axes: a primary, non-circular axis (A) the analytic perfusion log-slope (the gamma
-mean, defined without reference to a bi-exponential fit) and a corroborating axis
-(B) the best-fit bi-exponential $\Dstar$. The non-circularity of the test rests on
-axis A; axis B, which defines the regime by fitting Eq.~\eqref{eq:ivim} to signals
-Eq.~\eqref{eq:ivim} did not generate, is reported only to confirm the two
-definitions agree. Calibration and recalibration use the OSIPI
-within-distribution harness (Sec.~\ref{sec:osipi}).
+axes: a primary, non-circular axis (A), the analytic perfusion log-slope (gamma mean,
+defined without a bi-exponential fit), and a corroborating axis (B), the best-fit
+bi-exponential $\Dstar$, reported only to confirm the two definitions agree.
+Calibration and recalibration use the OSIPI within-distribution harness
+(Sec.~\ref{sec:osipi}).
 
 After recalibrating \emph{within} the dispersion distribution, marginal coverage is
 restored ($\Dstar_{\mathrm{eff}}$ marginal $0.898$\band{0.880}{0.917} on axis A),
 yet the high-$\Dstar_{\mathrm{eff}}$ tercile-conditional coverage stays well below
 nominal on both axes -- $0.796$\band{0.748}{0.854} (A) and $0.800$\band{0.756}{0.845}
-(B) (Fig.~\ref{fig:altmodel}A), a gap of $\sim0.10$ that the bi-exponential CRLB
-cannot have caused because the
-generator is not bi-exponential. The wall is therefore a property of the
-perfusion-estimation problem more broadly, not of our forward model: it survives a
-generator that Eq.~\eqref{eq:ivim} does not even contain. A second dispersion kernel
-(log-normal, same CV) reproduces the effect (high-$\Dstar_{\mathrm{eff}}$
-$0.797$\band{0.747}{0.847}), so it is not specific to the gamma parametrization. A
-continuity gate confirms the construction is sound: at zero dispersion the generator
-reduces to the bi-exponential cohort exactly (max
-$|S_{\mathrm{disp}}(\mathrm{CV}{=}0)-S_{\mathrm{biexp}}|=0.00\mathrm{e}{+}00$,
-numerically exact), and its recalibrated high-$\Dstar$ coverage there
-($0.798$\band{0.750}{0.842}) lands on the bi-exponential wall -- the dispersion
-cohort contains the bi-exponential model as its zero-deviation limit. Consistent
-with the observable-vs-latent reading (Sec.~\ref{sec:identifiability}), this
+(B) (Fig.~\ref{fig:altmodel}A), a gap of $\sim0.10$ the bi-exponential CRLB cannot
+have caused because the generator is not bi-exponential. The wall is therefore a
+property of the perfusion-estimation problem more broadly: it survives a generator
+Eq.~\eqref{eq:ivim} does not even contain. A second dispersion kernel (log-normal,
+same CV) reproduces it (high-$\Dstar_{\mathrm{eff}}$ $0.797$\band{0.747}{0.847}), so
+it is not gamma-specific, and a continuity gate confirms soundness: at zero dispersion
+the generator reduces to the bi-exponential cohort exactly (max
+$|S_{\mathrm{disp}}(\mathrm{CV}{=}0)-S_{\mathrm{biexp}}|=0.00\mathrm{e}{+}00$), with
+recalibrated high-$\Dstar$ coverage there ($0.798$\band{0.750}{0.842}) landing on the
+bi-exponential wall. Consistent with the observable-vs-latent reading, this
 forward-model misspecification is largely a \emph{hidden} channel: the naive-transfer
-deployment monitor barely separates the dispersion cohort from the bi-exponential
-calibration (AUC $0.501$\band{0.481}{0.519}, at chance), so the break is one the
-monitor cannot, by construction, see.
+monitor barely separates the dispersion cohort from the bi-exponential calibration
+(AUC $0.501$\band{0.481}{0.519}, at chance).
 
 \subsection{The off-model validity envelope}
 \label{sec:envelope}
 The tri-exponential stress in Sec.~\ref{sec:robustness} is a single off-model probe.
 We replace it with a \emph{validity envelope}: holding the deployed,
 bi-exponential-calibrated predictor fixed, we sweep three independent deviation
-families -- velocity dispersion (CV up to $0.8$), a tri-exponential third
-compartment (weight up to $0.4$), and a stretched-exponential signal ($|1-\beta|$ up
-to $0.6$) -- and trace how coverage degrades and whether the monitor tracks the drift
-(Fig.~\ref{fig:altmodel}B,C). Marginal coverage degrades gracefully and
-monotonically with deviation: by the largest deviation, $\Dstar$ coverage falls to
-$0.769$\band{0.736}{0.788} (tri-exponential) and $0.770$\band{0.749}{0.793}
-(stretched), and perfusion-fraction coverage to $0.791$\band{0.767}{0.815}
-(dispersion). The envelope contains the bi-exponential model as its origin: at zero
-deviation coverage recovers to nominal ($\Dstar$ $0.903$\band{0.880}{0.918}). The
-deployment monitor's discrimination of off-model drift is real but weak and
-family-dependent -- its AUC rises with deviation for the tri-exponential family
-($0.532$\band{0.515}{0.548} at the largest step) yet stays near chance for pure
-velocity dispersion -- so although the cohort-level alarm fires at or before the
-deviation at which marginal coverage first fails, off-model misspecification is only
-partly observable, reinforcing that some forward-model breaks are hidden channels
-(Sec.~\ref{sec:altmodel}). The single tri-exponential probe thus generalizes to a
-characterized envelope with a recovered bi-exponential origin.
+families -- velocity dispersion (CV up to $0.8$), a tri-exponential third compartment
+(weight up to $0.4$), and a stretched-exponential signal ($|1-\beta|$ up to $0.6$) --
+tracing coverage degradation and monitor drift (Fig.~\ref{fig:altmodel}B,C). Marginal
+coverage degrades gracefully and monotonically: by the largest deviation, $\Dstar$
+coverage falls to $0.769$\band{0.736}{0.788} (tri-exponential) and
+$0.770$\band{0.749}{0.793} (stretched), and perfusion-fraction coverage to
+$0.791$\band{0.767}{0.815} (dispersion), while at zero deviation it recovers to
+nominal ($\Dstar$ $0.903$\band{0.880}{0.918}). The monitor's discrimination is real
+but weak and family-dependent -- AUC rises with deviation for the tri-exponential
+family ($0.532$\band{0.515}{0.548} at the largest step) yet stays near chance for
+pure velocity dispersion -- so off-model misspecification is only partly observable,
+reinforcing that some forward-model breaks are hidden channels. The single
+tri-exponential probe thus generalizes to a characterized envelope.
 
 \begin{figure}[t]
 \centering
@@ -851,78 +688,64 @@ discrimination of off-model drift is weak and family-dependent. Across-seed mean
 \subsection{A clinically realistic cohort: correlated prior and measurement nuisance}
 \label{sec:realism}
 The cohort so far draws $(D,\Dstar,f)$ uniformly over published ranges with clean
-Rician noise. As a capstone robustness check we replace both idealizations at once:
-a clinically realistic \emph{joint} prior -- correlated, right-skewed marginals
-(log-normal $D,\Dstar$; logit-normal $f$) with a within-subject $\Dstar$
-coefficient of variation in the published $50$--$110\%$ band, with hyperparameters
-\emph{shaped to approximate} (not fitted to) representative abdominal IVIM patient
-cohorts~\citep{gurneychampion2018,kaandorp2021,barbieri2020}; the exact joint
-specification is documented design constants (Table~\ref{tab:realism-prior}) that
-deliberately avoid any circular plug-in source -- and a measurement-level nuisance
-layer on the bi-exponential signal under a single magnitude scalar $\eta$:
-partial-volume mixing of a free-fluid compartment, bulk-motion phase, and
-non-Rician (multi-coil noncentral-$\chi$) noise. This is still a synthetic cohort
-and makes no in-vivo coverage claim; a continuity gate confirms the construction
-reduces to the existing cohort exactly at the uniform prior with $\eta=0$ (max
-$|\cdot|=0.00\mathrm{e}{+}00$, numerically exact). Because a skewed prior moves the
-tercile boundaries, we report the high-$\Dstar$ regime on two stratifications: the
-\emph{fixed} physical boundaries inherited from the uniform cohort -- so ``high
-$\Dstar$'' denotes the same physical regime across priors (primary) -- and the
-per-distribution quantiles (secondary), with the clinical prevalence of the fixed
-high-$\Dstar$ bin reported so a rare regime is never mistaken for a vanished wall.
+Rician noise. As a capstone we replace both idealizations at once: a clinically
+realistic \emph{joint} prior -- correlated, right-skewed marginals (log-normal
+$D,\Dstar$; logit-normal $f$) with a within-subject $\Dstar$ coefficient of variation
+in the published $50$--$110\%$ band, \emph{shaped to approximate} (not fitted to)
+abdominal IVIM cohorts~\citep{gurneychampion2018,kaandorp2021,barbieri2020} as
+documented design constants (Supporting Information Table~\ref{tab:realism-prior}) --
+and a measurement-level nuisance layer on the signal under a single magnitude scalar
+$\eta$: partial-volume mixing of a free-fluid compartment, bulk-motion phase, and
+non-Rician (multi-coil noncentral-$\chi$) noise. This is still synthetic and makes no
+in-vivo coverage claim; a continuity gate confirms it reduces to the existing cohort
+exactly at the uniform prior with $\eta=0$ (max $|\cdot|=0.00\mathrm{e}{+}00$). Because
+a skewed prior moves the tercile boundaries, we report the high-$\Dstar$ regime on two
+stratifications -- \emph{fixed} physical boundaries inherited from the uniform cohort
+(primary, so ``high $\Dstar$'' denotes the same physical regime across priors) and
+per-distribution quantiles (secondary) -- with the clinical prevalence of the fixed
+bin reported so a rare regime is never mistaken for a vanished wall.
 
 Under the realistic prior with clean acquisition (Arm~A), recalibrating
 \emph{within} the distribution restores marginal coverage to nominal ($D/\Dstar/f =
 0.903$\band{0.896}{0.913}, $0.900$\band{0.884}{0.917}, $0.898$\band{0.885}{0.912}),
 while naive transfer of the uniform-calibrated predictor breaks ($\Dstar$ marginal
-$0.767$\band{0.735}{0.805}). The high-$\Dstar$ wall persists after recalibration in
-\emph{both} stratifications -- fixed-edge tercile coverage $0.533$\band{0.480}{0.594}
-and per-distribution $0.786$\band{0.749}{0.823}, against nominal $0.90$ -- with the
-fixed-edge CRLB-to-bin-width ratio reaching $0.895$\band{0.849}{0.961} at high
-$\Dstar$ (Fig.~\ref{fig:realism}A,B). As in the shrinkage dissociation
-(Sec.~\ref{sec:dissociation-shrinkage}), a sub-unity CRLB-to-width ratio coexisting
-with a large conditional-coverage gap is expected, not contradictory: the ratio
-bounds \emph{point} precision, whereas the gap is a \emph{conditional-coverage}
-failure on a latent axis. The severest under-coverage concentrates in a clinically
-\emph{rare} high-$\Dstar$ tail (fixed high-$\Dstar$ prevalence
-$0.049$\band{0.044}{0.056}), which entangles two effects: the rarity of the bin
-leaves the recalibration split few high-$\Dstar$ examples for the single global
-conformal offset, and the identifiability wall itself. A calibration-size control
-separates them. Up-sampling the fixed high-$\Dstar$ \emph{calibration} count to the
-uniform-prior level ($\sim\!73\to504$ voxels), drawn from the realistic generator at
-fixed within-bin distribution -- a fidelity gate confirms the up-sampled voxels match
-the realistic, not the uniform, high-$\Dstar$ law -- with train, test and prior held
-fixed, lifts fixed-edge high-$\Dstar$ coverage from $0.533$ only to
-$0.661$\band{0.580}{0.721}, closing $\approx\!47\%$ of the way to the uniform-prior
-anchor $0.807$\band{0.774}{0.831} and never reaching it (count-matched coverage stays
-$\le0.72$ in every seed; Fig.~\ref{fig:realism}D). Rare-bin calibration sparsity thus
-accounts for roughly half of the fixed-edge deficit; the remainder is a genuine
-identifiability wall that survives count-matching -- a scoping caveat on
-\emph{prevalence} and a partial contributor to the fixed-edge number, not an
-explanation of the wall. That the regime is rare does not make it low-stakes: a
-high-$\Dstar$ voxel is often the salient finding (brisk lesion perfusion), so
-under-coverage concentrated in the rare tail falls exactly where a wide, honest
-interval matters most.
-The realistic prior is a within-support covariate shift, so the label-free monitor
-does not flag it (naive-transfer AUC $0.480$\band{0.470}{0.494}, at chance);
-recalibration, not monitoring, is what restores coverage.
+$0.767$\band{0.735}{0.805}). The high-$\Dstar$ wall persists in \emph{both}
+stratifications -- fixed-edge tercile coverage $0.533$\band{0.480}{0.594} and
+per-distribution $0.786$\band{0.749}{0.823}, against nominal $0.90$ -- with the
+fixed-edge CRLB-to-bin-width ratio reaching $0.895$\band{0.849}{0.961}
+(Fig.~\ref{fig:realism}A,B); as in the shrinkage dissociation
+(Sec.~\ref{sec:dissociation-shrinkage}), a sub-unity ratio coexisting with a large gap
+is expected, since the ratio bounds \emph{point} precision whereas the gap is a
+\emph{conditional-coverage} failure on a latent axis. The severest under-coverage
+concentrates in a clinically \emph{rare} high-$\Dstar$ tail (fixed prevalence
+$0.049$\band{0.044}{0.056}), entangling bin rarity (few high-$\Dstar$ calibration
+examples for the single global offset) with the wall itself. A calibration-size
+control separates them: up-sampling the fixed high-$\Dstar$ \emph{calibration} count
+to the uniform-prior level ($\sim\!73\to504$ voxels from the realistic generator -- a
+fidelity gate confirms they match the realistic, not uniform, law), with train, test
+and prior fixed, lifts coverage from $0.533$ only to $0.661$\band{0.580}{0.721},
+closing $\approx\!47\%$ of
+the way to the uniform-prior anchor $0.807$\band{0.774}{0.831} and never reaching it
+($\le0.72$ in every seed; Fig.~\ref{fig:realism}D). Rare-bin sparsity thus accounts
+for roughly half the fixed-edge deficit; the remainder is a genuine wall that survives
+count-matching. The regime's rarity does not make it low-stakes -- a high-$\Dstar$
+voxel is often the salient finding (brisk lesion perfusion). The realistic prior is a
+within-support covariate shift, so the monitor does not flag it (naive-transfer AUC
+$0.480$\band{0.470}{0.494}, at chance); recalibration, not monitoring, restores
+coverage.
 
 Holding the deployed predictor fixed and sweeping the nuisance magnitude (Arm~B),
 marginal coverage degrades monotonically: $D$ coverage falls from
 $0.903$\band{0.889}{0.912} at $\eta=0$ to $0.570$\band{0.548}{0.589} at $\eta=1$,
 while the already-wide $\Dstar$ interval stays near nominal
-($0.899$\band{0.888}{0.911}), and recalibrating within the nuisance-laden
-distribution restores it ($\Dstar$ $0.899$\band{0.886}{0.914} at $\eta=1$). This
-$\Dstar$ stability reflects interval \emph{width}, not robust identification: the
-high-$\Dstar$ band is already wide enough to absorb the added nuisance, so flat
-$\Dstar$ coverage is the characterized-but-unresolved wall showing through, not
-evidence that $\Dstar$ is well determined under nuisance.
-Notably, this acquisition nuisance is \emph{not} more observable than pure
-signal-model drift: the monitor's AUC stays at chance across the sweep
-($0.493$\band{0.482}{0.507} at $\eta=1$, cf.\ the off-model envelope's
-$\le0.53$), so a measurement nuisance that substantially breaks coverage is a
-largely \emph{silent} channel -- again locating the operative safeguard in
-recalibration rather than the observable monitor.
+($0.899$\band{0.888}{0.911}) and recalibrating restores it ($\Dstar$
+$0.899$\band{0.886}{0.914} at $\eta=1$). This $\Dstar$ stability reflects interval
+\emph{width}, not robust identification: the band is already wide enough to absorb the
+nuisance, so flat $\Dstar$ coverage is the characterized-but-unresolved wall showing
+through. This nuisance is no more observable than signal-model drift -- the monitor's
+AUC stays at chance ($0.493$\band{0.482}{0.507} at $\eta=1$, cf.\ the off-model
+envelope's $\le0.53$) -- so a measurement nuisance that substantially breaks coverage
+is a largely \emph{silent} channel, again locating the safeguard in recalibration.
 
 \begin{figure}[t]
 \centering
@@ -948,41 +771,37 @@ Seed-\texttt{20260613} panel (across-seed [5,95] bands quoted in text); from
 \section{Discussion}
 The thread connecting these results is an \emph{observable-vs-latent} distinction.
 Conformal prediction guarantees \emph{marginal} coverage and, with weighting or
-stratification on \emph{observable} quantities (SNR, signal features, estimated
-density ratios), can recover coverage conditional on those observables. What it
-cannot label-free-guarantee is coverage conditional on a \emph{latent} axis that
-the data do not identify. In IVIM that latent axis is the true $\Dstar$ in its
-ill-posed regime: the Fisher information there collapses, the CRLB exceeds the bin
-width, and no observable proxy -- including the plug-in $\hat{\Dstar}$ -- recovers
-the regime. This is why an observable deployment monitor catches every
-\emph{distribution} shift but is blind to the \emph{within-distribution} high-$\Dstar$
-gap. Four independent stresses corroborate that this split is information, not an
-artifact of our estimator or generator: a deliberately biased shrinkage prior buys
-$\Dstar$ point precision but not high-$\Dstar$ conditional coverage
-(Sec.~\ref{sec:dissociation-shrinkage}); the gap replicates when the ground truth is
-a non-bi-exponential velocity-dispersion process, a forward-model break that is
-itself a hidden channel the monitor cannot see (Sec.~\ref{sec:altmodel}); the
-off-model validity envelope degrades gracefully with a recovered bi-exponential
-origin (Sec.~\ref{sec:envelope}); and the wall persists under a clinically realistic
-correlated, skewed prior with measurement-level nuisance, where it concentrates in a
-clinically rare high-$\Dstar$ tail and the nuisance proves a silent channel the
-monitor does not see (Sec.~\ref{sec:realism}).
+stratification on \emph{observable} quantities (SNR, signal features, density ratios),
+can recover coverage conditional on those observables; what it cannot
+label-free-guarantee is coverage conditional on a \emph{latent} axis the data do not
+identify. In IVIM that axis is the true $\Dstar$ in its ill-posed regime: the Fisher
+information collapses, the CRLB exceeds the bin width, and no observable proxy --
+including the plug-in $\hat{\Dstar}$ -- recovers the regime. This is why an observable
+monitor catches every \emph{distribution} shift but is blind to the
+\emph{within-distribution} high-$\Dstar$ gap. Four independent stresses corroborate
+that this split is information, not an artifact of our estimator or generator: a
+biased shrinkage prior buys $\Dstar$ point precision but not high-$\Dstar$ conditional
+coverage (Sec.~\ref{sec:dissociation-shrinkage}); the gap replicates under a
+non-bi-exponential velocity-dispersion generator, itself a hidden channel
+(Sec.~\ref{sec:altmodel}); the off-model envelope degrades gracefully with a recovered
+bi-exponential origin (Sec.~\ref{sec:envelope}); and the wall persists under a
+clinically realistic correlated, skewed prior with measurement nuisance, concentrated
+in a rare high-$\Dstar$ tail with the nuisance a silent channel
+(Sec.~\ref{sec:realism}).
 
-The same wall appears in adjacent label-free problems: deployment-validity
-monitoring is provably blind to shifts that leave observable statistics unchanged
-(a ``hidden channel''), and the absence of in-vivo ground truth (the ``Echo
-tension'') forecloses any direct coverage check on real data. We read these not as
-failures of conformal prediction -- whose guarantee is exactly as advertised -- but
-as the IVIM instance of a known boundary~\citep{barber2021limits}:
-distribution-free tools deliver everything the data identify and nothing they do
-not. On what this delivers, stated plainly: the finite-sample coverage guarantee is
-a property of the synthetic calibration and transfers in vivo only under an
-exchangeability assumption that cannot be verified where no ground truth exists --
-it is not an in-vivo coverage claim. What the method adds over the existing IVIM
-repeatability literature is mechanistic and operational, not a usable per-voxel
-in-vivo interval: (i) conformalizing a strong model-based base gives the sharpest
-valid intervals on synthetic data; (ii) an observable monitor guards exchangeability
-at deployment, while remaining blind to the latent high-$\Dstar$ gap by
+The same wall appears in adjacent label-free problems: deployment-validity monitoring
+is provably blind to shifts that leave observable statistics unchanged (a ``hidden
+channel''), and the absence of in-vivo ground truth forecloses any direct coverage
+check on real data. We read these not as failures of conformal prediction -- whose
+guarantee is exactly as advertised -- but as the IVIM instance of a known
+boundary~\citep{barber2021limits}: distribution-free tools deliver everything the data
+identify and nothing they do not. The finite-sample guarantee is a property of the
+synthetic calibration and transfers in vivo only under an exchangeability assumption
+that cannot be verified where no ground truth exists; it is not an in-vivo coverage
+claim. What the method adds over the existing IVIM repeatability literature is
+mechanistic and operational: (i) conformalizing a strong model-based base gives the
+sharpest valid intervals on synthetic data; (ii) an observable monitor guards
+exchangeability at deployment while remaining blind to the latent high-$\Dstar$ gap by
 construction; and (iii) the high-$\Dstar$ compartment is reported as
 characterized-but-unresolved, with a per-voxel reason -- the identifiability wall --
 rather than a trusted point map.
@@ -990,93 +809,56 @@ rather than a trusted point map.
 \paragraph{What this means in practice.}
 For a clinician or pipeline operator, the result is a triage rule, not a counsel of
 despair. The tissue-diffusion compartment $D$ is the well-identified one: it carries
-the finite-sample conformal guarantee on the synthetic cohort, and in real data its
-interval width tracks measured scan--rescan repeatability
-(Sec.~\ref{sec:invivo-real}), so it is the compartment to trust as a per-voxel
-uncertainty map. The high-$\Dstar$ pseudo-diffusion map should instead be read as
-\emph{characterized-but-unresolved}: its wide, honest interval is not a defect but
-the correct signal that the data do not localize the parameter, with the per-voxel
-CRLB supplying the reason. The deployment monitor turns the absence of in-vivo
-ground truth into an observable stop sign, firing on exactly the transfers where the
-synthetic guarantee must not be assumed. The contribution is therefore operational:
-it tells the user which compartment to trust and gives a per-voxel reason to
-distrust the rest, rather than promising a new biomarker.
+the finite-sample guarantee on the synthetic cohort and in real data its interval
+width tracks measured scan--rescan repeatability (Sec.~\ref{sec:invivo-real}), so it
+is the compartment to trust. The high-$\Dstar$ pseudo-diffusion map should instead be
+read as \emph{characterized-but-unresolved}: its wide, honest interval is not a defect
+but the correct signal that the data do not localize the parameter, with the per-voxel
+CRLB supplying the reason. The deployment monitor turns the absence of in-vivo ground
+truth into an observable stop sign, firing on exactly the transfers where the
+synthetic guarantee must not be assumed. The contribution is operational: it tells the
+user which compartment to trust and why to distrust the rest, rather than promising a
+new biomarker.
 
-\section{Limitations}
-Our coverage results are \emph{synthetic-primary} by necessity: conformal
-calibration needs labels that in-vivo IVIM lacks, so the guarantee is established
-on a forward model we control, and the in-vivo component is explicitly qualitative
-with no coverage claim. We stress that this is a structural impossibility, not a
-study limitation removable with more data: because in-vivo IVIM admits no
-ground-truth $(D,\Dstar,f)$, realized coverage is unmeasurable in vivo in
-principle, so a distribution-free coverage guarantee can only ever be
-synthetic-established and then transported under an explicitly monitored
-exchangeability assumption -- precisely what the real-data section
-(Sec.~\ref{sec:invivo-real}) exercises, rather than a coverage claim it could never
-support. The base synthetic cohort uses uniform priors over published
-ranges and Rician noise; real tissue is more heterogeneous. We address this directly
-with a capstone realism cohort (Sec.~\ref{sec:realism}) that draws a correlated,
-right-skewed joint prior with a published-range $\Dstar$ coefficient of variation and
-adds measurement-level nuisance (partial-volume mixing, bulk-motion phase, non-Rician
-multi-coil noise): the marginal guarantee returns on recalibration and the
-high-$\Dstar$ wall persists, concentrated in a clinically rare high-$\Dstar$ tail.
-The off-model behavior is likewise characterized rather than probed at a single
-point: the high-$\Dstar$ wall replicates under a non-bi-exponential
-velocity-dispersion generator (Sec.~\ref{sec:altmodel}) and we map a validity
-envelope across three deviation families with a monitored, graceful degradation and a
-recovered bi-exponential origin (Sec.~\ref{sec:envelope}). These remain schematic
-deviations and a still-synthetic cohort spanning the neighbourhood of the
-bi-exponential model, not a validated tissue model, and the in-vivo unverifiability
-above is unchanged by them. The
-CRLB diagnostic uses the high-SNR Gaussian approximation to Rician noise; the
-qualitative under-identification of $\Dstar$ is noise-model-independent (the
-$\Dstar$ Jacobian column vanishes as $\Dstar$ grows), but absolute bound values at
-SNR $\lesssim10$ would shift under an exact Rician treatment. Finally, all coverage
-guarantees assume exchangeability of calibration and deployment data; the monitor
-quantifies, but cannot by itself repair, departures from it.
+\subsection{Limitations}
+Our coverage results are \emph{synthetic-primary} by necessity: conformal calibration
+needs labels that in-vivo IVIM lacks, so the guarantee is established on a forward
+model we control and the in-vivo component is explicitly qualitative. This is a
+structural impossibility, not a removable study limitation: because in-vivo IVIM
+admits no ground-truth $(D,\Dstar,f)$, realized coverage is unmeasurable in vivo in
+principle, so a distribution-free guarantee can only be synthetic-established and then
+transported under an explicitly monitored exchangeability assumption -- precisely what
+Sec.~\ref{sec:invivo-real} exercises. The base cohort uses uniform priors and Rician
+noise; we address the heterogeneity of real tissue with a capstone realism cohort
+(Sec.~\ref{sec:realism}: correlated skewed prior plus measurement nuisance), where the
+marginal guarantee returns on recalibration and the high-$\Dstar$ wall persists. The
+off-model behavior is likewise characterized rather than probed at a single point
+(Secs.~\ref{sec:altmodel},~\ref{sec:envelope}), but these remain schematic deviations
+and a still-synthetic cohort, not a validated tissue model, and the in-vivo
+unverifiability above is unchanged by them. The CRLB diagnostic uses the high-SNR
+Gaussian approximation to Rician noise; the qualitative under-identification of
+$\Dstar$ is noise-model-independent (the $\Dstar$ Jacobian column vanishes as $\Dstar$
+grows), but absolute bound values at SNR $\lesssim10$ would shift under an exact Rician
+treatment. Finally, all coverage guarantees assume exchangeability of calibration and
+deployment data; the monitor quantifies, but cannot by itself repair, departures from
+it.
 
-\section{Consistency check (reproducibility)}
-\label{sec:consistency}
-Every numeric claim in this manuscript is drawn from a gated, seeded checkpoint
-printout. The script \texttt{gauge/paper/consistency.py} enforces two contracts:
-(i) every finite-sample-guaranteed marginal value and every determinism-gated
-quantity appears \emph{verbatim} in its seed-\texttt{20260613} report
-(\texttt{results/*.txt}, \texttt{POSITIONING.md}); and (ii) every conditional /
-empirical (E) headline ships as the \emph{across-seed mean} over a 16-seed re-run
-and is asserted to lie within its empirical $[5,95]$ band, which carries an
-\texttt{n\_seeds} (\texttt{results/multiseed.json}, \texttt{multiseed\_report.txt};
-old$\to$new point map in \texttt{results/ci\_rebaseline\_table.txt}). The full
-pipeline regenerates deterministically from seed \texttt{20260613}
-(\texttt{python -m gauge.baselines}; \texttt{gauge.benchmark};
-\texttt{gauge.conditional}; \texttt{gauge.conditional\_attack};
-\texttt{gauge.robustness}; \texttt{gauge.invivo}; \texttt{gauge.dissociation};
-\texttt{gauge.altmodel}; \texttt{gauge.osipi}; \texttt{gauge.realism}), with the
-core bands from the multi-seed driver (\texttt{python -m gauge.multiseed}) and the
-external-phantom, alternative-forward-model, and realism bands from their own
-seed sweeps (\texttt{python -m gauge.osipi sweep 16}; \texttt{gauge.altmodel sweep
-16}; \texttt{gauge.realism sweep 16}); the realism run also emits the NF1
-calibration-size control and the verbatim prior-provenance table. Seed-0 outputs are
-byte-identical across independent full re-runs.
-
-\section{Conclusion}
-The central contribution of this work is an IVIM-specific identifiability wall:
-high-$\Dstar$ regime-conditional coverage under-covers for every label-free method
-we tested -- including a deliberately biased shrinkage estimator -- and the gap
-replicates under a non-bi-exponential generator. This is the IVIM instance of the
-known impossibility of distribution-free conditional
-coverage~\citep{barber2021limits}: the conditioning axis, the true $\Dstar$ regime,
-is latent and unidentifiable. The Cram\'er--Rao bound, which exceeds the regime
-resolution here, is a concomitant point-identifiability diagnostic, not the
-demonstrated cause. Distribution-free conformal prediction is the instrument and
-lens that makes this wall measurable: bringing it to the ill-posed IVIM inverse
-problem and benchmarking it against model-based UQ also rejects the naive hypothesis
--- that the conformal advantage concentrates marginally in $\Dstar/f$ -- since
-among credible model-based baselines the marginal overconfidence is mild and broad
-rather than $\Dstar$-specific, conformal restores coverage everywhere, and
-conformalizing the MDN is the sharpest valid recipe. We therefore characterize the
-limit -- and provide the robustness tooling, acquisition analysis, and qualitative
-in-vivo demonstration that frame how an honest, distribution-free IVIM uncertainty
-map should be deployed and monitored.
+\section{Conclusions}
+The central contribution is an IVIM-specific identifiability wall: high-$\Dstar$
+regime-conditional coverage under-covers for every label-free method we tested --
+including a deliberately biased shrinkage estimator -- and the gap replicates under a
+non-bi-exponential generator. This is the IVIM instance of the known impossibility of
+distribution-free conditional coverage~\citep{barber2021limits}: the conditioning
+axis, the true $\Dstar$ regime, is latent and unidentifiable. The Cram\'er--Rao bound,
+which exceeds the regime resolution here, is a concomitant point-identifiability
+diagnostic, not the demonstrated cause. Distribution-free conformal prediction is the
+instrument that makes this wall measurable, and benchmarking it against model-based UQ
+also rejects the naive hypothesis -- that the conformal advantage concentrates
+marginally in $\Dstar/f$ -- since the credible baselines are only mildly and broadly
+overconfident, conformal restores coverage everywhere, and conformalizing the MDN is
+the sharpest valid recipe. We characterize the limit and provide the robustness
+tooling, acquisition analysis, and qualitative in-vivo demonstration framing how an
+honest, distribution-free IVIM uncertainty map should be deployed and monitored.
 
 \section*{Data and Code Availability Statement}
 All coverage results are produced from a deterministic, seeded synthetic cohort
@@ -1088,6 +870,20 @@ openly available in the project repository and permanently archived at
 \href{https://doi.org/10.5281/zenodo.20686273}{https://doi.org/10.5281/zenodo.20686273}
 (the all-versions DOI, which resolves to the latest archived release; this
 release: v3, \texttt{10.5281/zenodo.20697755}).
+The full pipeline regenerates deterministically from seed \texttt{20260613}
+(\texttt{python -m gauge.baselines}; \texttt{gauge.benchmark};
+\texttt{gauge.conditional}; \texttt{gauge.conditional\_attack};
+\texttt{gauge.robustness}; \texttt{gauge.invivo}; \texttt{gauge.dissociation};
+\texttt{gauge.altmodel}; \texttt{gauge.osipi}; \texttt{gauge.realism}), with the
+core bands from the multi-seed driver (\texttt{python -m gauge.multiseed}) and the
+external-phantom, alternative-forward-model, and realism bands from their own seed
+sweeps (\texttt{python -m gauge.osipi sweep 16}; \texttt{gauge.altmodel sweep 16};
+\texttt{gauge.realism sweep 16}). The machine-checked consistency script
+(\texttt{gauge/paper/consistency.py}) verifies that every headline traces verbatim
+to its gated, seeded checkpoint output (\texttt{results/*.txt},
+\texttt{POSITIONING.md}) or lies within its 16-seed $[5,95]$ band
+(\texttt{results/multiseed.json}; old$\to$new point map in
+\texttt{results/ci\_rebaseline\_table.txt}).
 The qualitative in-vivo cross-check (Sec.~\ref{sec:invivo-real}) applies the
 as-deployed predictor and monitor to real multi-$b$ DWI from the publicly available
 ACRIN-6698 / I-SPY2 Breast DWI collection (The Cancer Imaging Archive;
@@ -1138,10 +934,36 @@ Avery Karlin \quad \href{https://orcid.org/0000-0003-3848-6782}{https://orcid.or
 
 \clearpage
 \renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thetable}{S\arabic{table}}
 \setcounter{figure}{0}
+\setcounter{table}{0}
 \section*{Supporting Information}
-\noindent The following table and figures support the main text and are provided as
-Supporting Information.
+\noindent The following tables and figures support the main text and are provided as
+Supporting Information; each is cited at the relevant point in the main text.
+
+\medskip
+\noindent\textbf{Supporting Information captions.}
+\begin{itemize}\itemsep2pt
+\item \textbf{Table~\ref{tab:realism-prior}.} Realistic joint-prior specification
+(realism cohort, Arm~A and the NF1 calibration-size control).
+\item \textbf{Table~\ref{tab:shift}.} Per-parameter coverage under each
+exchangeability break, naive vs.\ weighted conformal, with the deployment monitor's
+verdict.
+\item \textbf{Table~\ref{tab:acq}.} High-$\Dstar$ coverage and the
+CRLB($\Dstar$)/tercile-width resolution ratio by b-value scheme.
+\item \textbf{Table~\ref{tab:osipi}.} Conformal/CQR coverage on the OSIPI external
+synthetic DRO (controlled/native regimes, naive transfer vs.\ recalibrated).
+\item \textbf{Figure~\ref{fig:sharpness}.} Median interval width vs SNR (sharpness of
+the conformalized methods).
+\item \textbf{Figure~\ref{fig:shift}.} Worst-parameter coverage under each break and
+the SNR-severity monitor sweep.
+\item \textbf{Figure~\ref{fig:invivo}.} Synthetic-stand-in in-vivo qualitative demo.
+\item \textbf{Figure~\ref{fig:coverage}.} Realized vs nominal coverage per parameter.
+\item \textbf{Figure~\ref{fig:acq}.} High-$\Dstar$ coverage and resolution ratio vs
+b-value scheme.
+\item \textbf{Figure~\ref{fig:invivo-maps}.} Real in-vivo ACRIN-6698 images: $b{=}0$
+DWI, plug-in $\hat{\Dstar}$ map, and conformal $\Dstar$ band-width map.
+\end{itemize}
 
 \begin{table}[h]
 \centering
@@ -1165,6 +987,70 @@ SNR$(b{=}0)$ & log-normal   & mean $35.0$, CV $0.40$, clipped to $[8.0, 120.0]$ 
 \left(\begin{smallmatrix}1.00 & 0.00 & -0.20\\ 0.00 & 1.00 & 0.35\\ -0.20 & 0.35 & 1.00\end{smallmatrix}\right)$}\\
 \bottomrule
 \end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Per-parameter coverage under each break, naive vs.\ weighted conformal
+($\alpha=0.10$, nominal $0.90$), with the deployment monitor's verdict. Across-seed
+means (16 seeds); per-entry $[5,95]$ bands are in the supplementary CI table
+(\texttt{results/ci\_for\_latex.json}). Monitor AUCs are the deterministic seed-0
+values. From \texttt{results/multiseed\_report.txt}.}
+\label{tab:shift}
+\small
+\begin{tabular}{llccc l}
+\toprule
+scenario & method & $D$ & $\Dstar$ & $f$ & monitor \\
+\midrule
+in-dist (control)   & naive    & 0.898 & 0.898 & 0.901 & silent (AUC 0.50) \\
+SNR shift (low)      & naive    & \textbf{0.592} & 0.739 & \textbf{0.614} & FIRES (AUC 0.91) \\
+                     & weighted & 0.882 & 0.901 & 0.909 & \\
+prior shift (harder) & naive    & 0.972 & \textbf{0.508} & 0.909 & FIRES (AUC 0.71) \\
+                     & weighted & 0.919 & 0.991 & 0.902 & \\
+tri-exp misspec      & naive    & 0.907 & 0.843 & 0.912 & FIRES (AUC 0.51) \\
+                     & weighted & 0.891 & 0.933 & 0.898 & \\
+noise-model swap     & naive    & 0.912 & 0.893 & 0.906 & FIRES (AUC 0.52) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{High-$\Dstar$ coverage and resolution ratio by b-value scheme. Across-seed
+means with 16-seed $[5,95]$ bands; the CRLB-optimal ratio band crosses unity. From
+\texttt{results/multiseed\_report.txt}.}
+\label{tab:acq}
+\small
+\begin{tabular}{lcccc}
+\toprule
+scheme & $n_b$ & hi-$\Dstar$ marg & hi-$\Dstar$ worst-SNR & CRLB/tercile-width \\
+\midrule
+clinical      & 11 & 0.821\band{0.794}{0.845} & 0.596\band{0.542}{0.702} & 1.24\band{1.17}{1.37} \\
+CRLB-optimal  & 11 & 0.835\band{0.795}{0.862} & 0.603\band{0.541}{0.678} & \textbf{1.03}\band{0.97}{1.16} \\
+dense         & 22 & 0.808\band{0.788}{0.836} & 0.551\band{0.508}{0.597} & 1.11\band{1.05}{1.21} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{llcccc}
+\toprule
+regime & calibration & $D$ & $\Dstar$ & $f$ & hi-$\Dstar$ tercile \\
+\midrule
+controlled & naive transfer & 0.597\band{0.567}{0.621} & 0.304\band{0.285}{0.315} & 0.495\band{0.472}{0.512} & 0.000\band{0.000}{0.000} \\
+controlled & recalibrated   & 0.899\band{0.881}{0.913} & 0.905\band{0.889}{0.921} & 0.904\band{0.892}{0.919} & 0.823\band{0.786}{0.853} \\
+native     & naive transfer & 0.693\band{0.643}{0.758} & 0.291\band{0.263}{0.312} & 0.524\band{0.497}{0.542} & 0.000\band{0.000}{0.000} \\
+native     & recalibrated   & 0.898\band{0.888}{0.913} & 0.899\band{0.884}{0.909} & 0.894\band{0.882}{0.908} & 0.831\band{0.798}{0.869} \\
+\bottomrule
+\end{tabular}
+\caption{Conformal/CQR coverage on the OSIPI external \emph{synthetic} DRO at
+nominal $0.90$ (CQR; across-seed mean over $16$ seeds, $[5,95]$ band). \emph{Naive
+transfer} of our synthetic calibration breaks under the real $\Dstar$ distribution
+shift; \emph{recalibrating} within the OSIPI distribution restores marginal coverage
+to nominal on independent ground truth, yet the high-$\Dstar$ conditional coverage
+stays below nominal -- the identifiability wall, on data we did not generate.}
+\label{tab:osipi}
 \end{table}
 
 \begin{figure}[h]
@@ -1191,6 +1077,36 @@ before coverage crosses the failure line.}
 $\Dstar$ band balloons with the plug-in $\hat{\Dstar}$. (Right) the heavy-tailed
 $\Dstar$ band-width distribution; the deployment monitor fires on the transfer.}
 \label{fig:invivo}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\linewidth]{figures/coverage_vs_nominal.pdf}
+\caption{Realized vs nominal coverage per parameter. Raw model-based methods sit
+below the diagonal (overconfident); conformal and conformalized methods sit on it.}
+\label{fig:coverage}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/acquisition_wall.pdf}
+\caption{(Left) high-$\Dstar$ coverage vs.\ b-scheme. (Right) the resolution ratio
+CRLB($\Dstar$)/tercile-width stays at or above unity for every scheme (the
+CRLB-optimal band dips to $0.97$): acquisition moves the regime to the resolution
+threshold, not past it.}
+\label{fig:acq}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{figures/invivo_real_maps.pdf}
+\caption{Actual in-vivo images (ACRIN-6698 / I-SPY2 Breast DWI; one slice;
+qualitative, no coverage claim). (Left) real $b{=}0$ DWI with the whole-tumor ROI in
+red; (middle) the plug-in $\hat{\Dstar}$ perfusion map; (right) the per-voxel
+conformal $\Dstar$ band-width map---wider where the perfusion compartment is
+under-identified. The synthetic 22-value-calibrated monitor (not shown here) fires
+on this data; see Fig.~\ref{fig:invivo-real}.}
+\label{fig:invivo-maps}
 \end{figure}
 
 \end{document}
