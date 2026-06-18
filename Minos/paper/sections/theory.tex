@@ -1,0 +1,381 @@
+% sections/theory.tex --- Minos manuscript, theory section.
+%
+% Standalone section for later \input into the Minos manuscript. Compiles via the harness
+% paper/theory_standalone.tex (CP2). The including document must provide, in its preamble:
+%   \usepackage{amsmath,amssymb,booktabs,microtype}
+%   \usepackage{amsthm}                              % theorem/proposition/proof environments
+%   \newtheorem{theorem}{Theorem}  \newtheorem{proposition}{Proposition}
+%   \usepackage[numbers,sort&compress]{natbib}       % numbered (Vancouver) citations
+%   % Overleaf font (standing convention): \usepackage{ebgaramond}  -- commented for local compile.
+% Notation matches the locked model in theory/THEORY_MODEL.md.
+%
+% PROVENANCE. Every numeric value below carries a "% src:" comment naming the script and seed that
+% produced it, all re-run this session in the `proteus` env. Theory constants are sympy-derived
+% (theory/gap_scaling.py); the bound constants from theory/detectability.py; the theory-vs-simulation
+% confirmation from theory/confirm.py; v2/v3 simulation references from minos-core/RESULTS_B.md
+% (seed 20240517, RUN_N = 4e6) and minos-core/RESULTS_C.md (CAL_N = 2e6, DEP_N = 1e6). The
+% impossibility (Theorem~\ref{thm:detect}(i)) is a drafted data-processing argument flagged for human
+% proof-review (theory/impossibility.md) -- it is stated as such, not as a machine-verified result.
+
+\section{Theory: the decision--calibration gap and the limits of label-free validity monitoring}
+\label{sec:theory}
+
+A reported error bar can be optimal for two different jobs, and the two need not agree. We make this
+precise for the Minos model of a piecewise-linear clinical utility acting on a skewed posterior, and
+prove two statements about it. Theorem~\ref{thm:gap} turns the empirically observed
+\emph{decision--calibration gap} into a leading-order scaling law in the posterior skew, with a
+coefficient that is a pure decision-boundary quantity. Theorem~\ref{thm:detect} splits the problem of
+monitoring a deployed correction for staleness into an observable component that is
+bounded-detectable and a hidden component that is undetectable by \emph{any} label-free statistic.
+The latter is the formal case for sparse labeled spot-checks, and it is an information-theoretic
+impossibility distinct in kind from an identifiability limit.
+
+\subsection{Setup: two calibrations of one error bar}
+\label{sec:setup}
+
+Following the locked model (the analytic transcription of the simulation code; see
+\texttt{theory/\allowbreak THEORY\_MODEL.md}), reports are generated posterior-centrically: the reported centre is
+$\mu$, and the truth is $\theta = \mu + s\,u$, where $u$ is a zero-mean, unit-variance skew-normal
+error of shape $\kappa$. Its standardised third cumulant is
+\begin{equation}
+\gamma(\kappa) \;=\; \tfrac{4-\pi}{2}\,\frac{\bigl(d\sqrt{2/\pi}\bigr)^3}{\bigl(1-2d^2/\pi\bigr)^{3/2}},
+\qquad d=\frac{\kappa}{\sqrt{1+\kappa^2}} .
+\label{eq:gammakappa}
+\end{equation}
+To leading order in $\gamma$ the true per-report posterior of $\theta$ is the Gram--Charlier
+expansion
+\begin{equation}
+p(\theta\mid\mu) \;=\; \tfrac{1}{s}\,\varphi\!\Bigl(\tfrac{\theta-\mu}{s}\Bigr)
+\Bigl[\,1+\tfrac{\gamma}{6}\,\mathrm{He}_3\!\bigl(\tfrac{\theta-\mu}{s}\bigr)\Bigr]
++O(\gamma^{4/3}),
+\qquad \mathrm{He}_3(x)=x^3-3x,
+\label{eq:gramcharlier}
+\end{equation}
+while the \emph{reported} posterior is the Gaussian $\mathcal{N}(\mu,(\tau s)^2)$; the scale $\tau$ is
+the single knob on the reported bar, and the skew $\gamma$ is the misspecification. The utility is
+piecewise-linear with thresholds $t_1<t_2$ and slopes $k_{\mathrm{over}}$ (over-treatment) and
+$k_{\mathrm{under}}$ (under-treatment); the cost asymmetry is $\lambda := k_{\mathrm{under}}/k_{\mathrm{over}}\ge 1$.
+In the gap regime $t_1$ is pushed far below $t_2$, so the only active threshold is the treat/escalate
+boundary $t_2$ (verified: $\mathrm{P}(\textsc{spare})=0$ exactly).
+
+Two scales calibrate the same bar against different objectives, on independent code paths:
+\begin{itemize}
+  \item $\tau_{\mathrm{stat}}$ --- \emph{statistical} calibration: the scale at which the reported
+  central-$L$ interval covers the truth at the nominal level $L$, i.e.\ the root of
+  $C(\tau)=\mathrm{P}(|u|\le z_L\,\tau)=L$ with $z_L=\Phi^{-1}(\tfrac12+\tfrac{L}{2})$ ($L=0.90$).
+  % src: minos-core/minos/calibration.py L_ref=0.90 (model constant); RESULTS_B.md.
+  It never reads the utility.
+  \item $\tau^\star$ --- \emph{decision} calibration: $\tau^\star=\arg\max_\tau \mathbb{E}\,
+  U\!\bigl(a^\star(\mathcal{N}(\mu,(\tau s)^2)),\theta\bigr)$, the scale whose induced decision rule
+  maximises realised expected utility. It never reads coverage.
+\end{itemize}
+The \emph{decision--calibration gap} is $G := \tau^\star - \tau_{\mathrm{stat}}$.
+
+\paragraph{The symmetric/degenerate baseline.}
+When the posterior is symmetric ($\kappa=0$, so $u\sim\mathcal{N}(0,1)$) or the cost is symmetric
+($\lambda=1$), the two calibrations coincide at the same point: both scales return $\approx 1$ and the
+gap collapses. At the well-specified cell the simulation gives
+$\tau_{\mathrm{stat}}=0.9998$, $\tau^\star=0.9959$, $G=-0.0039$
+% src: minos-core/RESULTS_B.md (v2, seed 20240517, RUN_N=4e6), kappa=0 row -- near-degenerate, opposite-tiny sign.
+--- a near-degenerate gap, essentially zero. The interesting regime is misspecified and asymmetric.
+There the two calibrations fall on \emph{opposite sides of $1$}: statistical calibration
+\emph{shrinks} the bar below unity to restore central coverage of a now-skewed truth, while decision
+calibration \emph{widens} it above unity so escalation fires soon enough against the heavy
+under-treatment tail. At the default cell ($\kappa=3,\lambda=3,\rho=0.5$, so $\gamma=0.6670$
+% src: theory/confirm.py, gamma_of_kappa(3).
+):
+\begin{equation}
+\tau_{\mathrm{stat}} \approx 0.964 \;<\; 1 \;<\; \tau^\star \approx 1.05,
+\qquad G \approx +0.085 ,
+\label{eq:oppositesides}
+\end{equation}
+% src: theory/confirm.py (A), 5 seeds @ 2e6: tau_stat=0.9640+/-0.0006, tau*=1.0516+/-0.0043, G=0.0876+/-0.0041;
+% v2 RESULTS_B: 0.9635 / 1.0431 / 0.0796. Quoted to 2 d.p. as the regime, made exact in Sec.~\ref{sec:thm1}.
+a deliberately under-confident bar beats the statistically calibrated one for the decision. The rest
+of this section explains \emph{why} this gap exists, \emph{how} it scales, and \emph{what} it implies
+for monitoring a correction built on it.
+
+\subsection{Theorem 1: the gap is a scaling law}
+\label{sec:thm1}
+
+\begin{theorem}[Decision--calibration gap scaling law]
+\label{thm:gap}
+In the locked model, to leading order in the posterior skewness $\gamma$,
+\begin{align}
+\tau_{\mathrm{stat}}(\gamma) &= 1 - a\,\gamma + O(\gamma^2), & a&=0,\\
+\tau^\star(\gamma) &= 1 + b\,\Lambda(\lambda)\,\gamma + O(\gamma^{4/3}), & b&=\tfrac16,\quad \Lambda(\lambda)=-z^\star(\lambda)=|z^\star(\lambda)|,\\
+G(\gamma) &= \tau^\star-\tau_{\mathrm{stat}} = \tfrac16\,|z^\star(\lambda)|\,\gamma + O(\gamma^{4/3}),
+\label{eq:gaplaw}
+\end{align}
+where $z^\star(\lambda)<0$ is the decision-boundary offset (in reported standard deviations) solving
+$(\lambda-1)\,\psi(z)+z=0$ with $\psi(z)=z\,\Phi(z)+\varphi(z)$ the standardised expected
+positive part. The gap is positive (the asymmetric cost \emph{widens} the bar,
+$\tau^\star>1=\tau_{\mathrm{stat}}$), vanishes as $\gamma\to0$, and is monotone increasing in
+$\gamma$ and in the cost asymmetry $\lambda$.
+\end{theorem}
+
+\paragraph{Proof sketch (derived symbolically in \texttt{theory/gap\_scaling.py}).}
+\emph{(i) $\tau_{\mathrm{stat}}$ is first-order skew-insensitive, $a=0$.} Coverage is a
+\emph{symmetric} probability $C(\tau)=\mathrm{P}(|u|\le z_L\tau)$. Its $O(\gamma)$ Gram--Charlier
+correction is $\tfrac16\int_{-c}^{c}\varphi(u)\,\mathrm{He}_3(u)\,du$; since $\mathrm{He}_3$ is
+\emph{odd} and the interval is symmetric about the mean, the integral is identically zero. Hence the
+entire first-order gap is decision-side.
+\emph{(ii) $\tau^\star$ slope.} For fixed $\tau$ the reported rule is a pure threshold on $\mu$
+(\textsc{escalate} iff $\mu>t_2+\tau s\,z^\star$), so choosing $\tau$ is choosing the threshold. The
+realised-utility-optimal threshold solves the first-order condition
+$h(z;\gamma)=(\lambda-1)\,g(z;\gamma)+z=0$ with
+$g(z;\gamma)=\mathbb{E}_u[(z+u)_+]=\psi(z)+\tfrac{\gamma}{6}\,gc(z)+O(\gamma^2)$, and sympy evaluates
+the skew correction in closed form,
+\begin{equation}
+gc(z)=\int_{-z}^{\infty}(z+u)\,\mathrm{He}_3(u)\,\varphi(u)\,du = -z\,\varphi(z).
+\label{eq:gc}
+\end{equation}
+% src: theory/gap_scaling.py, sympy: gc(z) = -z*phi(z) (asserted equal).
+The implicit-function theorem then gives
+$\tfrac{d\tau^\star}{d\gamma}\big|_0=\tfrac{(\lambda-1)\varphi(z^\star)}{6[(\lambda-1)\Phi(z^\star)+1]}=b\,\Lambda(\lambda)$
+with $b=\tfrac16$; substituting the boundary condition $(\lambda-1)\psi(z^\star)=-z^\star$ collapses
+$\Lambda$ to the pure threshold quantity $\Lambda(\lambda)=-z^\star(\lambda)$ (sympy-verified, residual
+$0$). Thus $G(\gamma)=\tfrac16|z^\star(\lambda)|\gamma$: the gap's slope in skewness is the magnitude
+of the decision-boundary offset, over six. The proximity $\rho$ does \emph{not} enter the leading
+coefficient (the optimality condition is pointwise, so the population density cancels); it sets only
+whether $\tau^\star$ is identified. At $\lambda=1$, $z^\star=0\Rightarrow\Lambda=0\Rightarrow
+\tau^\star=1$: a symmetric cost has no gap. \hfill$\square$
+
+The decision boundary $z^\star(\lambda)$ and the resulting slope are, for $\lambda=1,2,3,4$,
+\begin{equation}
+z^\star = 0,\,-0.27603,\,-0.43633,\,-0.54916,
+\qquad
+\tfrac{d\tau^\star}{d\gamma}=\tfrac{|z^\star|}{6}=0,\,0.04600,\,0.07272,\,0.09153 ,
+\label{eq:zstargrid}
+\end{equation}
+% src: theory/gap_scaling.py, GATE 1 grid (mpmath root + sympy slope), this session.
+strictly increasing in $\lambda$. At the default asymmetry $\lambda=3$ the leading-order slope is
+$|z^\star(3)|/6=0.0727$,
+% src: theory/gap_scaling.py / theory/confirm.py (B), slope_th.
+giving a leading-order $\tau^\star=1+\tfrac16|z^\star(3)|\gamma=1.0485$ at $\gamma=0.6670$.
+% src: theory/gap_scaling.py default-cell print / theory/confirm.py (A), tstar_th = 1.0485.
+
+\paragraph{The leading-order caveat (the operating skew is moderate, not small).}
+The default cell sits at $\gamma=0.6670$ --- moderate, \emph{not} small --- so the leading-order law
+captures the decision-side scale, sign, and slope, but not the full gap magnitude at that cell. Two
+pieces must be combined. The decision side is the leading-order $\tau^\star=1.0485$, which the
+simulation confirms to $0.3\%$ ($1.0516\pm0.0043$ over 5 seeds at $2\times10^6$);
+% src: theory/confirm.py (A): tau*_theory 1.0485 vs sim 1.0516+/-0.0043, |diff|=0.0031, tol 0.015 PASS.
+the calibration side has $a=0$ to first order, but the simulation shows a second-order
+\emph{symmetric-coverage shrink} $\tau_{\mathrm{stat}}-1=-0.0360$, reproduced to $0.0002$ by the exact
+skew-normal coverage model ($\tau_{\mathrm{stat}}=0.9638$ vs sim $0.9640\pm0.0006$).
+% src: theory/confirm.py (A): tau_stat exact 0.9638 vs sim 0.9640+/-0.0006, |diff|=0.0002, tol 0.010 PASS.
+Consequently, at $\gamma=0.6670$ the \emph{pure} leading-order decision-side term
+$G_{\mathrm{lead}}=\tfrac16|z^\star(3)|\gamma=0.0485$ is only
+\begin{equation}
+\frac{G_{\mathrm{lead}}}{G_{\mathrm{full}}}=\frac{0.0485}{0.0847}\approx 57\%
+\label{eq:57pct}
+\end{equation}
+% src: theory/confirm.py (A): G_leading 0.0485, G_full (tau*_lead - tau_stat_exact) 0.0847; 0.0485/0.0847=0.573.
+of the gap; the remaining $\approx 43\%$ is the higher-order coverage shrink. Combining the two
+analytic pieces reconstructs the full gap, $G_{\mathrm{full}}=\tau^\star_{\mathrm{lead}}-
+\tau_{\mathrm{stat}}^{\,\mathrm{exact}}=0.0847$, against a simulated $0.0876\pm0.0041$ (and $0.0796$
+in v2),
+% src: theory/confirm.py (A): |G_full - G_sim| = 0.0029, tol 0.015 PASS; v2 RESULTS_B G=0.0796.
+the theory sitting between the two simulation estimates. Across the published skew sweep the full
+theory tracks v2 to a maximum deviation of $0.0065$ (tolerance $0.012$); the \emph{pure}
+leading-order term tracks the full gap to within $0.012$ up to $\gamma\approx 0.137$, beyond which the
+named second-order coverage term must be added.
+% src: theory/confirm.py (B): max|G_full - G_v2|=0.0065 < 0.012; lead-order valid up to gamma=0.137.
+\textbf{Stated regime of validity:} Theorem~\ref{thm:gap} is a leading-order law in $\gamma$; the
+decision-side scale, the gap sign, and the slope hold throughout the tested range, while the full
+magnitude at moderate $\gamma$ requires the separately validated second-order coverage shrink in
+$\tau_{\mathrm{stat}}$.
+
+The gap is therefore structural, not a numerical accident of one cell: it must appear whenever the
+posterior is skewed ($\gamma>0$) and the cost is asymmetric ($\lambda>1$), and its coefficient is the
+interpretable threshold offset $z^\star(\lambda)$.
+
+\subsection{Theorem 2: the detectability dichotomy}
+\label{sec:thm2}
+
+The gap motivates a \emph{loss-calibration correction} --- fitting the bar's scale to the decision,
+i.e.\ reporting $\hat\tau_{\mathrm{cal}}\approx\tau^\star$ rather than $\tau_{\mathrm{stat}}$ (a cited
+baseline; see Sec.~\ref{sec:positioning}). Under deployment shift this correction goes stale,
+stranding regret
+$R(\delta)=\max_\tau \mathrm{EU}(\tau;\delta)-\mathrm{EU}(\hat\tau_{\mathrm{cal}};\delta)\ge 0$.
+The deployment shift splits, at matched gain $\beta s$, into two channels that impose the \emph{same}
+truth-vs-report discrepancy (hence the same regret) and differ only in whether the observable reported
+point moves:
+\[
+\text{observable } (\delta_{\mathrm{obs}}):\ \mu=\mu_0-\beta s\,\delta_{\mathrm{obs}},
+\qquad
+\text{hidden } (\delta_{\mathrm{hid}}):\ \theta=\mu_0+\beta s\,\delta_{\mathrm{hid}}+s\,u .
+\]
+A \emph{label-free monitor} is any measurable $M=f(O)$ of the observable batch $O=\{\mu_i\}$ (plus
+fixed known constants); it may not read the truths $\{\theta_i\}$.
+
+\begin{theorem}[Detectability dichotomy]
+\label{thm:detect}
+Let $P_O^{\mathrm{cal}},P_O^{\mathrm{dep}}$ be the calibration and deployment laws of the observable
+reported point $\mu$, and let $M=f(O)$ be any label-free monitor.
+
+\emph{(ii) Achievable bound (observable component).} The stale-correction regret of the observable
+channel obeys
+\begin{equation}
+R_{\mathrm{obs}} \;\le\; L\cdot\delta\bigl(P_O^{\mathrm{dep}},P_O^{\mathrm{cal}}\bigr),
+\label{eq:bound}
+\end{equation}
+in two consistent forms: \textbf{(W$_1$)} $\delta=W_1$ and $L=L_U=k_{\mathrm{under}}$, the utility's
+Lipschitz constant in $\theta$; \textbf{(TV)} $\delta=\mathrm{TV}$ and $L=2\,\mathrm{osc}(g_\tau)$,
+twice the oscillation of the per-report expected utility
+$g_\tau(\mu)=\mathbb{E}[U(a^\star(\mu;\tau),\theta)\mid\mu]$.
+
+\emph{(i) Hidden-channel impossibility} (\emph{drafted; requires human proof-review}). For the hidden
+channel ($\delta_{\mathrm{obs}}=0$), every label-free statistic $M=f(O)$ has identical law under
+\emph{fresh} ($\delta_{\mathrm{hid}}=0$) and \emph{stale} ($\delta_{\mathrm{hid}}>0$) deployment;
+hence every detector built from $O$ has true-positive rate equal to its false-positive rate at every
+operating point, its ROC is the diagonal, and its detection AUC is exactly $\tfrac12$.
+\end{theorem}
+
+\paragraph{Proof sketch of (ii) (\texttt{theory/detectability.py}).}
+An optimality chain gives
+\[
+R(P_{\mathrm{dep}})\le 2\sup_\tau\bigl|\mathrm{EU}(\tau;P_{\mathrm{dep}})-\mathrm{EU}(\tau;P_{\mathrm{cal}})\bigr|=:2\varepsilon .
+\]
+Writing $\mathrm{EU}(\tau;P)=\int g_\tau\,dP(\mu)$
+gives the TV form $\varepsilon\le\mathrm{osc}(g_\tau)\,\mathrm{TV}(P_O)$; and since $U$ is
+$L_U$-Lipschitz in $\theta$ while the observable shift only translates the decision boundary by
+$\Delta=\beta s\,\delta_{\mathrm{obs}}$ in report-space, the W$_1$ form follows with
+$W_1(P_O^{\mathrm{dep}},P_O^{\mathrm{cal}})=\Delta$ exactly. \hfill$\square$
+
+Read off the code's utility, $L_U=\max(k_{\mathrm{under}},k_{\mathrm{over}})=\max(3,1)=3.0$ and the
+gain $\beta s=2.5$, so $W_1=2.5\,\delta_{\mathrm{obs}}$; the TV constant is
+$L_{\mathrm{TV}}=2\,\mathrm{osc}(g_\tau)=0.6820$.
+% src: theory/detectability.py: L_U=3.0, gain=beta*s=2.5, osc(g)=0.3410, L_TV=0.6820, tau_hat_cal=1.0543.
+Both bounds hold across the observable sweep $\delta_{\mathrm{obs}}\in[0,0.24]$; the realised regret is
+sub-linear (quadratic near $\delta=0$), so the observed regret-vs-$W_1$ slope is $0.3165$, well below
+the envelope $L_U=3$.
+% src: theory/detectability.py: bound holds across sweep; observed R-vs-W1 slope = 0.3165 <= 3.
+
+\paragraph{Argument for (i) (data-processing / sufficiency; \texttt{theory/impossibility.md}).}
+The hidden shift perturbs only $\theta$, so the observable law is exactly invariant,
+$P_O^{\mathrm{stale}}=P_O^{\mathrm{fresh}}=:P_O$. Any $M=f(O)$ inherits the invariance,
+$\mathrm{Law}(M\mid\mathrm{stale})=\mathrm{Law}(M\mid\mathrm{fresh})$, equivalently
+$I(M;\delta_{\mathrm{hid}})\le I(O;\delta_{\mathrm{hid}})=0$; by Neyman--Pearson the likelihood ratio
+is $\equiv 1$, so no test has power and $\mathrm{AUC}=\tfrac12$. The simulation realises the structural
+premise bit-for-bit: the reported points are identical under $\delta_{\mathrm{hid}}=0$ versus $0.20$,
+and the monitor returns $M=0.007248$ in both cases.
+% src: theory/detectability.py, seed 4242, 200k voxels: M(delta_hid=0)=M(delta_hid=0.20)=0.007248, points identical.
+\textbf{Part~(i) is a sufficiency proof, not algebra, and carries a human-review flag} (see
+\texttt{theory/impossibility.md}); it is consistent with --- not verified by --- the simulated
+hidden-channel AUC $=0.500$. The population statement concerns the idealised law; no finite-sample
+concentration claim is made.
+
+\paragraph{Together: a dichotomy.}
+The two parts of Theorem~\ref{thm:detect} say a label-free monitor can be made arbitrarily good on the
+observable component (regret bounded by a utility-Lipschitz constant times an observable distance) and
+is provably powerless on the hidden component, which induces the \emph{same} regret yet leaves every
+observable summary untouched. The monitor is not ``imperfect''; it is optimal up to a floor that no
+label-free statistic can cross.
+
+\paragraph{Partial leak.}
+Real shifts need not factor cleanly into one channel or the other. The following decomposition, a
+direct corollary of the dichotomy, states what survives.
+
+\begin{proposition}[Partial leak]
+\label{prop:leak}
+Decompose a deployment shift into a component that moves the observable law $P_O$ and a residual
+component that leaves $P_O$ exactly invariant. Then \emph{(a)} the regret attributable to the
+$P_O$-moving (``leaked'') component is bounded-detectable via Theorem~\ref{thm:detect}(ii),
+$R_{\mathrm{leak}}\le L_U\,W_1(P_O^{\mathrm{dep}},P_O^{\mathrm{cal}})$; and \emph{(b)} the regret of the
+$P_O$-invariant (``genuinely hidden'') component is undetectable by any label-free monitor
+($\mathrm{AUC}=\tfrac12$, Theorem~\ref{thm:detect}(i)). A physically ``hidden'' change that correlates
+with acquisition features leaks into $P_O$ and is detectable to the extent of that leakage; only the
+residual that leaves every observable summary untouched is invisible.
+\end{proposition}
+
+\noindent Proposition~\ref{prop:leak}(a) follows from Theorem~\ref{thm:detect}(ii) applied to whatever
+moves $P_O$; part~(b) inherits the human-review flag of Theorem~\ref{thm:detect}(i), since it rests on
+the same exact-invariance premise (the \emph{definition} of ``hidden'' in this model).
+
+\subsection{The validity monitor: Theorem 2's applied face}
+\label{sec:monitor}
+
+The dichotomy has a direct operational reading. The label-free monitor
+\begin{equation}
+M \;=\; \sum_b \omega(z_b)\,\bigl|p_{\mathrm{dep}}(z_b)-p_{\mathrm{cal}}(z_b)\bigr|\,dz,
+\qquad z=\tfrac{\mu-t_2}{s},\quad \omega(z)=k_{\mathrm{under}}\,\varphi(z),
+\label{eq:monitor}
+\end{equation}
+is a regret-targeted (not density-ratio) divergence of the reported points: $\omega$ weights the
+discrepancy by the under-treatment stakes and localises it to within $\sim$one reported standard
+deviation of the active threshold $t_2$. By construction $M$ reads only $\{\mu\}$, so it is exactly the
+object Theorem~\ref{thm:detect} bounds.
+
+\paragraph{Observable fires; hidden is blind.}
+On the observable channel $M$ tracks the stranded regret and separates stale from fresh batches:
+$\mathrm{corr}(M,R)=+0.964$ and detection AUC for $\{R>\text{tol}\}$ is $1.000$.
+% src: theory/confirm.py (C): corr(M,R)=+0.964, AUC_obs=1.000; v3 RESULTS_C: +0.965, 1.000.
+On the hidden channel --- which by construction does not move $\{\mu\}$ --- $M$ sits at the theoretical
+floor, detection AUC $=0.500$,
+% src: theory/confirm.py (C): AUC_hid=0.500; v3 RESULTS_C: 0.500.
+exactly Theorem~\ref{thm:detect}(i). The fitted correction $\hat\tau_{\mathrm{cal}}=1.0543$ (this session;
+$1.0480$ in v3, $\tau^\star=1.0485$ in theory) reproduces the decision scale.
+% src: theory/confirm.py (C): tau_hat_cal=1.0543; v3 RESULTS_C: 1.0480; theory tau*=1.0485 (Thm 1).
+
+\paragraph{The break-even shift.}
+In operation the monitor declares a batch stale when $M$ exceeds a null-calibrated threshold $m^\star$
+(false-alarm controlled at a chosen level). The decision-relevant break-even is the shift at which the
+stranded regret crosses the tolerance: on the observable channel $R_{\mathrm{obs}}$ crosses the
+decision tolerance ($\text{tol}=0.02$) between $\delta_{\mathrm{obs}}=0.06$ ($R=0.0145$) and $0.09$
+($R=0.0317$),
+% src: theory/confirm.py (C) regret ladder: R_obs at 0.06=0.0145, 0.09=0.0317; TOL=0.02.
+and Theorem~\ref{thm:detect}'s envelope $R_{\mathrm{obs}}\le L_U W_1=7.5\,\delta_{\mathrm{obs}}$
+guarantees the regret a detectable observable signature wherever it matters. On the hidden channel no
+such break-even exists for \emph{any} label-free $M$: the regret ladder is comparable in magnitude
+(matched by construction) yet $M$ cannot see it. The monitor is thus the applied face of the
+dichotomy --- a near-optimal observable detector paired with a provable blind spot.
+
+\subsection{Positioning: a gap and a monitor, not a new calibration method}
+\label{sec:positioning}
+
+Minos's contributions are \emph{(i)} the gap scaling law of Theorem~\ref{thm:gap} --- a quantification
+of \emph{how far} the decision-optimal scale departs from the coverage-optimal one --- and \emph{(ii)}
+the detectability dichotomy of Theorem~\ref{thm:detect} with the validity monitor as
+its applied face. It does \emph{not} propose a new calibration method.
+
+The act of tuning a posterior so the \emph{decision} is optimal is the established baseline of
+loss-calibrated Bayesian inference \citep{lacostejulien2011} and its post-hoc form
+\citep{vadera2021}, and of decision calibration \citep{zhao2021}; Minos uses exactly this as the
+$\hat\tau_{\mathrm{cal}}$ correction and asks two questions these lines do not, since each targets a
+single object: how far apart the two calibrations are (the gap), and whether a correction built on one
+of them can be monitored for staleness (the dichotomy). The decision-curve / net-benefit literature
+\citep{vickers2006} prices a single threshold's net benefit but not the statistical-versus-decision
+gap; the calibration-under-shift literature \citep{ovadia2019} studies calibration under distribution
+shift empirically but not the label-free detectability floor. To our knowledge Theorem~\ref{thm:detect}(i)
+is the first statement that the hidden component of correction-staleness is information-theoretically
+invisible to any label-free monitor.
+
+\subsection{The observable/hidden throughline}
+\label{sec:throughline}
+
+The two theorems share one structure: a quantity that is decision-relevant yet invisible to the
+natural observable. In Theorem~\ref{thm:gap} the skew $\gamma$ moves the decision-optimal scale while
+leaving symmetric coverage first-order unchanged ($a=0$); in Theorem~\ref{thm:detect}(i) the hidden shift
+moves the truth while leaving every observable summary exactly unchanged. Both motivate reading a
+\emph{label}: only a statistic that touches $\theta$ can see what the observables cannot, which is the
+role of periodic labeled repeatability spot-checks (Echo, \citealp{echo}). Theorem~\ref{thm:detect}(i) is
+the principled justification for pairing a cheap label-free monitor with a sparse labeled check, rather
+than trusting either alone.
+
+\paragraph{Impossibility, not identifiability.}
+This blind spot must not be confused with an \emph{identifiability} limit. Gauge \citep{gauge}
+describes an identifiability wall: a parameter (the IVIM pseudo-diffusion coefficient) that the data
+and forward model cannot pin down, so \emph{no estimator} recovers it from the available
+measurements. Theorem~\ref{thm:detect}(i) is a different kind of wall: it is an
+\emph{information-theoretic impossibility} of \emph{detection} --- the hidden shift contributes zero
+mutual information to the observables ($I(M;\delta_{\mathrm{hid}})=0$), so \emph{no label-free test}
+can separate stale from fresh, regardless of estimator quality. Identifiability concerns estimating a
+parameter from data; this impossibility concerns detecting a distributional change from observables.
+Both are ``you cannot get there from here'' statements, but they bound different operations and rest on
+different premises --- and only the labeled check (Echo) resolves the impossibility, just as only
+additional informative data could resolve an identifiability wall.
+
+% --- References for standalone compile (numbered natbib). In the full manuscript these merge into the
+% --- manuscript .bib; keys: lacostejulien2011, vadera2021, zhao2021, vickers2006, ovadia2019, gauge, echo.
