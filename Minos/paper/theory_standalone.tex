@@ -1,0 +1,47 @@
+% theory_standalone.tex --- CP2 compile harness for sections/theory.tex.
+% Standalone wrapper that supplies the preamble the section assumes, so the section can be
+% compiled/proofed in isolation. The real manuscript will \input{sections/theory} under its own
+% preamble; this file exists only to verify the section compiles. Build: `tectonic theory_standalone.tex`.
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+% Overleaf font (standing convention) --- commented for local compile:
+% \usepackage{ebgaramond}
+
+\emergencystretch=2em  % repo convention (cf. Gauge) --- absorbs overfull boxes from long \texttt/math.
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+
+\title{\textbf{Minos --- theory section (standalone proof)}}
+\author{Avery Karlin}
+\date{}
+
+\begin{document}
+\maketitle
+
+\input{sections/theory}
+
+\begin{thebibliography}{9}
+\bibitem{lacostejulien2011} S.~Lacoste-Julien, F.~Husz\'ar, Z.~Ghahramani.
+  Approximate inference for the loss-calibrated Bayesian. \emph{AISTATS}, 2011.
+\bibitem{vadera2021} M.~P.~Vadera et al. Post-hoc loss-calibration for Bayesian neural networks.
+  \emph{UAI}, 2021.
+\bibitem{zhao2021} S.~Zhao, M.~Kim, R.~Sahoo, T.~Ma, S.~Ermon. Calibrating predictions to decisions:
+  a novel approach to multi-class calibration (decision calibration). \emph{NeurIPS}, 2021.
+\bibitem{vickers2006} A.~J.~Vickers, E.~B.~Elkin. Decision curve analysis: a novel method for
+  evaluating prediction models. \emph{Medical Decision Making}, 26(6):565--574, 2006.
+\bibitem{ovadia2019} Y.~Ovadia et al. Can you trust your model's uncertainty? Evaluating predictive
+  uncertainty under dataset shift. \emph{NeurIPS}, 2019.
+\bibitem{gauge} A.~Karlin. Distribution-free conformal coverage for IVIM parameter maps, and the
+  identifiability wall in the pseudo-diffusion compartment (Gauge). Companion manuscript.
+\bibitem{echo} A.~Karlin. Echo: labeled repeatability spot-checks for deployment validity.
+  Companion work.
+\end{thebibliography}
+
+\end{document}
