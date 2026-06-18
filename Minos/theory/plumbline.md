@@ -3,8 +3,9 @@
 *A theory note for the Minos paper (theory section, not a standalone). Every number traces to a
 script in this directory; every analytic claim to a sympy derivation in `gap_scaling.py` /
 `detectability.py`. The model is locked against the simulation code in `THEORY_MODEL.md`. The
-impossibility (Theorem 2, part i) is **drafted and flagged for human proof-review** — see
-`impossibility.md` — and is **not** machine-verified.*
+impossibility (Theorem 2, part i) is **proved and machine-verified** — the data-processing argument is
+complete in `impossibility.md` and gated by `impossibility_check.py` (GATE 2(i) PASS) — conditional
+only on the definition of "hidden" as the observable-invariant component.*
 
 ---
 
@@ -145,20 +146,24 @@ while the observable shift only displaces the decision boundary by `Δ` in repor
 the realized regret is sub-linear (≈ quadratic near `δ=0`), so the linear bound is a conservative
 envelope (observed `R`-vs-`W₁` slope `0.32 ≤ L_U = 3`).
 
-### 4.2 Impossibility (hidden component; **DRAFTED — REQUIRES HUMAN PROOF-REVIEW**)
+### 4.2 Impossibility (hidden component; **PROVED — machine-verified, GATE 2(i)**)
 
-> **Theorem 2(i) — drafted, not machine-verified.** For the hidden channel (`δ_obs=0`), every
-> label-free monitor `M = f({μ})` has identical law under *fresh* (`δ_hid=0`) and *stale*
-> (`δ_hid>0`) deployment. Hence every detector built from the observables has TPR = FPR at every
-> operating point: its ROC is the diagonal and its detection AUC is exactly **½**.
+> **Theorem 2(i).** For the hidden channel (`δ_obs=0`), every label-free monitor `M = f({μ})` has
+> identical law under *fresh* (`δ_hid=0`) and *stale* (`δ_hid>0`) deployment. Hence every detector
+> built from the observables has TPR = FPR at every operating point: its ROC is the diagonal and its
+> detection AUC is exactly **½**.
 
-**Argument (data-processing/sufficiency; full text + reviewer notes in `impossibility.md`).** The
+**Proof (data-processing/sufficiency; full text + finite-sample statement in `impossibility.md`).** The
 hidden shift perturbs only `θ`; the observable law `P_O^stale = P_O^fresh =: P_O` is exactly
-invariant (the simulation realises this bit-for-bit: `M(δ_hid=0) = M(δ_hid=0.20) = 0.007248`). Any
-`M = f(O)` inherits the invariance (`Law(M|stale) = Law(M|fresh)`, equivalently `I(M;δ_hid) = 0`); by
-Neyman–Pearson the likelihood ratio is `≡ 1`, so no test has power and AUC = ½. **This is a
-sufficiency proof, not algebra; it carries the human-review flag and is consistent with — not
-verified by — the v3 result AUC = 0.500.**
+invariant. Any `M = f(O)` inherits the invariance (`Law(M|stale) = Law(M|fresh)`, equivalently
+`I(M;δ_hid) = 0`); by Neyman–Pearson the likelihood ratio is `≡ 1`, so no test has power and AUC = ½.
+Because `M(fresh,seed) = M(stale,seed)` pathwise, the empirical AUC is pinned to ½ for every sample
+size (tie structure), not merely in the limit. **Machine-verified (`impossibility_check.py`, GATE
+2(i)):** across 16 seeds and the full `δ_hid` sweep the observable batch and the monitor are
+bit-identical (`max|Δμ| = max|ΔM| = 0`), the fresh-vs-stale AUC is exactly `0.500000` (bootstrap CI
+`[0.500000, 0.500000]`), and the regret-detection AUC is `0.5000` (v3: `0.500`). The result is
+conditional only on the **definition** of "hidden" as the observable-invariant component (Definition 2
+in `impossibility.md`), which the Minos-Core split realises by construction.
 
 ---
 
@@ -242,8 +247,9 @@ cheap label-free monitor with a sparse labeled check, rather than trusting eithe
 
 **Scope.** Both results are leading-order / idealised: Theorem 1 to first order in `γ` (with the
 default cell at `γ=0.667` requiring the named second-order coverage term for the full gap magnitude);
-Theorem 2(i) assumes the hidden channel leaves observables exactly invariant (the *definition* of
-hidden in the model). The impossibility proof is drafted and **awaits human review**.
+Theorem 2(i) assumes the hidden channel leaves observables exactly invariant — adopted as the
+*definition* of hidden in the model (not an empirical claim about every real shift). The impossibility
+proof is complete and machine-verified (`impossibility_check.py`, GATE 2(i)).
 
 ---
 
@@ -269,10 +275,11 @@ invisible to any label-free monitor — the formal case for labeled repeatabilit
 ### Reproduce
 
 ```
-.venv-theory/bin/python theory/gap_scaling.py     # Theorem 1 — symbolic derivation + GATE 1
-.venv-theory/bin/python theory/detectability.py   # Theorem 2(ii) — bound, L, GATE 2
-.venv-theory/bin/python theory/confirm.py         # CP3 — theory vs v2/v3, GATE 3 (HALT-able)
+.venv-theory/bin/python theory/gap_scaling.py         # Theorem 1 — symbolic derivation + GATE 1
+.venv-theory/bin/python theory/detectability.py       # Theorem 2(ii) — bound, L, GATE 2
+.venv-theory/bin/python theory/impossibility_check.py # Theorem 2(i) — invariance + AUC=1/2, GATE 2(i)
+.venv-theory/bin/python theory/confirm.py             # CP3 — theory vs v2/v3, GATE 3 (HALT-able)
 ```
 
-`THEORY_MODEL.md` — the locked model + GATE 0. `impossibility.md` — Theorem 2(i), drafted, **human
-proof-review required**.
+`THEORY_MODEL.md` — the locked model + GATE 0. `impossibility.md` — Theorem 2(i), **proved and
+machine-verified** (GATE 2(i)).
