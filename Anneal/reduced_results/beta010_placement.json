@@ -1,0 +1,60 @@
+{
+  "beta": 0.1,
+  "A_SN": {
+    "series_eq17": 0.1783635,
+    "numeric": 0.17834090849559003
+  },
+  "A_H": {
+    "series_eq18": 0.2777323515212476,
+    "numeric": 0.2777800963940394
+  },
+  "A_hc": {
+    "numeric": 0.3537158203125,
+    "bracket": [0.35367187499999997, 0.353759765625],
+    "width": 8.789062500003109e-5
+  },
+  "selections": {
+    "A_post": 0.5,
+    "A_stable": 0.2,
+    "A_depth_matched_candidate": 0.444,
+    "depth_offset_used": 0.09
+  },
+  "post": {
+    "A": 0.5,
+    "region": "post-homoclinic (no chimera attractor; sync attracting)",
+    "r_star": 0.336715689,
+    "psi_star": -0.20103245308759732,
+    "sigma": 0.024955976733942925,
+    "omega": 0.3251823521232827,
+    "stable_fp": false,
+    "eig": [
+      "(0.024955976733942925+0.3251823521232827j)",
+      "(0.024955976733942925-0.3251823521232827j)"
+    ],
+    "dynamical_confirmation": {
+      "kind": "sync",
+      "escaped": true,
+      "t_escape": 333.4818797124483,
+      "r_max": 0.9989063417565488,
+      "r_final": 0.9989063417565488
+    }
+  },
+  "stable": {
+    "A": 0.2,
+    "region": "stable stationary chimera",
+    "r_star": 0.729147123,
+    "psi_star": -0.20940853600382173,
+    "sigma": -0.014454562497126955,
+    "omega": 0.10217033038538975,
+    "stable_fp": true,
+    "eig": [
+      "(-0.014454562497126955+0.10217033038538975j)",
+      "(-0.014454562497126955-0.10217033038538975j)"
+    ],
+    "dynamical_confirmation": {
+      "kind": "fixed",
+      "r_star": 0.7291470818333747,
+      "amp": 7.268567969731521e-10
+    }
+  }
+}

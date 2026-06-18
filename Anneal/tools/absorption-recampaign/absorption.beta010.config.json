@@ -1,0 +1,63 @@
+{
+  "name": "beta=0.10 finite-N robustness slice (absorption-grade)",
+  "version": "1.0.0",
+  "campaign": "beta010-v1",
+  "description": "Second-beta robustness slice for the Death-of-a-chimera campaign. Re-runs the absorption-grade tracer at beta=0.10 (the value the reduced model is validated against) at two corners selected by reduced-model placement (place_beta010.py): A_post=0.5 (post-homoclinic, A_hc(0.10)=0.354) and A_stable=0.2 (stable stationary-chimera band, A_SN=0.178 < 0.2 < A_H=0.278). Same canonical seed family, integrator settings, labels and tracer as absorption.config.json; only beta and the sweep design change. Rows carry campaign='beta010-v1'.",
+  "model": {
+    "beta": 0.1,
+    "dt": 0.05,
+    "sampleStride": 0.1,
+    "t_max": 2000,
+    "_note": "beta=0.10 only; dt/sampleStride/t_max identical to absorption.config.json so labels are computed by the same cadence."
+  },
+  "graze_criterion": {
+    "theta": 0.85,
+    "W": 5.0
+  },
+  "absorption_criterion": {
+    "T_v": 120.0,
+    "recoveryThreshold": 0.8,
+    "recoveryWindowSec": 5.0
+  },
+  "breath": {
+    "smoothWindowSec": 2.0,
+    "minProminenceFrac": 0.1,
+    "minPeakSepFrac": 0.5,
+    "minCyclesForPhase": 2,
+    "autoPeriodFloorSec": 8.0
+  },
+  "phase_subset": {
+    "nSeedsPerPoint": 100,
+    "fromSweeps": true,
+    "_note": "Breath-phase locking subset: re-trace the lowest-id seeds per sweep point with R_incoh kept through absorption, so true-absorption phase phi_abs can be Rayleigh-tested. fromSweeps derives the points (A_post, A_stable, A_depth) and per-A seed0 from the sweeps above."
+  },
+  "sweeps": [
+    {
+      "label": "A_post",
+      "A": 0.5,
+      "Ns": [8, 16, 32, 64],
+      "seeds": 100,
+      "seed0": 100000
+    },
+    {
+      "label": "A_stable",
+      "A": 0.2,
+      "Ns": [8, 64],
+      "seeds": 50,
+      "seed0": 200000
+    },
+    {
+      "label": "A_depth",
+      "A": 0.444,
+      "Ns": [8, 16, 32, 64],
+      "seeds": 100,
+      "seed0": 100000,
+      "_note": "Depth-matched contingency point (added after the A=0.5 slice came in at 2.24 breath periods, < 3). A_hc(0.10)=0.354 + operating-corner depth 0.0904 [= 0.5 - A_hc(0.05)=0.4096] = 0.444. Same distance beyond the homoclinic as the paper's operating corner, so the ratchet/aging/phase analyses are depth-matched and the 'phenomenology travels' claim is testable."
+    }
+  ],
+  "inputs": {
+    "campaign_jsonl": "campaign_results/collapse_campaign.jsonl"
+  },
+  "output_dir": "absorption_results",
+  "output": "absorption_results/absorption_campaign_beta010.jsonl"
+}

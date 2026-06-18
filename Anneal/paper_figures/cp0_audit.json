@@ -1,0 +1,49 @@
+{
+ "N": 16,
+ "A": 0.5,
+ "n_candidates": 85,
+ "top3": [
+  {
+   "seed": 100015,
+   "t_graze": 83.2,
+   "t_abs": 221.9,
+   "ng": 2,
+   "Tb": 20.5,
+   "nbp": 8,
+   "sep": 138.7,
+   "rec_depth": 0.264,
+   "span": 221.9,
+   "pre_graze": 83.2,
+   "score": 8.34
+  },
+  {
+   "seed": 100070,
+   "t_graze": 69,
+   "t_abs": 236.9,
+   "ng": 2,
+   "Tb": 26,
+   "nbp": 8,
+   "sep": 167.9,
+   "rec_depth": 0.312,
+   "span": 236.9,
+   "pre_graze": 69,
+   "score": 8.11
+  },
+  {
+   "seed": 100023,
+   "t_graze": 130.20000000000002,
+   "t_abs": 228.3,
+   "ng": 1,
+   "Tb": 28.100000000000016,
+   "nbp": 7,
+   "sep": 98.1,
+   "rec_depth": 0.312,
+   "span": 228.3,
+   "pre_graze": 130.2,
+   "score": 8.02
+  }
+ ],
+ "chosen_seed": 100015,
+ "pinned_seed": 100015,
+ "match": true
+}

@@ -1,0 +1,53 @@
+{
+  "name": "Poisson-manifold probe + Weibull aging",
+  "version": "1.0.0",
+  "description": "Tests whether distance from the Ott-Antonsen/Poisson submanifold predicts, precedes, and (under intervention) causes collapse of the two-population Sakaguchi-Kuramoto chimera (delta-omega=0), plus a Weibull/aging characterization of the campaign survival shape. Builds on the merged collapse-time campaign; reuses its shipped-identical integrator. Dynamics-only; no audio.",
+  "observable": {
+    "M": 4,
+    "_M_note": "Highest circular-moment order in D = sum_{m=2..M} |Z_m - Z_1^m|^2. M=4 captures the leading closure defects; on-manifold each squared term is O(1/N)."
+  },
+  "model": {
+    "beta": 0.05,
+    "dt": 0.05,
+    "sampleStride": 0.1,
+    "t_max": 2000,
+    "theta": 0.85,
+    "W": 5.0,
+    "_note": "Identical to the merged campaign (campaign.config.json) so D-vs-lifetime is measured against the exact same dynamics and collapse criterion."
+  },
+  "cp1_invariance": {
+    "Np": 32,
+    "A": 0.5,
+    "a_sync_mod": 0.96,
+    "a_incoh_mod": 0.4,
+    "horizon_s": 300,
+    "_note": "On-manifold chimera-like IC: both populations are Mobius pushes of a uniform grid (R = |a|). Evolve over several breath periods; D must stay at its O(1/N) floor (manifold is invariant under the sinusoidal mean-field coupling)."
+  },
+  "cp3": {
+    "points": [
+      { "Np": 16, "A": 0.5 },
+      { "Np": 32, "A": 0.5 }
+    ],
+    "nSeeds": 30,
+    "_note": "Per point, 30 campaign seeds chosen to span the lifetime distribution (quantile-stratified). Traces recorded until collapse + a short tail; event-aligned to test escape precedence."
+  },
+  "cp4": {
+    "Np": 16,
+    "A": 0.5,
+    "nFamilies": 60,
+    "harmonics": [2, 3],
+    "eps_levels": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5],
+    "seed0": 700000,
+    "_note": "Interventional seed families. Each family (fixed seed) holds the synchronized population at the canonical chimera envelope and a fixed incoherent pre-image set; we inject a controlled m=2&m=3 harmonic distortion of strength epsilon. Families are PAIRED across eps levels (same sync, same pre-image, same phi) so a paired baseline-vs-max test controls for family-to-family finite-N floor noise. eps is restricted to the MONOTONE band [0,0.5]: realized incoherent-D0 rises monotonically there (median ~0.18->0.36, spanning the upper CP2 range); beyond ~0.5 the distortion folds over and D0 DECREASES, so absolute-D0 bisection is not well-posed there. Injection can only push D0 UP from the finite-N floor (a finite sample cannot be more on-manifold than its sampling floor), so the tested band is [floor, ~2x floor] = the reachable CP2 range. Same collapse criterion and t_max as the campaign.",
+    "output": "manifold_results/cp4_intervention.jsonl"
+  },
+  "cp5": {
+    "bootstrap": 1000,
+    "boot_seed": 90210,
+    "_note": "Censored Weibull/exponential/log-normal MLE per (N,A) with >=1000 nonparametric bootstrap resamples (seeded). Model comparison by AIC."
+  },
+  "inputs": {
+    "campaign_jsonl": "campaign_results/collapse_campaign.jsonl"
+  },
+  "output_dir": "manifold_results"
+}

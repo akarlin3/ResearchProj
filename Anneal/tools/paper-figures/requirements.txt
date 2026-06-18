@@ -1,0 +1,7 @@
+# Python dependencies for regenerating the paper figures (run_all.py).
+# Node (for fig1_trace.mjs) is also required; see run_all.py.
+matplotlib
+numpy
+scipy
+pypdf>=3,<6     # vector side-by-side composition of the two-panel figures (compose.py)
+pillow         # PNG composition of the two-panel figures (compose.py)
