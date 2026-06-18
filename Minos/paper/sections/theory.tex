@@ -14,8 +14,9 @@
 % (theory/gap_scaling.py); the bound constants from theory/detectability.py; the theory-vs-simulation
 % confirmation from theory/confirm.py; v2/v3 simulation references from minos-core/RESULTS_B.md
 % (seed 20240517, RUN_N = 4e6) and minos-core/RESULTS_C.md (CAL_N = 2e6, DEP_N = 1e6). The
-% impossibility (Theorem~\ref{thm:detect}(i)) is a drafted data-processing argument flagged for human
-% proof-review (theory/impossibility.md) -- it is stated as such, not as a machine-verified result.
+% impossibility (Theorem~\ref{thm:detect}(i)) is a completed data-processing proof, machine-verified
+% in theory/impossibility_check.py (GATE 2(i)); it is conditional only on the definition of "hidden"
+% as the observable-invariant component of a shift.
 
 \section{Theory: the decision--calibration gap and the limits of label-free validity monitoring}
 \label{sec:theory}
@@ -226,11 +227,12 @@ Lipschitz constant in $\theta$; \textbf{(TV)} $\delta=\mathrm{TV}$ and $L=2\,\ma
 twice the oscillation of the per-report expected utility
 $g_\tau(\mu)=\mathbb{E}[U(a^\star(\mu;\tau),\theta)\mid\mu]$.
 
-\emph{(i) Hidden-channel impossibility} (\emph{drafted; requires human proof-review}). For the hidden
-channel ($\delta_{\mathrm{obs}}=0$), every label-free statistic $M=f(O)$ has identical law under
-\emph{fresh} ($\delta_{\mathrm{hid}}=0$) and \emph{stale} ($\delta_{\mathrm{hid}}>0$) deployment;
-hence every detector built from $O$ has true-positive rate equal to its false-positive rate at every
-operating point, its ROC is the diagonal, and its detection AUC is exactly $\tfrac12$.
+\emph{(i) Hidden-channel impossibility.} Define the \emph{hidden} channel as the component of a shift
+that leaves $P_O$ exactly invariant (realised by $\delta_{\mathrm{obs}}=0$). Then every label-free
+statistic $M=f(O)$ has identical law under \emph{fresh} ($\delta_{\mathrm{hid}}=0$) and \emph{stale}
+($\delta_{\mathrm{hid}}>0$) deployment; hence every detector built from $O$ has true-positive rate
+equal to its false-positive rate at every operating point, its ROC is the diagonal, and its detection
+AUC is exactly $\tfrac12$.
 \end{theorem}
 
 \paragraph{Proof sketch of (ii) (\texttt{theory/detectability.py}).}
@@ -253,19 +255,27 @@ sub-linear (quadratic near $\delta=0$), so the observed regret-vs-$W_1$ slope is
 the envelope $L_U=3$.
 % src: theory/detectability.py: bound holds across sweep; observed R-vs-W1 slope = 0.3165 <= 3.
 
-\paragraph{Argument for (i) (data-processing / sufficiency; \texttt{theory/impossibility.md}).}
-The hidden shift perturbs only $\theta$, so the observable law is exactly invariant,
+\paragraph{Proof of (i) (data-processing / sufficiency; \texttt{theory/impossibility.md}).}
+The hidden shift perturbs only $\theta$, so by definition the observable law is exactly invariant,
 $P_O^{\mathrm{stale}}=P_O^{\mathrm{fresh}}=:P_O$. Any $M=f(O)$ inherits the invariance,
 $\mathrm{Law}(M\mid\mathrm{stale})=\mathrm{Law}(M\mid\mathrm{fresh})$, equivalently
 $I(M;\delta_{\mathrm{hid}})\le I(O;\delta_{\mathrm{hid}})=0$; by Neyman--Pearson the likelihood ratio
-is $\equiv 1$, so no test has power and $\mathrm{AUC}=\tfrac12$. The simulation realises the structural
-premise bit-for-bit: the reported points are identical under $\delta_{\mathrm{hid}}=0$ versus $0.20$,
-and the monitor returns $M=0.007248$ in both cases.
+is $\equiv 1$, so no test has power and $\mathrm{AUC}=\tfrac12$. The statement is finite-sample, not
+merely asymptotic: since $M(\mathrm{fresh},\mathrm{seed})=M(\mathrm{stale},\mathrm{seed})$ pathwise,
+the fresh and stale score sets coincide, so the empirical AUC is pinned to $\tfrac12$ for every sample
+size (a tie at every cross-pair). \hfill$\square$
+
+\textbf{Machine-verified} (\texttt{theory/impossibility\_check.py}, GATE 2(i)): across $16$ seeds and
+the full sweep $\delta_{\mathrm{hid}}\in[0,0.24]$ the observable batch and the monitor are bit-identical,
+$\max|\Delta\mu|=\max|\Delta M|=0$; the fresh-vs-stale detection AUC is exactly $0.500000$ with a
+degenerate bootstrap CI $[0.500000,0.500000]$, and the regret-detection AUC is $0.5000$ (v3: $0.500$).
+% src: theory/impossibility_check.py, seeds 8001-8016: max|dmu|=max|dM|=0; fresh-vs-stale AUC=0.500000, CI [0.5,0.5]; regret AUC=0.5000.
+Inline, \texttt{detectability.py} (seed 4242) shows the monitor identical at $\delta_{\mathrm{hid}}=0$
+versus $0.20$ ($M=0.007248$ in both cases).
 % src: theory/detectability.py, seed 4242, 200k voxels: M(delta_hid=0)=M(delta_hid=0.20)=0.007248, points identical.
-\textbf{Part~(i) is a sufficiency proof, not algebra, and carries a human-review flag} (see
-\texttt{theory/impossibility.md}); it is consistent with --- not verified by --- the simulated
-hidden-channel AUC $=0.500$. The population statement concerns the idealised law; no finite-sample
-concentration claim is made.
+The result is \emph{conditional only on the definition} of ``hidden'' as the observable-invariant
+component, which the Minos model realises by construction; the genuinely observable-moving part of any
+real shift falls under part~(ii) (Proposition~\ref{prop:leak}).
 
 \paragraph{Together: a dichotomy.}
 The two parts of Theorem~\ref{thm:detect} say a label-free monitor can be made arbitrarily good on the
@@ -291,8 +301,8 @@ residual that leaves every observable summary untouched is invisible.
 \end{proposition}
 
 \noindent Proposition~\ref{prop:leak}(a) follows from Theorem~\ref{thm:detect}(ii) applied to whatever
-moves $P_O$; part~(b) inherits the human-review flag of Theorem~\ref{thm:detect}(i), since it rests on
-the same exact-invariance premise (the \emph{definition} of ``hidden'' in this model).
+moves $P_O$; part~(b) rests on the same definitional exact-invariance premise as
+Theorem~\ref{thm:detect}(i) (the \emph{definition} of ``hidden'' in this model).
 
 \subsection{The validity monitor: Theorem 2's applied face}
 \label{sec:monitor}

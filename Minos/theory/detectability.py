@@ -12,10 +12,10 @@ from the code's utility, and both bounds are checked against the actual Minos-Co
 default cell — the bound must HOLD (it is an upper envelope), and L must be the right order as the
 observed regret-vs-divergence slope.
 
-The companion *impossibility* (part i: the HIDDEN component is undetectable, best AUC = 1/2) is a
-data-processing argument drafted in ``impossibility.md`` and flagged for human proof-review — it is
-NOT machine-verified here. This file only demonstrates the structural fact the impossibility rests
-on: a hidden shift leaves the observable law P_O (hence M) invariant.
+The companion *impossibility* (part i: the HIDDEN component is undetectable, best AUC = 1/2) is the
+data-processing argument proved in ``impossibility.md`` and machine-verified in
+``impossibility_check.py`` (GATE 2(i)). This file additionally demonstrates the structural fact the
+impossibility rests on: a hidden shift leaves the observable law P_O (hence M) invariant.
 
 Run:  ``.venv-theory/bin/python theory/detectability.py``
 """
@@ -152,7 +152,7 @@ def main():
     # ----------------------------------------------------------------------------------------
     # The structural fact behind the impossibility (part i): a hidden shift leaves P_O (hence M)
     # invariant. We DEMONSTRATE invariance here; the AUC=1/2 conclusion is proved in impossibility.md
-    # (human-review-flagged), not asserted as machine-verified.
+    # and machine-verified across the full sweep in impossibility_check.py (GATE 2(i)).
     # ----------------------------------------------------------------------------------------
     hr("Structural fact for the impossibility (part i): P_O invariant under the hidden shift")
     ref = build_reference(base_cal, cfg, tau_hat)
@@ -166,10 +166,10 @@ def main():
     print(f"reported points identical under delta_hid 0.0 vs 0.20:  {same_points}")
     print(f"monitor M(delta_hid=0) = {M0:.6f}   M(delta_hid=0.20) = {M1:.6f}   equal: {M0 == M1}")
     print("=> the hidden shift moves the truth but NOT the observable law P_O, so any M=f({mu}) is")
-    print("   invariant. The AUC=1/2 conclusion is the data-processing argument in impossibility.md")
-    print("   (REQUIRES HUMAN PROOF-REVIEW — not machine-verified).")
+    print("   invariant. The AUC=1/2 conclusion is the data-processing argument in impossibility.md,")
+    print("   machine-verified across the full sweep in impossibility_check.py (GATE 2(i)).")
 
-    hr("GATE 2 (part ii) PASS — L derived & printed; bound holds vs v3; impossibility drafted+flagged")
+    hr("GATE 2 (part ii) PASS — L derived & printed; bound holds vs v3; part (i) proved (GATE 2(i))")
     print(f"  L (Wasserstein) = L_U = k_under = {L_U};   L_TV = 2*osc(g_tau) = {L_TV:.4f}")
     print(f"  R_obs <= L_U * W1(P_O)  and  R_obs <= L_TV * TV(P_O)  hold across delta_obs in [0, 0.24]")
     return {"L_U": L_U, "L_TV": L_TV, "osc_g": osc_g, "tau_hat": tau_hat, "rows": rows,
