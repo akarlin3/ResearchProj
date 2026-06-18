@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "caliper"
+version = "0.1.0"
+description = "Caliper -- an IVIM uncertainty-quantification calibration toolkit (model-agnostic calibration ruler + MAF posterior + conformal wrapper)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Caliper project" }]
+keywords = ["IVIM", "calibration", "conformal-prediction", "uncertainty-quantification", "normalizing-flows"]
+dependencies = ["numpy>=1.23"]
+
+[project.optional-dependencies]
+estimator = ["torch>=2.0"]
+dev = ["pytest>=7", "ruff>=0.4"]
+
+[tool.setuptools]
+packages = ["caliper"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E741"]  # allow single-char names (l, q) in math code
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
