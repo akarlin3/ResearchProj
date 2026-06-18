@@ -27,7 +27,8 @@ dependencies = ["numpy>=1.23"]
 
 [project.optional-dependencies]
 estimator = ["torch>=2.0"]
-dev = ["pytest>=7", "ruff>=0.4", "matplotlib>=3.5"]
+baselines = ["scipy>=1.8"]
+dev = ["pytest>=7", "ruff>=0.4", "matplotlib>=3.5", "scipy>=1.8"]
 
 [project.urls]
 Homepage = "https://github.com/akarlin3/ResearchProj/tree/main/Caliper"

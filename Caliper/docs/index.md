@@ -21,6 +21,7 @@ toolkit** for IVIM diffusion MRI fitting. It does three things:
 ```bash
 pip install -e .                 # numpy-only core (ruler + forward + conformal + reference)
 pip install -e ".[estimator]"    # + the MAF posterior (torch)
+pip install -e ".[baselines]"    # + the NLLS bi-exponential baseline (scipy)
 pip install -e ".[dev]"          # + pytest, ruff
 ```
 
@@ -33,9 +34,12 @@ pip install -e ".[dev]"          # + pytest, ruff
 | `examples/demo.py` | MAF posterior → split-conformal under SNR shift | **yes** |
 | `python -m caliper.benchmark` | the full eval grid → `results/benchmark.csv` | no |
 | `examples/benchmark_report.py` | regenerate figures from the CSV | no |
+| `examples/fashion_repro.py` | Fashion repro: NLLS railing + flow-vs-NLLS calibration | **yes** (+scipy) |
 
 ## Reference
 
 - [API reference](api.md) — the public surface of each module.
+- [Fashion reproduction](fashion_reproduction.md) — Caliper as the manuscript's
+  companion code: the claim → synthetic-result map (in review; synthetic only).
 - [`../README.md`](../README.md) — quickstart, the conformal result, and the
   benchmark summary, with every number traced to the script that produced it.

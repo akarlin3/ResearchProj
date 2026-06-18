@@ -10,9 +10,12 @@ The public surface is intentionally small:
   layer.
 * ``caliper.estimator_maf`` -- a masked-autoregressive-flow posterior (needs
   the optional ``[estimator]`` extra: torch).
+* ``caliper.baselines`` -- a box-constrained NLLS bi-exponential IVIM baseline
+  (needs the optional ``[baselines]`` extra: scipy); the classical reference for
+  the Fashion reproduction module.
 
-Everything except the torch MAF is imported eagerly; the torch-dependent
-estimator is imported lazily so the core stays numpy-only.
+Everything except the torch MAF and the scipy NLLS baseline is imported eagerly;
+those two are imported lazily so the core stays numpy-only.
 """
 from __future__ import annotations
 

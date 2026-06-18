@@ -58,3 +58,5 @@ jobs:
         run: pytest -q
       - name: MAF example (fixed seed)
         run: python examples/demo.py
+      - name: Fashion reproduction (fixed seed, reduced for CI)
+        run: python examples/fashion_repro.py --n-train 1500 --n-test 600 --epochs 15
