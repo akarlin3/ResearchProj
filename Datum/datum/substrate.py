@@ -68,30 +68,60 @@ def gauge_cohort(n_train: int = 3000, n_cal: int = 2000, n_test: int = 3000,
     )
 
 
-def osipi_dro(data_dir: str | Path | None = None) -> Substrate:
+_DRO_REL = "data/osipi/DRO.npy"      # git-ignored cache, under the Datum package root
+_DATUM_ROOT = Path(__file__).resolve().parent.parent
+
+
+def osipi_dro(n_cal: int | None = None, seed: int = 20260613) -> Substrate:
     """External-validation substrate: the OSIPI TF2.4 IVIM DRO (synthetic).
 
-    The DRO is fetched on demand by ``Gauge/scripts/fetch_osipi.py`` and cached
-    under a git-ignored ``data/`` directory; only the provenance manifest is
-    tracked. This adapter does NOT download: it reads an already-fetched cache and
-    its provenance, and raises an actionable error if the cache is absent so the
-    benchmark never silently runs on missing data.
+    The DRO (``Utilities/DRO.npy`` from Zenodo record 14605039 -- 5000 voxels, a
+    fixed sparse 7-b acquisition pre-noised at ~SNR 80, ground truth (D, D*, f) we
+    did NOT generate) is downloaded on demand and cached under the git-ignored
+    ``Datum/data/osipi/`` directory; only its provenance is committed. The fetch
+    reuses Gauge's pinned DOI/URL/MD5 (see ``datum.osipi_fetch``) -- Gauge itself
+    is never modified. This loader reads the cache and splits it into cal/test so
+    the conformal baselines have a calibration set; it raises an actionable error
+    if the cache is absent so the benchmark never silently runs on missing data.
+
+    Ground truth is returned in Gauge convention ``(D, D*, f)`` (physical mm^2/s),
+    matching :func:`gauge_cohort`, so the same downstream conversion applies. NB:
+    OSIPI's true D* (~0.05-0.20) is shifted HIGHER than Gauge's prior -- a genuine
+    out-of-distribution external test for the analytic, b-flexible baselines.
     """
-    root = _paths.find_monorepo_root()
-    prov_path = (root / SUBSTRATE["external_validation"]["provenance"]) if root else None
-    if prov_path is None or not prov_path.exists():
+    dro_path = _DATUM_ROOT / _DRO_REL
+    if not dro_path.exists():
         raise FileNotFoundError(
-            "OSIPI DRO provenance not found. Fetch it first with Gauge's script:\n"
-            f"    python {SUBSTRATE['external_validation']['fetch_script']}\n"
-            f"(DOI {SUBSTRATE['external_validation']['doi']}). The DRO is synthetic "
-            "and download-on-demand; only provenance is committed."
-        )
-    provenance = json.loads(prov_path.read_text())
-    raise NotImplementedError(
-        "OSIPI DRO loading is wired at CP1 (provenance located at "
-        f"{prov_path}) and is populated by the CP2 benchmark build once the DRO "
-        "cache is fetched. Provenance keys available: "
-        f"{sorted(provenance)[:6]}..."
+            f"OSIPI DRO cache not found at {dro_path}. Fetch it on demand:\n"
+            "    python -m datum.osipi_fetch\n"
+            f"(DOI {SUBSTRATE['external_validation']['doi']}; synthetic, 245 MB "
+            "download, md5-verified, cached git-ignored).")
+    dro = np.load(dro_path, allow_pickle=True)
+    D = np.array([float(e["D"]) for e in dro])
+    Dstar = np.array([float(e["Dp"]) for e in dro])
+    f = np.array([float(e["f"]) for e in dro])
+    sig = np.array([np.asarray(e["signals"], dtype=float) for e in dro])
+    b = np.asarray(dro[0]["bvals"], dtype=float)
+    params = np.stack([D, Dstar, f], axis=1)        # Gauge convention (D, D*, f)
+
+    n = sig.shape[0]
+    n_cal = n // 2 if n_cal is None else int(n_cal)
+    rng = np.random.default_rng(seed)
+    perm = rng.permutation(n)
+    cal_idx, test_idx = perm[:n_cal], perm[n_cal:]
+    return Substrate(
+        name=SUBSTRATE["external_validation"]["name"],
+        b=b,
+        signals={"cal": sig[cal_idx], "test": sig[test_idx]},
+        params={"cal": params[cal_idx], "test": params[test_idx]},
+        snr={"cal": None, "test": None},
+        provenance={
+            "kind": "synthetic external DRO (OSIPI TF2.4)",
+            "doi": SUBSTRATE["external_validation"]["doi"],
+            "n_voxels": int(n), "n_b": int(b.size), "split_seed": seed,
+            "dstar_range_mm2_s": [float(Dstar.min()), float(Dstar.max())],
+            "note": "OOD-high D* vs Gauge prior; pre-noised ~SNR 80; 7-b sparse.",
+        },
     )
 
 

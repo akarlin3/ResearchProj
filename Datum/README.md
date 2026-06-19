@@ -59,17 +59,34 @@ standard is applied as a leaderboard.
 ```bash
 # Inside the ResearchProj monorepo (Caliper/ and Gauge/ are siblings of Datum/):
 pip install -e Datum            # numpy only; Caliper/Gauge resolved via sibling bootstrap
-python Datum/revalidate.py      # check pins + prove substrate→ruler pipeline resolves
-pytest Datum/tests              # CP1 gates
+python Datum/revalidate.py        # check pins + prove substrate→ruler pipeline resolves
+python -m datum.run               # produce the (PROVISIONAL) reference numbers
+python -m datum.osipi_fetch       # (optional) fetch the OSIPI DRO for external validation
+pytest Datum/tests                # gates
 ```
+
+## Reference numbers (PROVISIONAL)
+
+Produced by [`results/REFERENCE.md`](results/REFERENCE.md) /
+[`results/reference_numbers.csv`](results/reference_numbers.csv) via
+`python -m datum.run`. **Scored on Fashion's in-review ruler — PROVISIONAL, no
+tuning.** The headline (Gauge cohort, D\* coverage at nominal 0.90): raw error bars
+under-cover D\* (NLLS-Gaussian gap −0.07, segmented −0.69, MAF −0.05); conformal
+restores marginal coverage (split −0.02, CQR −0.004, MAF+CQR +0.001, Mondrian
++0.007). The high-D\* identifiability wall persists for marginal split-conformal
+(coverage 0.77) and is recovered by CQR/Mondrian only by inflating width. The OSIPI
+DRO external validation reproduces the story on an independent synthetic phantom.
 
 ## Status
 
-CP1 complete: subrepo embedded (own clean synthetic-only history, mirroring Minos),
-registered in the monorepo README, read-only imports resolve, assumptions manifest
-pins the ruler. **Reference numbers are the CP2 deliverable** and are PROVISIONAL
-by construction. A citable JOSS/Zenodo release is documented but **not executed** —
-gated on Fashion's ruler locking, exactly like Caliper.
+CP1 + CP2 complete: subrepo embedded (own clean synthetic-only history, mirroring
+Minos), registered in the monorepo README, read-only imports resolve, assumptions
+manifest pins the ruler, and the curated baseline panel has been run through the
+ruler on the Gauge cohort (+ OSIPI DRO external validation) to produce
+reference numbers with bootstrap CIs — **every number PROVISIONAL** until the ruler
+locks. Next: CP3 (submission/scoring interface + docs + Casali framing). A citable
+JOSS/Zenodo release is documented but **not executed** — gated on Fashion's ruler
+locking, exactly like Caliper.
 
 ## License
 

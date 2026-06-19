@@ -26,7 +26,7 @@ def test_baseline_registry_covers_task():
     assert len(BASELINES) >= 6
     # spans paradigms from under-coverer to conditional fix
     paradigms = {b.paradigm for b in BASELINES.values()}
-    assert {"gaussian", "conformal", "mondrian"} <= paradigms
+    assert {"parametric", "conformal", "mondrian"} <= paradigms
 
 
 def test_substrate_registry_has_named_substrate():

@@ -71,8 +71,16 @@ def main() -> int:
     ok = _wiring_smoke()
 
     if args.full:
-        print("\n[--full] reference-number regeneration is implemented at CP2; "
-              "no numbers are produced at CP1.")
+        print("\n[--full] regenerating reference numbers (PROVISIONAL)...")
+        from datum import run as R
+        rows, meta = R.run_benchmark(verbose=True)
+        csv_path = R.write_csv(rows)
+        rep_path = R.write_report(rows, meta)
+        print(f"  wrote {csv_path}")
+        print(f"  wrote {rep_path}")
+        if meta["skipped"]:
+            print("  skipped cells: " + ", ".join(k for k, _ in meta["skipped"]))
+
     print("\nResult: manifest complete and pipeline resolves."
           if ok else "\nResult: WIRING SMOKE FAILED.")
     return 0 if ok else 1
