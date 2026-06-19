@@ -5,3 +5,7 @@
 !figures/
 results/cohorts/
 *.npz
+paper/*.pdf
+paper/*.aux
+paper/*.log
+paper/*.out

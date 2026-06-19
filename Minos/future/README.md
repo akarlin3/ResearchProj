@@ -50,7 +50,13 @@ The theory half is deterministic (seeded); the applied half pins Fashion's `SEED
 
 ## Status
 
-- **CP1 — scaffold + wire theory + manifest:** built. Gate: `verify_cp1.py`.
-- **CP2 — applied decision–calibration gap:** pending.
-- **CP3 — applied validity monitor:** pending.
-- **CP4 — full draft assembly:** pending.
+- **CP1 — scaffold + wire theory + manifest:** done. Gate `verify_cp1.py` PASS (theory
+  reproduces via read-only import; wiring resolves; quarantine clean).
+- **CP2 — applied decision–calibration gap:** done. Gate `applied/gap_applied.py` PASS.
+  Honest result: qualitative gap holds on Fashion-calibrated posteriors; quantitative
+  leading-order law does **not** transfer (median |G_std/G_theory| ≈ 17×). [`results/RESULTS_CP2.md`](results/RESULTS_CP2.md)
+- **CP3 — applied validity monitor:** done. Gate `applied/monitor_applied.py` PASS.
+  Observable-fires (AUC up to 1.00) / hidden-blind (AUC 0.52) reproduced on synthetic IVIM.
+  [`results/RESULTS_CP3.md`](results/RESULTS_CP3.md)
+- **CP4 — full draft assembly:** done. `paper/minos.tex` compiles (tectonic, ebgaramond +
+  microtype) and `paper/consistency.py` PASS (20 numbers traced to seeded results).
