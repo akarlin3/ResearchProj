@@ -28,7 +28,18 @@ run_stage "CP1 method self-test (SOLID)" "$PY" "$HERE/scripts/run_harness.py" --
 echo ">>> CP2 data check"
 "$PY" "$HERE/scripts/fetch_invivo.py" --check || true
 
-run_stage "CP3 real-data validation (PROVISIONAL)" "$PY" "$HERE/scripts/run_validation.py"
+# CP3 renders a VERDICT (PASS or LETHE) -- both are valid outcomes, so exit 0 = rendered,
+# 3 = data gate unsatisfied (-> use Reverb/run_harness), 1 = error. Report the verdict.
+echo ">>> CP3 real-data validation (PROVISIONAL): running"
+"$PY" "$HERE/scripts/run_validation.py"; cp3=$?
+if [ "$cp3" = "3" ]; then
+  echo ">>> CP3: SKIP (data gate not satisfied -> Reverb: scripts/run_harness.py)"
+elif [ "$cp3" = "0" ]; then
+  V=$("$PY" -c "import json,sys;print(json.load(open('$HERE/results/RESULTS_VALIDATION.json'))['gate']['VERDICT'])" 2>/dev/null || echo "?")
+  echo ">>> CP3: VERDICT RENDERED = $V"
+else
+  echo ">>> CP3: ERROR (rc=$cp3)"; exit "$cp3"
+fi
 
 if [ -f "$HERE/paper/consistency.py" ] && [ -f "$HERE/paper/echo.tex" ]; then
   run_stage "CP4 manuscript consistency" "$PY" "$HERE/paper/consistency.py"

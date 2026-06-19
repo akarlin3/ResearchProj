@@ -202,7 +202,9 @@ def main() -> int:
     (outdir / "RESULTS_VALIDATION.md").write_text("\n".join(L))
     print("\n".join(L))
     print(f"\nVERDICT={verdict}; wrote RESULTS_VALIDATION.{{json,md}}")
-    return 0 if passed else 1
+    # Exit 0 = verdict cleanly RENDERED (PASS or LETHE -- both valid); the verdict itself is
+    # in the output/JSON, not the exit status. (3 = data gate unsatisfied; 1 = error.)
+    return 0
 
 
 if __name__ == "__main__":
