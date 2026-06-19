@@ -1,6 +1,6 @@
 # ResearchProj
 
-Consolidated monorepo bringing together my `proj*` research repositories. Each
+Consolidated monorepo bringing together my research repositories. Each
 project is preserved in its own subdirectory **with full commit history**.
 
 | Subfolder | Origin repo | History |
