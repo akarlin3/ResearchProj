@@ -293,7 +293,7 @@ downstream and are flagged **PROVISIONAL** (see `Vernier/ASSUMPTIONS.md`).
 
 ## How the IVIM projects fit together
 
-Five folders form one IVIM diffusion-MRI uncertainty program:
+Six folders form one IVIM diffusion-MRI uncertainty program:
 
 - **Fashion** establishes *which* uncertainty paradigms actually cover D\* and pins Gaussian error bars as the culprit.
 - **Gauge** approaches the same problem from distribution-free conformal prediction and reveals the high-D\* under-coverage as an irreducible identifiability wall.
