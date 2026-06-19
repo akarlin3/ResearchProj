@@ -47,21 +47,27 @@ standard is applied as a leaderboard.
 
 - `datum/` — `task.py` (the frozen spec), `substrate.py` (read-only Gauge/OSIPI/Lattice
   adapters), `ruler.py` (read-only adapter over `caliper.metrics`), `baselines.py`
-  (the curated panel registry), `manifest.py` (assumption pins + provisional policy),
-  `provisional.py` (PROVISIONAL stamping), `_paths.py` (sibling bootstrap for the
-  read-only deps).
-- `tests/` — import/manifest/task gates (CP1). `revalidate.py` — one-command
-  re-validation. `ASSUMPTIONS.md` — the SOLID-vs-PROVISIONAL split and the pinned
-  ruler version.
+  (the curated panel registry), `run.py` (the benchmark runner), `ci.py` (bootstrap
+  CIs), `convert.py` (Gauge↔Caliper convention), `submit.py` (the submission/scoring
+  interface), `osipi_fetch.py` (external-validation fetch), `manifest.py` +
+  `provisional.py` (assumption pins + PROVISIONAL stamping), `_paths.py` (bootstrap).
+- `examples/submit_demo.py` — score a new method on Datum (runnable).
+- `docs/` — [`benchmark.md`](docs/benchmark.md) (the task), [`submitting.md`](docs/submitting.md)
+  (the contract), [`ruler-as-standard.md`](docs/ruler-as-standard.md) (the Casali
+  framing), [`release.md`](docs/release.md) (citable-release path, gated).
+- `results/` — `REFERENCE.md` + `reference_numbers.csv` (PROVISIONAL) + OSIPI provenance.
+- `tests/` — import/manifest/task/convert/run/submit/osipi gates. `revalidate.py` —
+  one-command re-validation. `ASSUMPTIONS.md` — SOLID-vs-PROVISIONAL + pinned ruler.
 
 ## Quickstart
 
 ```bash
 # Inside the ResearchProj monorepo (Caliper/ and Gauge/ are siblings of Datum/):
-pip install -e Datum            # numpy only; Caliper/Gauge resolved via sibling bootstrap
+pip install -e Datum              # numpy only; Caliper/Gauge resolved via sibling bootstrap
 python Datum/revalidate.py        # check pins + prove substrate→ruler pipeline resolves
 python -m datum.run               # produce the (PROVISIONAL) reference numbers
 python -m datum.osipi_fetch       # (optional) fetch the OSIPI DRO for external validation
+python -m examples.submit_demo    # score a new method on Datum (worked example)
 pytest Datum/tests                # gates
 ```
 
@@ -79,14 +85,15 @@ DRO external validation reproduces the story on an independent synthetic phantom
 
 ## Status
 
-CP1 + CP2 complete: subrepo embedded (own clean synthetic-only history, mirroring
+CP1–CP3 complete: subrepo embedded (own clean synthetic-only history, mirroring
 Minos), registered in the monorepo README, read-only imports resolve, assumptions
-manifest pins the ruler, and the curated baseline panel has been run through the
-ruler on the Gauge cohort (+ OSIPI DRO external validation) to produce
-reference numbers with bootstrap CIs — **every number PROVISIONAL** until the ruler
-locks. Next: CP3 (submission/scoring interface + docs + Casali framing). A citable
-JOSS/Zenodo release is documented but **not executed** — gated on Fashion's ruler
-locking, exactly like Caliper.
+manifest pins the ruler; the curated baseline panel has been run through the ruler on
+the Gauge cohort (+ OSIPI DRO external validation) to produce reference numbers with
+bootstrap CIs; and a **submission/scoring interface** (`datum.submit`), worked
+example, docs, and the ruler-as-standard / Casali framing are in place — **every
+ruler-derived number PROVISIONAL** until the ruler locks. A citable JOSS/Zenodo
+release is documented ([`docs/release.md`](docs/release.md)) but **not executed** —
+gated on Fashion's ruler locking, exactly like Caliper.
 
 ## License
 

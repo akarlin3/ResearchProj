@@ -3,6 +3,25 @@
 All notable changes to Datum are recorded here. Datum follows the monorepo's
 provisional-until-the-ruler-locks discipline; see `ASSUMPTIONS.md`.
 
+## [0.1.0] — 2026-06-19 — CP3: submission interface + docs + Casali framing
+
+### Added
+- `datum/submit.py` — the standardized submission/scoring interface: `load_task`
+  (materialise the task, test truth held out) + `score_submission` (score a new
+  method's quantiles on the ruler, with bootstrap CIs, per-D\* tercile coverage, and
+  a `vs_reference` ranking against the baselines). Public convention is physical
+  `(D, D*, f)`; every result PROVISIONAL-stamped.
+- `examples/submit_demo.py` — runnable worked example submitting Gauge's quantile
+  regressor (a non-baseline method) and printing its scorecard + ranking.
+- `docs/` — `benchmark.md` (the task), `submitting.md` (the contract + example),
+  `ruler-as-standard.md` (the Casali differentiation), `release.md` (citable-release
+  path, documented, NOT executed). CP3 tests (`test_submit`).
+
+### Notes
+- Resource, not a novel-result claim. The Casali framing is positioning: Fashion's
+  ruler is a *standard*; Datum is the benchmark that scores any method (including a
+  Casali-style one) against it. Numbers remain PROVISIONAL until the ruler locks.
+
 ## [0.1.0] — 2026-06-19 — CP2: benchmark build (PROVISIONAL reference numbers)
 
 ### Added
