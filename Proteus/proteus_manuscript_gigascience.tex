@@ -1,0 +1,176 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{textcomp}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{lineno}
+\usepackage{authblk}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\captionsetup{font=small,labelfont=bf}
+\renewcommand{\familydefault}{\rmdefault}
+\linenumbers
+\setlength{\parindent}{1.2em}
+\newcommand{\sm}{\ensuremath{\sim}}
+
+\title{\vspace{-1.5em}\bfseries Structure-first mining of the metagenomic dark proteome finds serine hydrolases but does not extend PET-hydrolase discovery beyond sequence homology}
+\author[1,2,3]{Avery Karlin\thanks{Corresponding author: \texttt{averykarlin3@gmail.com}; ORCID 0000-0003-3848-6782}}
+\affil[1]{The Annealing Signet Institute, New York, NY, USA}
+\affil[2]{Department of Applied Physics and Applied Mathematics, Columbia University, New York, NY, USA}
+\affil[3]{Department of Computer Science, University of Colorado Boulder, Boulder, CO, USA}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\section*{Abstract}
+\noindent\textbf{Background.} Protein structure prediction and structural search are increasingly proposed as a route to discover divergent enzymes hidden in the metagenomic dark proteome, with poly(ethylene terephthalate) (PET) hydrolases a flagship target. Whether structure-first search genuinely extends functional discovery past the boundary of sequence homology has not been tested directly.
+
+\noindent\textbf{Results.} We built a calibrated structure-first pipeline --- fold-class structural search, a catalytic Ser--His--Asp geometry gate, and a size-invariant active-site-exposure score --- validated to separate known PET hydrolases from non-PET serine hydrolases on crystal structures, and applied it to the ESM Metagenomic Atlas (\sm37 million predicted structures) with a properly powered random floor and a per-anchor decomposition. Fold-class search enriches serine hydrolases \sm53-fold, but the exposure score is not selective, admitting \sm50\% of random triad-bearing hydrolases. Against the powered floor the PET-hydrolase branch shows no enrichment and sits significantly below it; the only above-floor signal lies at near-homolog identities that homology search already reaches. A maximum-sensitivity re-search retrieves more than nine million divergent ($<$20\% identity) neighbors, yet these are depleted in the exposed-cleft phenotype --- an effect not explained by prediction confidence --- and docking does not discriminate PET hydrolases from negatives.
+
+\noindent\textbf{Conclusions.} Structure-first triage is an effective serine-hydrolase finder but does not, for the descriptors tested, extend PET-hydrolase discovery beyond sequence homology; structure and sequence fail together in the divergent tail. We release the full pipeline and intermediate data as a reproducible benchmark.
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} PET hydrolase; dark proteome; protein structure prediction; Foldseek; structural search; enzyme discovery; ESMFold; negative result; reproducible benchmark
+
+\section{Background}
+Poly(ethylene terephthalate) (PET) is among the most abundant manufactured plastics, and enzymatic depolymerization has emerged as a promising route to its recycling and remediation. The discovery of \emph{Ideonella sakaiensis} PETase and the engineering of leaf-branch compost cutinase (LCC) established that microbial serine hydrolases can hydrolyze PET, and motivated a broad search for additional and more capable enzymes~\cite{yoshida2016,tournier2020}. Environmental metagenomes are an attractive hunting ground: they encode enormous, largely uncharacterized enzymatic diversity, much of it in the so-called dark proteome --- proteins too divergent in sequence to be annotated reliably by homology-based methods~\cite{perdigao2015}.
+
+The advent of fast, accurate protein structure prediction has reframed this search. ESMFold and the resulting ESM Metagenomic Atlas place hundreds of millions of predicted metagenomic structures within reach, and structural-search tools such as Foldseek enable querying this space by fold rather than by sequence~\cite{lin2023,vankempen2024}. Because structure is more conserved than sequence, structure-first search is widely expected to recover functionally relevant proteins that sequence search cannot --- and several recent efforts have reported candidate PET hydrolases mined from metagenomic or structural databases on this basis~\cite{nortonbaker2025,almeida2019}.
+
+The premise underlying these efforts --- that searching by predicted structure extends functional discovery beyond the reach of sequence homology --- has, however, rarely been tested head-on. A structural search can retrieve a remote homolog, but retrieval is not discrimination: to discover a novel PET hydrolase one must distinguish PET-hydrolyzing geometry from the far larger background of serine hydrolases that share the $\alpha/\beta$-hydrolase fold but act on other substrates. Here we ask, directly and at scale, whether an in-silico structure-first pipeline can do so. We assemble a calibrated pipeline, validate it on crystal-structure controls, apply it to the full ESM Metagenomic Atlas, and decompose its behavior against a properly powered random baseline. We report that the pipeline is an excellent serine-hydrolase finder but that its PET-specific signal is bounded by sequence homology, and that in the divergent dark tail structure and sequence fail together.
+
+\section{Results}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figs/figure1.png}
+\caption{\textbf{Structure-first pipeline.} Reference PET-hydrolase/cutinase structures are searched by fold against the ESM Metagenomic Atlas; hits passing a catalytic triad-geometry gate are scored for active-site exposure and thresholded at a pinned, jitter-immune decision boundary.}
+\label{fig:1}
+\end{figure}
+
+\subsection{A calibrated structure-first pipeline}
+The pipeline (Fig~\ref{fig:1}) proceeds from a query set of PET-hydrolase and cutinase reference structures through (i) fold-class structural search against a target corpus, (ii) a catalytic Ser--His--Asp triad-geometry gate, and (iii) a cleft-detection and active-site-exposure scoring step that yields a composite decision score. We calibrated the pipeline on crystal structures: PET hydrolases (\emph{I.\ sakaiensis} PETase, PDB 6EQE; LCC, 4EB0) as positives, and a panel of non-PET serine hydrolases (\emph{Candida antarctica} lipase B, 1TCA; acetylcholinesterase, 1EA5; \emph{Candida rugosa} lipase, 1CRL; \emph{Alicyclobacillus acidocaldarius} esterase Est2, 1EVQ), together with a catalytically inactivated LCC variant (6THS) as a trap, as negatives. Under the calibrated threshold the positives separated from the negatives with a decision margin of $+1.31$ (raw) and $+1.41$ after the size-invariance correction below, with no negative scoring above any positive (precision 1.0 on the control set). Because the cleft-detection step (fpocket~\cite{leguilloux2009}) is non-deterministic between runs, we pinned the decision threshold ($-1.1587$ on the at-scale normalization) so that all metagenomic comparisons are immune to run-to-run jitter, and we normalized the exposure score to a size-invariant percentile so that it does not co-vary with protein or pocket size.
+
+\subsection{Fold-class search enriches hydrolases, but the cleft score is not selective}
+To separate what the pipeline's stages each contribute, we drew a random baseline of 1,500 Atlas proteins (uniform byte-offset sampling, fixed seed) and passed them through the unchanged pipeline. The fold-class/triad stage is highly enriching: 99.3\% of fold-class hits carry a catalytic triad versus 1.87\% of random Atlas proteins, a 53-fold rate ratio (Fig~\ref{fig:3}). The exposure score, however, is not selective. To estimate its selectivity with adequate power we enlarged the random draw to 11{,}498 Atlas proteins (209 triad-bearers; seed 20260614). Among random triad-bearing proteins, 50.2\% (105/209) clear the exposed-cleft threshold (Wilson 95\% CI 43.5--57.0\%); that is, just over half of unrelated serine hydrolases pass the very step intended to flag PET-hydrolase-like active sites. The precision observed on the four curated negatives --- which happen to be buried- or gorge-active-site enzymes --- does not generalize, because exposed active sites are common across the hydrolase background. Overall, only 0.91\% (105/11{,}498; Wilson CI 0.75--1.09\%) of random proteins clear the full pipeline, so the pipeline's enrichment is real, but it is carried entirely by the fold/triad stage, not by the exposure score.
+
+\subsection{At Atlas scale, the PET-hydrolase branch sits below the random floor}
+We searched the query set against the ESM Metagenomic Atlas high-quality clustered set (36,986,627 predicted structures, pLDDT $> 0.7$), yielding 217,833 fold-class hits (0.59\% of the corpus). Ranking hits by global structural bit-score conflates query size with match quality (the larger acetylcholinesterase fold accrues higher absolute bit-scores), so we re-tiered hits within each query anchor. The PET-hydrolase/cutinase branch is in fact the largest, comprising 169,487 hits (77.8\%), versus 41,697 (19.1\%) for other-negative anchors and 6,649 (3.1\%) for the acetylcholinesterase anchor. Screening the top 300 hits per anchor, the PET-hydrolase branch clears the exposure line at 32.65\% (96/294 triad-bearers; CI 27.6--38.2\%) --- not enriched over the properly powered 50.2\% random floor; in fact it sits significantly below it (one-sided 95\% upper bound on enrichment $-10.3$ percentage points, non-superiority $p = 2.0\times10^{-10}$, rate ratio 0.65). The acetylcholinesterase branch is lower (8.75\%) only because its deep-gorge active sites fall further below the floor, not because the PET-hydrolase branch rises above it (Fig~\ref{fig:4}). Within the PET-hydrolase branch a genuine gradient exists, but it is confined to the closest neighbors (top-25 by bits, 80\%, significantly above the floor, $p = 0.0053$; decaying below it by the top-100 tier, \sm1090 bits), foreshadowing a homology-bounded signal.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.72\textwidth]{figs/figure2.png}
+\caption{\textbf{The PET-relevant signal is a homology gradient.} Exposed-cleft rate among triad-bearing PET-hydrolase-branch hits versus sequence identity to the nearest query. The rate is monotonic and crosses the random floor (dashed, 50.2\%) only near \sm45\% identity; the $<$20\% band is abundantly populated ($9.05\times10^{6}$ retrieved neighbors) yet screens at zero. Bin counts shown below bars.}
+\label{fig:2}
+\end{figure}
+
+\subsection{The PET-relevant signal is confined to near-homolog distances}
+To test the homology boundary directly, we recomputed the exposed-cleft rate of PET-hydrolase-branch triad-bearers as a function of \emph{sequence identity} to the nearest query, rather than structural bit-score (Fig~\ref{fig:2}). The rate is monotonic in identity and crosses the random floor only near \sm45\% identity: 91.7\% above 60\% identity, 69.8\% at 40--60\%, but 27.4\% at 30--40\% and collapsing below the floor through the twilight zone (\sm25--30\% identity). Structural bit-score and sequence identity are strongly correlated here (Pearson $r = 0.735$), and the previously observed \sm1090-bit crossover maps to \sm35\% identity, above the twilight threshold; the structural and sequence gradients are one and the same. Triaging the 96 above-line hits, 93 lie at $\geq$30\% identity (near-homologs that sequence search already reaches) and none fall below 25\% identity under the primary metric (one borderline case at 23.4\% under the strictest structural identity measure, a full-coverage homolog of a known archaeal PET hydrolase, not a novel divergent fold). Sequence-identity estimates were cross-validated against Foldseek's own alignment identity ($r = 0.987$).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{figs/figure3.png}
+\caption{\textbf{The lift is carried by fold-class search, not the cleft score.} (Left) Catalytic-triad rate among fold-class hits versus random Atlas proteins (53-fold). (Right) Among random triad-bearing hydrolases, the fraction clearing the exposed-cleft threshold; just over half pass, so the score is not selective.}
+\label{fig:3}
+\end{figure}
+
+\subsection{The divergent tail is abundantly reachable but depleted}
+A natural objection is that the empty divergent tail reflects a search-sensitivity limit rather than biology. It does not. A maximum-sensitivity re-search (Foldseek \texttt{-s 9.5}, near-zero bit-score floor) retrieves 9,810,546 unique targets, of which 9,050,775 lie below 20\% identity to any query --- a more than fifty-fold increase over the default search and a clearly abundant divergent tail. We screened 2,100 of the most structurally convincing sub-25\%-identity hits, stratified across identity bands. Triads are common among them (1,710/2,100), but only 11.3\% of credible-coverage sub-25\% triad-bearers clear the exposure line --- far below the 50.2\% random floor (rate ratio 0.23, $p = 1.5\times10^{-6}$) --- and none of the 22 screened below 20\% identity clear it. (Forty-seven above-line hits with low alignment coverage, median 7\%, were flagged as coverage artifacts and excluded; they do not change the result.) Thus structure reaches the divergent tail in abundance, but the exposed-cleft phenotype is, if anything, depleted there relative to the random hydrolase background: retrieval is not the limitation, discrimination is. This depletion is not an artifact of ESMFold prediction quality: divergent-tail structures are not lower in confidence than the random floor (mean pLDDT 92.9 vs.\ 90.1; Mann--Whitney $p = 1.5\times10^{-9}$, Cliff's $\delta = +0.25$ --- the tail is, if anything, higher-confidence), and a pLDDT-matched re-screen leaves the depletion intact (matched exposed-cleft rate 15.7\%, still far below the floor; see Additional File~1, S1 Fig).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{figs/figure4.png}
+\caption{\textbf{The PET-hydrolase branch sits below the random floor.} (Left) Exposed-cleft rate for the top 300 hits per anchor: the PET-hydrolase branch is significantly below the properly powered random floor (dashed, 50.2\%; non-superiority $p = 2.0\times10^{-10}$), and the acetylcholinesterase branch sits further below. (Right) Within the PET-hydrolase branch the gradient decays from above the floor (top-25, 80\%, $p = 0.0053$) to below it by the top-100 tier (\sm1090 structural bits).}
+\label{fig:4}
+\end{figure}
+
+\subsection{Docking does not discriminate}
+As an orthogonal specificity check, we docked a PET fragment analog (bis(2-hydroxyethyl) terephthalate, BHET) into positives and negatives. Predicted binding affinities overlap across PET hydrolases and non-PET hydrolases within the scoring function's error, providing no separation beyond the structural pipeline. Docking is therefore confirmatory of, not a remedy for, the absence of an in-silico specificity signal.
+
+\section{Discussion}
+Across calibration, an Atlas-scale screen, a random-baseline decomposition, a sequence-identity reach analysis, and a maximum-sensitivity re-search, a consistent picture emerges. Structure-first triage is an effective \emph{finder} of serine hydrolases --- the fold/triad stage enriches them 53-fold --- but it is not a \emph{discriminator} of PET-hydrolyzing function. The active-site-exposure score, which cleanly separated PET hydrolases from a curated panel of buried-site negatives, admits roughly half of random triad-bearing hydrolases (50.2\% against a properly powered floor) and provides no enrichment for the PET-hydrolase branch, which sits significantly below that floor. Whatever PET-relevant signal exists is confined to near-homolog sequence identities, precisely the regime a standard homology search already covers, and it vanishes by the twilight zone. Where structure should add value --- the divergent dark tail --- it adds none: the tail is abundantly reachable but depleted in the relevant phenotype, so structure and sequence fail together rather than complementing one another.
+
+The depletion of the exposed-cleft phenotype in the divergent tail is a robust observation, and we state it as such: the exposed-cleft rate declines monotonically with sequence divergence and falls below the random-hydrolase baseline among the most divergent neighbors. We are more cautious about why. The comparison is between two different populations --- a random draw of hydrolases versus sequence-divergent structural neighbors of PET hydrolases --- and so the depletion should not be over-interpreted. One plausible account, which we offer as a hypothesis rather than a conclusion, is that structural search at low sequence identity matches the conserved $\alpha/\beta$-hydrolase fold core, while the surface-exposed, solvent-accessible cleft that PET hydrolases require for attack on an insoluble polymer is a peripheral, specialized adaptation that is rare among divergent members of the fold.
+
+These results are complementary to, not in conflict with, reports of metagenome-mined PET hydrolases. Such efforts have typically validated candidates that are themselves near-homologs of known enzymes, or have relied on homology-seeded entry filters; our analysis quantifies the boundary within which those pipelines operate, rather than contradicting their experimentally confirmed hits. Our findings also echo a convergent result in an adjacent domain: structure-based homology search and tree reconstruction do not outperform sequence-based methods for large-scale phylogenomics~\cite{mutti2025}, with the same underlying cause --- predicted-structure information adds little once sequence homology is exhausted. They are likewise reconcilable with recent reports of structure-first enzyme mining that \emph{do} recover novel biocatalysts~\cite{nortonbaker2025,jaito2026}: those pipelines pair structural search with sequence-similarity filtering or seed from known enzymes, and their validated hits are homology-reachable --- precisely the regime in which we, too, find signal.
+
+Several limitations bound our conclusions. The Atlas structures are ESMFold predictions; we mitigated model-quality confounds by restricting to the high-confidence clustered set (pLDDT $> 0.7$), by coverage-gating sequence-identity estimates, and by the explicit pLDDT comparison and matched re-screen reported above, but prediction error at low identity cannot be excluded entirely. Our specificity signals --- active-site exposure and BHET docking --- are particular operationalizations; a richer, PET-specific descriptor (for example, an aromatic substrate-binding subsite) might in principle perform differently, although the same low-identity model noise that limits exposure scoring would bear most heavily on such a descriptor, and our docking result is not encouraging. Finally, sequence identity here measures the reach of sequence search, not PET activity itself; all candidates are computational priorities, not experimentally validated enzymes, and wet-lab characterization remains necessary to establish function.
+
+\section{Potential implications}
+For the active effort to mine novel PET hydrolases from environmental metagenomes, these results delimit where in-silico structure-first search can and cannot help: it is a reliable serine-hydrolase finder but not, on its own, a route to PET-hydrolyzing function beyond the reach of sequence homology. More broadly, the random-floor decomposition and sequence-identity reach analysis provide a reusable template, and the released pipeline a concrete benchmark, for evaluating any claim that predicted structure extends functional discovery past sequence homology. We anticipate the benchmark will be useful both as a negative control for future mining pipelines and as a calibration target for richer, function-specific structural descriptors.
+
+\section{Methods}
+\noindent\textbf{Controls and calibration.} Positive controls: \emph{I.\ sakaiensis} PETase (PDB 6EQE) and LCC (4EB0). Negative controls: CalB (1TCA), acetylcholinesterase (1EA5), \emph{C.\ rugosa} lipase (1CRL), Est2 (1EVQ), and a catalytically inactivated LCC variant (6THS). The catalytic triad was defined geometrically on Ser--His--Asp side-chain atoms; the composite decision score combines triad geometry with an active-site-exposure (peripherality) term derived from fpocket pocket detection~\cite{leguilloux2009}, normalized to a size-invariant percentile. The decision threshold was pinned at $-1.1587$ on the at-scale normalization to ensure invariance to fpocket's run-to-run non-determinism.
+
+\noindent\textbf{Corpus and structural search.} The target corpus was the ESM Metagenomic Atlas high-quality clustered set (36,986,627 structures, pLDDT $> 0.7$), queried with a prebuilt Foldseek database~\cite{vankempen2024} over the 3Di structural alphabet~\cite{heinzinger2024}. Default fold-class search used standard Foldseek sensitivity; the divergent-tail re-search used \texttt{foldseek -s 9.5 -{}-max-seqs 4000000 -e 10000} with a near-zero bit-score floor. Hits were tiered within each query anchor by anchor-specific bit-score. Structures for screening were fetched on demand via Foldcomp~\cite{kim2023} / the predicted-structure API, using the MMseqs2-compatible database format~\cite{steinegger2017}.
+
+\noindent\textbf{Baseline sampling.} The random baseline was drawn by seeded uniform HTTP byte-range offset sampling and passed through the unchanged pipeline at the pinned threshold. The stage-decomposition baseline was 1,500 proteins (seed 1729); to power the central selectivity and enrichment comparisons we enlarged the draw to 11,498 proteins (seed 20260614), yielding 209 triad-bearers.
+
+\noindent\textbf{Sequence identity.} Pairwise identity to the nearest query was computed by Smith--Waterman alignment (biotite), reported with alignment coverage and gated for low-coverage artifacts, and cross-validated against Foldseek alignment identity ($r = 0.987$).
+
+\noindent\textbf{Docking.} BHET was docked into control structures with AutoDock Vina~\cite{trott2010,eberhardt2021}; affinities were compared across positives and negatives.
+
+\noindent\textbf{Statistics.} Proportions are reported with Wilson 95\% confidence intervals; group comparisons use rate ratios. Non-enrichment of the PET-hydrolase-branch exposed-cleft rate against the random floor was assessed by a two-one-sided-tests (TOST) equivalence/non-superiority procedure with a 10-percentage-point margin, reporting the one-sided upper bound on enrichment. Predicted-structure confidence (pLDDT) was compared across the divergent tail, the floor, and near-homolog hits with the Mann--Whitney $U$ test and Cliff's $\delta$, with a pLDDT-matched re-screen as a robustness check. fpocket non-determinism was controlled by threshold pinning and matched re-screening.
+
+\noindent\textbf{Compute.} Local triage on Apple Silicon; burst structural search on a single cloud instance (16 vCPU), with the divergent re-search completing in \sm13 minutes.
+
+\section*{Availability of source code and requirements}
+\noindent\begin{tabular}{@{}p{0.32\textwidth}p{0.6\textwidth}@{}}
+Project name: & projProteus \\
+Project home page: & \url{https://github.com/akarlin3/projProteus} \\
+Operating system(s): & Platform independent (tested on Linux and macOS/Apple Silicon) \\
+Programming language: & Python 3 \\
+Other requirements: & Foldseek, fpocket, AutoDock Vina, biotite, Foldcomp; access to the ESM Metagenomic Atlas \\
+License: & [author to confirm SPDX identifier in repository \texttt{LICENSE}, e.g. MIT] \\
+RRID / bio.tools: & not yet registered \\
+\end{tabular}
+
+\noindent Code and intermediate-data snapshots are archived at Zenodo (doi:10.5281/zenodo.20758580) and will be deposited in the \emph{GigaScience} repository (\emph{Giga}DB) on acceptance.
+
+\section*{Availability of supporting data and materials}
+The data sets supporting the results of this article --- intermediate results, per-hit tables, and run reports --- are archived at Zenodo (doi:10.5281/zenodo.20758580) and will be deposited in the \emph{GigaScience} GigaDB repository under a CC0 waiver upon acceptance, per journal policy. The structural corpus analysed is the publicly available ESM Metagenomic Atlas~\cite{lin2023}. Source code is available as described in the preceding section.
+
+\section*{Declarations}
+\noindent\textbf{List of abbreviations.} BHET: bis(2-hydroxyethyl) terephthalate; CI: confidence interval; LCC: leaf-branch compost cutinase; PDB: Protein Data Bank; PET: poly(ethylene terephthalate); pLDDT: predicted local distance difference test; RR: rate ratio; TOST: two one-sided tests.
+
+\noindent\textbf{Ethics approval and consent to participate.} Not applicable.
+
+\noindent\textbf{Consent for publication.} Not applicable.
+
+\noindent\textbf{Competing interests.} The author declares that they have no competing interests.
+
+\noindent\textbf{Funding.} The author received no specific funding for this work.
+
+\noindent\textbf{Author contributions.} A.K. conceived and designed the study, implemented the pipeline, performed all analyses, prepared the figures, and wrote the manuscript (CRediT: Conceptualization, Methodology, Software, Formal analysis, Investigation, Data curation, Visualization, Writing --- original draft and review and editing).
+
+\noindent\textbf{Acknowledgements.} The author thanks the developers of the ESM Metagenomic Atlas, Foldseek, fpocket, AutoDock Vina, Foldcomp, and biotite for the open data and software on which this work depends.
+
+\noindent\textbf{Use of AI-assisted technologies.} A generative AI assistant (Anthropic Claude, Claude Opus 4.8) was used to draft and edit manuscript prose, to help structure the analyses, and to generate figure-plotting code. All research data, numerical results, and statistical analyses were produced and verified by the author, who takes full responsibility for the accuracy, integrity, and originality of the work. The tool was not used to generate, alter, or fabricate primary research data.
+
+\section*{Additional files}
+\noindent\textbf{Additional File 1 --- S1 Fig.} Predicted-structure confidence (pLDDT) distributions for the divergent tail, the random floor, and near-homolog hits, showing that the divergent tail is not lower in confidence than the floor.
+
+\begin{thebibliography}{99}
+\small
+\bibitem{yoshida2016} Yoshida S, Hiraga K, Takehana T, Taniguchi I, Yamaji H, Maeda Y, et al. A bacterium that degrades and assimilates poly(ethylene terephthalate). Science. 2016;351(6278):1196--1199. doi:10.1126/science.aad6359.
+\bibitem{tournier2020} Tournier V, Topham CM, Gilles A, David B, Folgoas C, Moya-Leclair E, et al. An engineered PET depolymerase to break down and recycle plastic bottles. Nature. 2020;580(7802):216--219. doi:10.1038/s41586-020-2149-4.
+\bibitem{perdigao2015} Perdig\~ao N, Heinrich J, Stolte C, Sabir KS, Buckley MJ, Tabor B, et al. Unexpected features of the dark proteome. Proc Natl Acad Sci USA. 2015;112(52):15898--15903. doi:10.1073/pnas.1508380112.
+\bibitem{lin2023} Lin Z, Akin H, Rao R, Hie B, Zhu Z, Lu W, et al. Evolutionary-scale prediction of atomic-level protein structure with a language model. Science. 2023;379(6637):1123--1130. doi:10.1126/science.ade2574.
+\bibitem{vankempen2024} van Kempen M, Kim SS, Tumescheit C, Mirdita M, Lee J, Gilchrist CLM, et al. Fast and accurate protein structure search with Foldseek. Nat Biotechnol. 2024;42(2):243--246. doi:10.1038/s41587-023-01773-0.
+\bibitem{nortonbaker2025} Norton-Baker B, Komp E, Gado JE, Denton MCR, Mathews II, Murphy NP, et al. Machine learning-guided identification of PET hydrolases from natural diversity. ACS Catal. 2025;15(17). doi:10.1021/acscatal.5c03460.
+\bibitem{almeida2019} Almeida EL, Carrillo Rinc\'on AF, Jackson SA, Dobson ADW. In silico screening and heterologous expression of a poly(ethylene terephthalate) hydrolase (PETase)-like enzyme (SM14est) with polycaprolactone (PCL)-degrading activity, from the marine sponge-derived strain \emph{Streptomyces} sp.\ SM14. Front Microbiol. 2019;10:2187. doi:10.3389/fmicb.2019.02187.
+\bibitem{heinzinger2024} Heinzinger M, Weissenow K, Sanchez JG, Henkel A, Mirdita M, Steinegger M, et al. Bilingual language model for protein sequence and structure. NAR Genom Bioinform. 2024;6(4):lqae150. doi:10.1093/nargab/lqae150.
+\bibitem{steinegger2017} Steinegger M, S\"oding J. MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nat Biotechnol. 2017;35(11):1026--1028. doi:10.1038/nbt.3988.
+\bibitem{leguilloux2009} Le Guilloux V, Schmidtke P, Tuffery P. Fpocket: an open source platform for ligand pocket detection. BMC Bioinformatics. 2009;10:168. doi:10.1186/1471-2105-10-168.
+\bibitem{trott2010} Trott O, Olson AJ. AutoDock Vina: improving the speed and accuracy of docking with a new scoring function, efficient optimization, and multithreading. J Comput Chem. 2010;31(2):455--461. doi:10.1002/jcc.21334.
+\bibitem{eberhardt2021} Eberhardt J, Santos-Martins D, Tillack AF, Forli S. AutoDock Vina 1.2.0: new docking methods, expanded force field, and Python bindings. J Chem Inf Model. 2021;61(8):3891--3898. doi:10.1021/acs.jcim.1c00203.
+\bibitem{kim2023} Kim H, Mirdita M, Steinegger M. Foldcomp: a library and format for compressing and indexing large protein structure sets. Bioinformatics. 2023;39(4):btad153. doi:10.1093/bioinformatics/btad153.
+\bibitem{mutti2025} Mutti G, Oca\~na-Pallar\`es E, Gabald\'on T. Newly developed structure-based methods do not outperform standard sequence-based methods for large-scale phylogenomics. Mol Biol Evol. 2025;42(7):msaf149. doi:10.1093/molbev/msaf149.
+\bibitem{jaito2026} Jaito N, Kaewsawat N, Sangawthong K, Uengwetwanit T. Identification of novel metagenomic lipases through integrated structural and sequence-based analysis. PeerJ. 2026;14:e20462. doi:10.7717/peerj.20462.
+\end{thebibliography}
+
+\end{document}
