@@ -1,10 +1,22 @@
-# Echo — repeatability as a *scale* check on conformal intervals
+# Lethe — constrained-validation / honest-limitation results for the IVIM uncertainty program
+
+**Lethe** is the home for *honest-limitation* findings: results where a validation is run
+faithfully and the verdict is a sharply-scoped negative. Its first (and currently only)
+portion is **Echo**, which arrived here by verdict — a speculative gated build whose CP3
+validation routed to Lethe. The package, code, and history below are the **Echo portion**
+(the directory was renamed `Echo/ → Lethe/` once the verdict made Echo part of Lethe; the
+method keeps the name *Echo*). The manuscript is in [`paper/lethe.tex`](paper/lethe.tex).
+
+---
+
+## The Echo portion — repeatability as a *scale* check on conformal intervals
 
 **Status: speculative gated build — VERDICT RENDERED. CP0 legitimacy PASSED; CP1 scaffold
 up; CP2 data gate PASSED (real ACRIN-6698, n=76); CP3 → LETHE (constrained validation).**
 On real data the conformal interval is ~4× too narrow to cover real test–retest variation of
 D (coverage 0.263 [0.158, 0.355] vs 0.755 target) — a valid honest-limitation verdict, not a
-failure. See [`LETHE.md`](LETHE.md) and [`results/RESULTS_VALIDATION.md`](results/RESULTS_VALIDATION.md).
+failure. See [`LETHE.md`](LETHE.md), [`paper/lethe.tex`](paper/lethe.tex), and
+[`results/RESULTS_VALIDATION.md`](results/RESULTS_VALIDATION.md).
 
 Echo asks one ground-truth-free question about a deployed conformal IVIM interval:
 

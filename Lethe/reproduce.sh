@@ -41,10 +41,10 @@ else
   echo ">>> CP3: ERROR (rc=$cp3)"; exit "$cp3"
 fi
 
-if [ -f "$HERE/paper/consistency.py" ] && [ -f "$HERE/paper/echo.tex" ]; then
-  run_stage "CP4 manuscript consistency" "$PY" "$HERE/paper/consistency.py"
+if [ -f "$HERE/paper/consistency.py" ] && [ -f "$HERE/paper/lethe.tex" ]; then
+  run_stage "CP4 manuscript consistency (Lethe / Echo portion)" "$PY" "$HERE/paper/consistency.py"
 else
-  echo ">>> CP4 manuscript consistency: SKIP (manuscript not built — PASS-only)"
+  echo ">>> CP4 manuscript consistency: SKIP (manuscript absent)"
 fi
 
 echo "=== done ==="

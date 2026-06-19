@@ -32,7 +32,10 @@ in `harness.py`) only if the real data is genuinely unsuitable for the scale reg
 **Outcome (seed 20260613, n=76):** coverage_D = **0.263 [BCa 95% 0.158, 0.355]** vs the 0.755
 target; R(D) = 0.247 (interval ~4× too narrow); under-scaled across the whole SNR grid →
 **LETHE** under the locked gate below. D* over-scaled (coverage 0.797, R=19.5) by the
-identifiability wall. See `LETHE.md`. CP4 is therefore not executed (PASS-only).
+identifiability wall. See `LETHE.md`. The full ground-truth-free *validation* manuscript
+(CP4 PASS-only) is not built; instead the **Lethe deliverable** — the honest-limitation
+write-up — is `paper/lethe.tex` (the Echo portion of the Lethe paper), gated by
+`paper/consistency.py`.
 
 Run `scripts/run_validation.py` on the real data; report coverage + z-dispersion with BCa
 95% CIs. **Locked gate on the well-identified parameter D:**
@@ -45,8 +48,10 @@ Run `scripts/run_validation.py` on the real data; report coverage + z-dispersion
   pass/fail — expect degraded/different behavior mirroring Gauge's D/D\* split.
 - **No tuning:** α = 0.10 fixed; seeds fixed; thresholds above frozen.
 
-## CP4 — result + manuscript (PASS only)
-Build `paper/echo.tex` (ebgaramond + microtype). Every number traces to a seeded printout
-via `paper/consistency.py` → `numbers.tex`. Every Fashion/Minos/Gauge-dependent claim carries
-the PROVISIONAL marker. Honest scoping: precision ≠ accuracy; the explicit delta vs Gauge
-§4.2.2; positioned in the no-ground-truth / QIBA repeatability literature.
+## CP4 — manuscript
+On a PASS this would be the full validation manuscript. On the rendered **Lethe** verdict it is
+the honest-limitation write-up: `paper/lethe.tex` (ebgaramond + microtype), the Echo portion of
+the Lethe paper. Every number traces to a seeded printout via `paper/consistency.py` →
+`numbers.tex` (gate: 0 undefined macros + load-bearing asserts, PASS). Every Fashion/Gauge/
+Minos-dependent claim carries the PROVISIONAL marker. Honest scoping: precision ≠ accuracy; the
+explicit delta vs Gauge §4.2.2; positioned in the no-ground-truth / QIBA repeatability literature.

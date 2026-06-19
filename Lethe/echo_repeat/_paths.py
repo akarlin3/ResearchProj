@@ -22,9 +22,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-_PKG = Path(__file__).resolve().parent          # Echo/echo_repeat
-ECHO = _PKG.parent                              # Echo
-REPO = ECHO.parent                              # researchProj (repo root)
+_PKG = Path(__file__).resolve().parent          # Lethe/echo_repeat
+LETHE = _PKG.parent                             # Lethe (project root; the Echo portion lives here)
+ECHO = LETHE                                     # back-compat alias (Echo == this Lethe portion)
+REPO = LETHE.parent                             # researchProj (repo root)
 
 CALIPER = REPO / "Caliper"                      # SOLID dependency (MIT, in-tree)
 GAUGE = REPO / "Gauge"                          # PROVISIONAL (in review)
