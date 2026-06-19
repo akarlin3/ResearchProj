@@ -7,18 +7,24 @@ an external method. It is trained on the task's calibration split and predicts t
 quantiles in the physical (D, D*, f) convention; Datum scores it on Fashion's ruler
 and reports where it lands relative to the reference baselines.
 
-Run:
-    python -m examples.submit_demo          # full task
-    python -m examples.submit_demo --quick  # tiny cohort smoke
+Run (from the monorepo root; works with no install / no PYTHONPATH):
+    python Datum/examples/submit_demo.py          # full task
+    python Datum/examples/submit_demo.py --quick  # tiny cohort smoke
 """
 from __future__ import annotations
 
 import argparse
+import sys
 from dataclasses import replace
+from pathlib import Path
 
 import numpy as np
 
-from datum import _paths
+# Put the Datum package root on sys.path so this runs as a plain script
+# (`python Datum/examples/submit_demo.py`) without an install or PYTHONPATH.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from datum import _paths  # noqa: E402
 
 _paths.ensure_deps()
 

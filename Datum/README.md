@@ -67,7 +67,7 @@ pip install -e Datum              # numpy only; Caliper/Gauge resolved via sibli
 python Datum/revalidate.py        # check pins + prove substrate→ruler pipeline resolves
 python -m datum.run               # produce the (PROVISIONAL) reference numbers
 python -m datum.osipi_fetch       # (optional) fetch the OSIPI DRO for external validation
-python -m examples.submit_demo    # score a new method on Datum (worked example)
+python Datum/examples/submit_demo.py   # score a new method on Datum (worked example)
 pytest Datum/tests                # gates
 ```
 

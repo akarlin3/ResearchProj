@@ -53,8 +53,8 @@ gradient-boosted **quantile regressor** (a method that is *not* one of Datum's
 baselines) and prints its scorecard and ranking:
 
 ```
-python -m examples.submit_demo          # full task
-python -m examples.submit_demo --quick  # tiny smoke
+python Datum/examples/submit_demo.py          # full task
+python Datum/examples/submit_demo.py --quick  # tiny smoke
 ```
 
 ## Rules of the road

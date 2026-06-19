@@ -74,6 +74,14 @@ def main() -> int:
         print("\n[--full] regenerating reference numbers (PROVISIONAL)...")
         from datum import run as R
         rows, meta = R.run_benchmark(verbose=True)
+        # Regenerate the OSIPI external-validation rows too, so the committed CSV is
+        # never silently reduced to a single substrate. Skipped if the DRO is absent.
+        try:
+            ext_rows, ext_meta = R.run_external(verbose=True)
+            rows.extend(ext_rows)
+            meta["external"] = ext_meta
+        except FileNotFoundError as exc:
+            print(f"  [skip OSIPI] {exc}")
         csv_path = R.write_csv(rows)
         rep_path = R.write_report(rows, meta)
         print(f"  wrote {csv_path}")
