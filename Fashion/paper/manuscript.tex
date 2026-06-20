@@ -172,6 +172,12 @@ the forward model, and scoring the fraction of held-out signals covered --- unde
 conditions (in-distribution, tri-exponential ground truth, and a noise-model mismatch) and
 under an alternative acquisition scheme, and repeated the held-out-b check on an open multi-b
 in-vivo brain dataset (the OSIPI TF2.4 IVIM-MRI Code Collection data (22); $N = 500$ voxels).
+The same gray-matter ROI of this dataset, under the same held-out-b partition, supplies both
+in-vivo evaluations: the $N = 500$ voxels here for the held-out-b coverage curve (Figure 4B)
+and a larger $\sim$2{,}000-voxel draw for the per-voxel deployment-time gate (Supplementary
+S3). The two are overlapping random samples from the same voxel pool, not different datasets;
+the gate uses the larger sample because characterizing a per-voxel ROC threshold needs more
+voxels than estimating an aggregate coverage curve.
 
 \subsection*{Calibration metrics}
 
