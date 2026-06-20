@@ -113,6 +113,18 @@ comparisons (21)) alongside concurrent UQ frameworks for IVIM (19), amortized ne
 posterior estimators have not been benchmarked against the information-theoretic limit of
 the problem.
 
+This work is positioned as a diagnostic contribution rather than an audit of one method.
+Relative to recent IVIM and diffusion-MRI uncertainty work, its distinguishing move is to
+benchmark a learned posterior against the information floor. Casali et al.\ (19) decompose
+supervised IVIM uncertainty into aleatoric and epistemic components but do not test it against
+a Cram\'er--Rao information floor; $\mu$GUIDE (20) surfaces parameter degeneracy in a
+generalized simulation-based framework without referencing the achievable-precision limit; and
+Manzano-Patr\'on et al.\ (21) report simulation-based inference as ``calibrated'' on aggregate
+coverage in diffusion MRI --- precisely the aggregate-pass / pointwise-fail mirage this work
+dissects pointwise. The portable lesson is methodological: aggregate calibration is necessary
+but not sufficient, and floor-referenced, shape-aware auditing is what separates a posterior
+that is calibrated on average from one that is trustworthy voxel-by-voxel.
+
 A recurring hazard underlies both gaps: aggregate calibration metrics can be satisfied while
 the uncertainty is wrong where it matters. A method can attain nominal marginal coverage by
 being overconfident in one region and over-wide in another, the two errors canceling in the
@@ -123,9 +135,17 @@ We address both gaps within one simulation framework. Part 1 compares uncertaint
 constructions across classical, Bayesian, and deep-learning paradigms and identifies which
 produce calibrated \Dstar{} and $f$ intervals. Part 2 trains an amortized NPE and audits it
 against the CRLB and an NLLS reference, distinguishing claimed from achieved uncertainty. The
-unifying finding is methodological: reliable IVIM uncertainty in the clinical SNR regime
-benefits heavily from shape-aware intervals and information-floor benchmarking, because the
-standard aggregate checks pass even when the uncertainty is not trustworthy.
+transferable contribution is the diagnostic itself: information-floor (CRLB) auditing is a
+general check for learned qMRI posteriors --- not specific to IVIM or to one network --- and
+the aggregate-passes / pointwise-fails distinction is the portable lesson, because the standard
+aggregate checks pass even when the uncertainty is not trustworthy. The amortized NPE studied
+here is the worked example through which we exercise that diagnostic, not the object of the
+claim.
+
+The scope is correspondingly bounded, and we state it up front: we study a single trained NPE
+configuration over one prior and acquisition family, with the normalizing-flow architecture
+varied as an ablation. It is the diagnostic, not this particular estimator, that we intend to
+generalize.
 
 % ======================= METHODS =======================
 \section*{Methods}
