@@ -20,11 +20,22 @@ Gate: **mirrors the sibling subrepos, clean, self-consistent.**
 - [x] **Clean IP:** no proprietary/clinical data, no data-like files in tree.
 - [x] CP1 tests pass: `python -m pytest Gnomon/tests -q` → (recorded at commit).
 
-## CP2 — clean-room rebuild  ⏳
+## CP2 — clean-room rebuild  ✅
 
-Gate: **runs, self-consistent.** forward/NLLS/Laplace/MCMC/MAF/metrics implemented
-from spec; clean-signal round-trip recovers truth; continuity limits hold; every
-design choice documented inline + in `docs/METHODS.md`.
+Gate: **runs, self-consistent.**
+
+- [x] forward (`forward.py`), NLLS + railing (`nlls.py`), Laplace + per-voxel MCMC
+      (`bayes.py`), MAF/NPE flow (`flow.py`), independent ruler (`metrics.py`),
+      bootstrap (`bootstrap.py`), OSIPI loader (`osipi.py`), CP3 driver
+      (`reproduce.py`) all implemented from spec — no Caliper import.
+- [x] **Self-consistency gates pass** (`tests/test_cp2_selfconsistency.py`, 7 cases):
+      analytic Jacobian matches finite differences; clean-signal NLLS round-trip
+      recovers truth (no railing on clean data); continuity (f=0 → mono-exponential)
+      holds; cohort draws ground truth from Lattice; ruler coverage exact; the
+      end-to-end driver runs and emits a verdict + JSON.
+- [x] Full suite green: `python -m pytest Gnomon/tests -q` → **16/16**.
+- [x] Every design choice documented inline + in `docs/METHODS.md` (b-schemes, NLLS
+      box/init/railing, MCMC sampler spec, MAF training spec, OSIPI ROI selection).
 
 ## CP3 — the reproduction gate  ⏳  (HARD HALT either way)
 
