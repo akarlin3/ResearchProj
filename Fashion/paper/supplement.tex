@@ -87,6 +87,29 @@ prior from log-uniform to a tissue-informed truncated Normal on $\log_{10}(\Dsta
 \log_{10}(0.03)$, $\sigma = 0.30$~dex). It was audited against the same analytical CRLB grid
 and the same per-SNR median-ratio transform as the primary model.
 
+\subsection*{S6. In-vivo cohort validation (liver)}
+
+To test whether the in-vivo held-out-b overconfidence reproduces beyond a single subject, the
+main-text held-out-b check was repeated across an open multi-subject liver IVIM dataset
+(Dryad doi:10.5061/dryad.xwdbrv1cg; hypovascular liver lesions; GE Signa 1.5T; b-values
+$\{0,10,25,50,200,500,800\}$~s/mm$^2$). This is an off-scheme deployment for the amortized NPE
+(an independent vendor, field strength, organ, and b-scheme relative to the trained Philips 3T
+clinical-sparse acquisition), i.e.\ the multi-subject analogue of the acquisition-shift result
+(main-text Figure 4C). DICOM series were converted to NIfTI (\texttt{dcm2niix}); each b-value is
+its own two-volume series carrying its own b=0, so each diffusion image was normalized by its
+in-series b=0. Of 67 converted patients, 59 had all six non-zero b-series at a consistent
+spatial geometry and were analyzed; the rest were excluded for missing or mismatched series.
+Per patient, a fixed-seed random sample of foreground liver-parenchyma voxels (b=0 above a robust
+threshold, finite and physically plausible attenuation across all b) was taken; the
+normalized-signal noise level was estimated robustly as the median per-voxel biexponential
+fit-residual RMS (giving SNR $\approx$ 13, typical for liver DWI at 1.5T), applied to both
+estimators. Held-out-b posterior-predictive coverage was then computed exactly as in
+\texttt{run\_f\_realdata.py} (fit on $b\in\{0,25,200,800\}$, held out $b\in\{10,50,500\}$),
+comparing the amortized NPE to the per-voxel NLLS reference. Because in vivo lacks voxel-level
+ground truth, this compares the two estimators rather than either against truth. The full
+per-patient table and aggregates are released in the reproducibility module
+(\texttt{npe/run\_liver\_cohort.py}).
+
 \section*{Supplementary Figures}
 
 \begin{figure}[htbp]
@@ -150,6 +173,21 @@ persists, and is slightly higher, under the tissue prior at every SNR (overall 7
 so the discriminating evidence is the persistence under the uninformative log-uniform prior
 and in both claimed and achieved SD, indicating the overconfidence is intrinsic to the
 amortized estimator rather than prior-reversion.}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figS6_liver_cohort.pdf}
+\caption{In-vivo cohort validation on an open multi-subject liver IVIM dataset ($N = 59$
+patients; GE 1.5T; off-scheme for the amortized NPE). (A) Per-patient held-out-b coverage at
+nominal 0.95, NPE versus the per-voxel NLLS reference (paired; each grey line is one patient).
+The amortized NPE under-covers held-out signal relative to NLLS in 100\% of patients (cohort-mean
+0.58 vs 0.78). (B) Cohort-mean reliability (empirical vs nominal coverage): the NPE sits below
+NLLS at every credibility level. In vivo lacks voxel-level ground truth, so this compares the
+two estimators rather than either against truth; NLLS is itself below nominal (model misfit and
+inter-series noise), but the systematic NPE-below-NLLS gap across an independent vendor, organ,
+and b-scheme shows the amortized overconfidence under acquisition shift is reproducible at cohort
+scale, not a single-dataset artifact.}
 \end{figure}
 
 \end{document}
