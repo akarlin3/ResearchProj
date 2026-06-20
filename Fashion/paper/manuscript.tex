@@ -496,11 +496,18 @@ aggregate checks miss it.
 
 The analyses are simulation-based; real-tissue heterogeneity and acquisition artifacts may
 shift the rankings, and multi-acquisition validation is a natural next step. The deep-learning
-comparison covers two architectures. Three controlled ablations bracket the amortized
+comparison covers two architectures. Four controlled ablations bracket the amortized
 estimator: flow architecture (NSF versus MAF, Supplementary Figure S1), acquisition density
-(8- versus 16-point b-schemes, Supplementary Figure S2), and the prior (log-uniform versus a
-tissue-informed truncated-Normal \Dstar{} prior, Supplementary Figure S5). The below-floor
-\Dstar{} overconfidence persists across all three, which attributes it to the estimator under
+(8- versus 16-point b-schemes, Supplementary Figure S2), the prior (log-uniform versus a
+tissue-informed truncated-Normal \Dstar{} prior, Supplementary Figure S5), and the
+training-simulation budget (50,000 to 1,000,000 simulations, Supplementary Figure S6). The
+budget sweep directly tests the mundane alternative that the below-floor behaviour is
+simulation starvation rather than an intrinsic property: holding architecture, prior, seed,
+embedding and b-scheme fixed, the per-SNR median \Dstar{} claimed SD-to-CRLB ratio and the
+below-floor fraction are essentially constant across the 20-fold budget range (overall
+below-floor fraction $\approx$0.69 at every budget, claimed ratio at SNR 10 of 0.077--0.084),
+so the overconfidence is not relieved by more training data. The below-floor
+\Dstar{} overconfidence persists across all four ablations, which attributes it to the estimator under
 weak identifiability rather than to a single design choice; an informative prior legitimately
 permits posterior width below the prior-free CRLB, so the discriminating evidence is the
 persistence under the uninformative log-uniform prior, not the below-floor fraction itself.
