@@ -83,6 +83,26 @@ prior from log-uniform to a tissue-informed truncated Normal on $\log_{10}(\Dsta
 \log_{10}(0.03)$, $\sigma = 0.30$~dex). It was audited against the same analytical CRLB grid
 and the same per-SNR median-ratio transform as the primary model.
 
+\subsection*{S7. In-silico parameter-calibration control and model criticism}
+
+To separate posterior-width overconfidence from forward-model misfit --- which the in-vivo
+signal-domain check cannot disentangle --- the trained NPE was evaluated on simulated voxels
+with \emph{known} parameters (4{,}000 draws from the prior; SNR log-uniform 8--100) on its
+own training acquisition with the correct forward model. Empirical parameter coverage was the
+fraction of voxels whose true $[D, \Dstar{}, f]$ fell within the central $L$-level posterior
+interval, computed overall and stratified by SNR and by perfusion fraction. With the correct
+forward model and on the training acquisition, coverage was near-nominal (0.93--0.94 at
+nominal 0.95) and remained near-nominal across strata, establishing that the in-distribution
+parameter posterior is Bayesian-calibrated and that the pointwise overconfidence reported in
+the main text is an information-floor (efficiency) and signal-prediction phenomenon rather
+than an in-distribution parameter-coverage failure. As a robust-NPE-style (RNPE) model
+criticism, each in-vivo voxel's posterior-predictive self-consistency residual was compared to
+an SNR-matched 95th-percentile null built from the well-specified simulation; the flagged
+fraction (12.8\%, versus a 5\% well-specified baseline) is reported as a misspecification
+diagnostic. The control uses no in-vivo parameter ground truth; a definitive in-vivo
+parameter-recovery test would require phantom or repeated-acquisition data and remains open.
+This control was a one-time analysis and was not part of the per-SNR median-ratio transform.
+
 \section*{Supplementary Figures}
 
 \begin{figure}[htbp]

@@ -292,6 +292,23 @@ rather than a parameter-recovery test, so it demonstrates that the trained NPE's
 overconfidence persists outside simulation rather than establishing it as a general property
 of amortized IVIM posteriors.
 
+\textbf{Signal-domain coverage is not parameter calibration.} Because the held-out-b check
+operates in signal space, an in-silico control with known parameters was added to separate
+posterior-width overconfidence from forward-model misfit (Supplementary Methods S7). On its
+training acquisition with the correct forward model, the NPE's \emph{parameter} posterior is
+in fact well-calibrated: simulation-based parameter coverage is near-nominal at every level
+(0.93--0.94 at nominal 0.95) and stays near-nominal when stratified by SNR and by weak
+identifiability (low-$f$), even though the signal-domain held-out-b coverage for the same model
+is 0.34. The in-distribution pointwise failure is therefore one of information-theoretic
+efficiency (claimed precision below the achievable floor, Figure~3) and of signal-domain
+prediction, not of in-distribution Bayesian parameter coverage; the gross in-vivo collapse
+(0.03) is an out-of-distribution transfer effect. An RNPE-style model-criticism check ---
+comparing each in-vivo voxel's posterior-predictive self-consistency residual to an
+SNR-matched well-specified simulated null --- flags 12.8\% of in-vivo voxels as misspecified
+(versus a 5\% well-specified baseline), a modest excess consistent with mild forward/noise
+misspecification atop the dominant transfer failure. A definitive in-vivo test would require
+parameter ground truth (phantom or repeated-acquisition data), which is unavailable here.
+
 A single in-vivo abdominal case from the same open collection (22) is shown in Supplementary
 Figure S4 as a qualitative illustration of the same weak-identifiability signature (the NLLS
 \Dstar{} reference
@@ -416,7 +433,15 @@ retaining 49\% of voxels at TPR 0.97 / FPR 0.05), and gating on it monotonically
 held-out coverage --- from 0.03 toward 0.20 as the retained fraction tightens (Supplementary
 Figure S3). A classical biexponential goodness-of-fit gate, by contrast, does not recover
 calibration (AUC 0.59), confirming that the overconfidence is intrinsic to the estimator
-rather than driven by model-misfit; gating therefore provides safe triage but, consistent
+rather than driven by model-misfit. This AUC must be read with care, however: the held-out-b
+miscalibration target is computed from the same posterior fit and noise realization as the
+gate, so the two are coupled through shared noise. Scored in simulation against an
+\emph{independent} target --- the true \Dstar{} parameter-recovery error, available only where
+ground truth exists --- the gate's ranking power falls toward chance (AUC 0.60 versus 0.99 for
+the shared-fit target). The gate therefore detects residual/noise magnitude rather than
+validated parameter miscalibration, and we present it as a deployment-time abstention/triage
+heuristic, not as a calibrated detector of the unobservable parameter error. Gating thus
+provides safe triage but, consistent
 with the acquisition-shift result, full calibration still requires the per-scheme
 recalibration described next. Second, a lightweight recalibration or transfer-learning step
 on a small protocol-specific dataset (phantom or healthy-volunteer data) could adapt the
