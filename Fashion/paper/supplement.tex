@@ -130,8 +130,14 @@ intrinsic to the estimator rather than model-misfit. Marked point: ROC Youden th
 IVIM-MRI Code Collection data, Zenodo doi:10.5281/zenodo.14605039). In 54.7\% of high-SNR ROI
 voxels the NLLS \Dstar{}
 estimate is boundary-railed, which is the per-voxel signature of the weak \Dstar{}
-identifiability characterised in simulation (Figures 2--3). These voxels are excluded before
-the spread comparison. The case is shown as a qualitative illustration of that mechanism in
+identifiability characterised in simulation (Figures 2--3). The \Dstar{} spread ratio
+(NPE$/$NLLS) is reported both ways to make the inclusion policy explicit: railed-included
+(all 1{,}618 voxels) SD ratio 0.27 / IQR ratio 0.21, and railed-excluded (733 non-railed
+voxels) SD ratio 0.41 / IQR ratio 0.38. The railed-excluded values (the OLD reported pair)
+are the more conservative for the overconfidence narrative, because the boundary-pinned NLLS
+values are degenerate point masses that inflate the NLLS spread and thus shrink the ratio when
+included; we therefore quote the non-railed ratio as primary but report both. The case is
+shown as a qualitative illustration of that mechanism in
 vivo and is not used to support any quantitative claim; $N = 1$ precludes population inference.}
 \end{figure}
 
