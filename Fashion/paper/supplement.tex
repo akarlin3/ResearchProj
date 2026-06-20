@@ -65,7 +65,8 @@ reproduce the main-text Figure 3 transform over the 512-point grid.
 \subsection*{S3. Operationalized out-of-distribution gate}
 
 The deployment-time gate was operationalized at the voxel level on the in-vivo brain dataset
-($N \approx 2{,}000$ gray-matter voxels). For each voxel two deployable scores were computed
+(OSIPI TF2.4 IVIM-MRI Code Collection data, Zenodo doi:10.5281/zenodo.14605039;
+$N \approx 2{,}000$ gray-matter voxels). For each voxel two deployable scores were computed
 from the fit b-values only: the reduced $\chi^2$ of the biexponential NLLS fit (a classical,
 NPE-independent goodness-of-fit signal) and an NPE posterior-predictive self-consistency
 residual. Each was scored against the held-out-b posterior-predictive miscalibration
@@ -125,7 +126,9 @@ intrinsic to the estimator rather than model-misfit. Marked point: ROC Youden th
 \centering
 \includegraphics[width=\textwidth]{figS4_invivo_illustration.pdf}
 \caption{Single-subject in-vivo illustration (abdomen, $N = 1$). NPE and biexponential-NLLS
-\Dstar{} maps for one open IVIM acquisition. In 54.7\% of high-SNR ROI voxels the NLLS \Dstar{}
+\Dstar{} maps for one open IVIM abdominal acquisition from the same collection (OSIPI TF2.4
+IVIM-MRI Code Collection data, Zenodo doi:10.5281/zenodo.14605039). In 54.7\% of high-SNR ROI
+voxels the NLLS \Dstar{}
 estimate is boundary-railed, which is the per-voxel signature of the weak \Dstar{}
 identifiability characterised in simulation (Figures 2--3). These voxels are excluded before
 the spread comparison. The case is shown as a qualitative illustration of that mechanism in

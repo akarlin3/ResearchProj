@@ -171,7 +171,7 @@ of held-out b-values --- fitting on a retained b-subset, propagating posterior s
 the forward model, and scoring the fraction of held-out signals covered --- under three
 conditions (in-distribution, tri-exponential ground truth, and a noise-model mismatch) and
 under an alternative acquisition scheme, and repeated the held-out-b check on an open multi-b
-dataset ($N = 500$ voxels).
+in-vivo brain dataset (the OSIPI TF2.4 IVIM-MRI Code Collection data (22); $N = 500$ voxels).
 
 \subsection*{Calibration metrics}
 
@@ -282,15 +282,17 @@ the overconfidence is intrinsic to the trained NPE, not an artifact of the in-di
 simulation, and NLLS remained calibrated throughout. Under an alternative acquisition scheme
 the NPE became overconfident at essentially every grid point for all three parameters
 ($\sim$100\%, versus 17--69\% on the trained scheme), showing that the amortized calibration
-does not transfer across acquisitions. On an open in-vivo brain dataset ($N = 500$ voxels),
-held-out-b posterior-predictive coverage collapsed to 0.03 at nominal 0.95 (NLLS 0.90).
+does not transfer across acquisitions. On the same open in-vivo brain dataset (22) ($N = 500$
+voxels), held-out-b posterior-predictive coverage collapsed to 0.03 at nominal 0.95 (NLLS
+0.90).
 Because voxel-level ground truth is unavailable in vivo, this is a held-out-signal check
 rather than a parameter-recovery test, so it demonstrates that the trained NPE's
 overconfidence persists outside simulation rather than establishing it as a general property
 of amortized IVIM posteriors.
 
-A single in-vivo abdominal case is shown in Supplementary Figure S4 as a qualitative
-illustration of the same weak-identifiability signature (the NLLS \Dstar{} reference
+A single in-vivo abdominal case from the same open collection (22) is shown in Supplementary
+Figure S4 as a qualitative illustration of the same weak-identifiability signature (the NLLS
+\Dstar{} reference
 boundary-rails in 54.7\% of high-SNR ROI voxels); it is not used for inference. Inference-time
 benchmarks were measured on a single CPU (Apple M4, 10-core, macOS; no GPU) with all three
 estimators run on identical 1,000-voxel synthetic workloads and comparable per-voxel
@@ -447,7 +449,7 @@ tissue-informed truncated-Normal \Dstar{} prior, Supplementary Figure S5). The b
 weak identifiability rather than to a single design choice; an informative prior legitimately
 permits posterior width below the prior-free CRLB, so the discriminating evidence is the
 persistence under the uninformative log-uniform prior, not the below-floor fraction itself.
-The in vivo signal evaluation relies on a single open brain dataset ($N = 500$ voxels)
+The in vivo signal evaluation relies on a single open brain dataset (22) ($N = 500$ voxels)
 without voxel-level ground truth, serving as a held-out-signal demonstration rather than a
 parameter-recovery test. Similarly, the spatial demonstration (Supplementary Figure S4) is
 restricted to a single representative abdominal case ($N = 1$) intended strictly to illustrate
@@ -503,7 +505,8 @@ and $f$ drift from near-efficient to inefficient; NLLS tracks the floor.}
 \caption{Robustness and real-data confirmation. (A) Posterior-predictive held-out-b coverage
 in simulation for NPE vs NLLS under baseline, tri-exponential, and noise-model
 misspecification: the NPE under-covers by $\sim$0.61 at nominal 0.95 regardless of condition,
-while NLLS stays calibrated. (B) The same check on an open multi-b dataset ($N=500$ voxels):
+while NLLS stays calibrated. (B) The same check on the open multi-b in-vivo brain dataset (22)
+($N=500$ voxels):
 NPE coverage collapses to $\sim$0.03 at nominal 0.95. (C) Fraction of grid points
 overconfident on the trained vs an alternative acquisition scheme: overconfidence rises to
 $\sim$100\% off-scheme for all parameters, indicating amortized calibration does not transfer
@@ -618,6 +621,11 @@ doi:10.7554/eLife.101069.
 mapping and probabilistic tractography using simulation-based inference in diffusion MRI: a
 comparison with classical Bayes. Med Image Anal. 2025;103:103580.
 doi:10.1016/j.media.2025.103580.
+
+\bibitem{osipidata2025} Gurney-Champion O, Rashid I, van der Thiel M, Kuppens D, Voorter P, van
+Houdt P, Peterson E, Jalnefjord O. Data for the OSIPI TF2.4 IVIM-MRI Code Collection (in-vivo
+brain and abdominal diffusion-weighted acquisitions). Zenodo; 2025.
+doi:10.5281/zenodo.14605039.
 
 \end{thebibliography}
 
