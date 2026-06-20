@@ -23,26 +23,39 @@ the whole abdomen rail to a bound, with a tight CI, dominated by the upper
 (high-D\*) wall, and surviving generous wide bounds (27%). This clears the
 registered thresholds.
 
-## CP3b — independent cohort (TCGA-LIHC liver DWI) — PENDING SIGN-OFF
+## CP3b — independent cohort (TCGA-LIHC liver DWI) — DONE (signed off)
 
-A truly independent human-abdominal cohort was located and DICOM-verified:
+Independent human-abdominal cohort, downloaded via the NBIA REST API (reusing
+Gauge's TCIA helpers read-only):
 
-* **TCGA-LIHC** (liver hepatocellular carcinoma), TCIA, DOI
-  10.7937/K9/TCIA.2016.IMMQW8UQ, **CC BY 3.0**.
-* Verified at the DICOM level: a real 4-b-value liver DWI series
-  **b = 0 / 50 / 500 / 800 s/mm²** (spans the IVIM low+high range), human in-vivo,
-  `BodyPartExamined: LIVER`.
-* Non-pancreatic, non-MSK. Downloadable via the NBIA REST API (the same mechanism
-  Gauge already uses): `getSeries?Collection=TCGA-LIHC&Modality=MR` →
-  `getImage?SeriesInstanceUID=…`.
+* **TCGA-LIHC** (liver), TCIA, DOI 10.7937/K9/TCIA.2016.IMMQW8UQ, **CC BY 3.0**.
+* Siemens 1.5T (b encoded in `SequenceName`) — a different site, scanner, and
+  organ from the Philips 3T OSIPI cohort. Non-pancreatic, non-MSK.
+* Two IVIM-capable acquisition schemes present across patients.
 
-This requires a human license/posture sign-off (CC BY 3.0 + TCIA Data Usage
-Policy) before download — the CP3 hard halt. Kidney fallbacks if needed: TCGA-KIRP
-(3-b, CC BY 3.0), CPTAC-CCRCC (CC BY 4.0, thinner multi-b).
+| cohort | scheme | subjects | n high-SNR (analyzed) | railed | 95% CI | lower / upper | verdict |
+|---|---|---|---|---|---|---|---|
+| `lihc_liver_4b` | b=0/50/500/800 (clean) | 1 | 648 265 (40 000) | **0.4370** | [0.4321, 0.4419] | 0.165 / 0.272 | REPLICATES-STRONG |
+| `lihc_liver_3b` | b=50/400/800 (no b=0) | 3 | 1 544 999 (40 000) | **0.7345** | [0.7302, 0.7388] | 0.725 / 0.009 | REPLICATES |
 
-**Verdict so far:** the primary claim REPLICATES strongly on the open OSIPI
-human-abdominal data (original ROI and full-abdomen generalisation). Independent
-cross-dataset confirmation (TCGA-LIHC) is staged and awaits sign-off; if declined,
-the claim is reported as demonstrated across the full OSIPI human-abdominal
-acquisition with independent confirmation noted as future work (honest scoping, not
-a failure).
+Per-subject 3-b railing is consistent (0.659, 0.744, 0.752). High-SNR sets exceed
+the 40 000-fit cap, so a seeded random subsample was analysed (logged, not silent).
+
+**Reading:** the phenomenon replicates on independent liver data. The clean 4-b
+scheme (with b=0) rails at 43.7%, squarely in the original's "strong" band and
+again split across both bounds. The sparse 3-b scheme (no b=0, normalised by b=50)
+rails far more (73.5%) and almost entirely to the lower bound — exactly the
+expected direction: fewer perfusion-sensitive b-values → worse D\* identifiability
+→ more railing. Honest caveats: (i) the SNR floor here uses a background-noise
+estimate (vs OSIPI's replicate-variance SNR), and (ii) the 3-b scheme lacks b=0.
+Neither weakens the qualitative claim — a large, robust fraction of conventional
+NLLS D\* fits rail on independent human-abdominal data.
+
+## Overall CP3 verdict
+
+**REPLICATES.** Boundary-railing of conventional NLLS D\* is a robust, assumption-
+free property across: the original OSIPI ROI (54.7%), the full OSIPI abdomen
+(47.8%), and an independent TCGA-LIHC liver cohort (43.7% clean 4-b; 73.5% sparse
+3-b across 3 subjects). All cohorts clear the pre-registered thresholds. The
+primary claim is established; merge-back into the retooled Fashion spine is the
+default (no salami).

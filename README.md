@@ -334,9 +334,10 @@ The Zenodo badge above archives Proteus's code and intermediate-data snapshots
 
 ### `Sextant/` — Boundary-railing as the primary, assumption-free IVIM diagnostic
 
-*Status: a **re-aim of Fashion**, not a new dataset. CP0–CP3a complete; the
-independent TCGA-LIHC replication is staged pending license sign-off (CP3 hard
-halt). Default merge-back target: this becomes retooled Fashion's new spine.*
+*Status: a **re-aim of Fashion**, not a new dataset. CP0–CP4 complete; the
+manuscript is built (`Sextant/paper/sextant.pdf`). The independent TCGA-LIHC liver
+replication is done (CC BY 3.0, signed off). Default merge-back target: this
+becomes retooled Fashion's new spine.*
 
 Sextant answers the reviewer critique that Fashion's calibration contribution is
 *overextended* by promoting a result that **cannot** be overextended because it
@@ -349,15 +350,17 @@ section, explicitly limited to data with ground truth (it cannot be applied to t
 real scan — which is the argument for leading with railing).
 
 Headline (seed 20260613, 5000-bootstrap): railing reproduces Fashion's **54.7%**
-on the original ROI (95% CI [52.2, 57.1], n=1618) and **generalises** to the full
-abdomen ROI at **47.8%** ([47.1, 48.5], n=19652); it survives generous *wide*
-bounds (32% / 27%, so not a tight-bounds artefact) and is dominated by the
-upper-bound high-D\* identifiability wall — the same wall Gauge found and that
+on the original ROI (95% CI [52.2, 57.1], n=1618), **generalises** to the full
+abdomen ROI at **47.8%** ([47.1, 48.5], n=19652), and **replicates on an
+independent liver cohort** (TCGA-LIHC, Siemens 1.5T): **43.7%** at the clean 4-b
+scheme and **73.5%** across 3 subjects at a sparse 3-b scheme. It survives generous
+*wide* bounds (32% / 27% / 15%, so not a tight-bounds artefact) and is dominated by
+the upper-bound high-D\* identifiability wall — the same wall Gauge found and that
 Casali's learned method (in-vivo mouse-brain) reports as residual D\*
 overconfidence. The boundary-railing computation is **reused read-only** from
 Fashion (`fashion_reuse` via AST extraction); the new empirical content is the
 bootstrap CIs, the SNR/rail-direction characterisation, the full-abdomen
-generalisation, and the (pending) independent liver-DWI replication.
+generalisation, and the independent liver-DWI replication.
 
 - `sextant-core/` — package (flat layout, own `pyproject.toml`): `fashion_reuse.py` (read-only Fashion railing/ruler loaders), `railing.py` (primary diagnostic + SNR strata), `bootstrap.py` (voxel CIs), `ruler.py` (scoped secondary), `cohorts.py`, `seeding.py`; `tests/` (16 cases).
 - `scripts/` — `fetch_osipi.py` (download-on-demand OSIPI human-abdominal data, CC-BY-4.0, MD5-verified, provenance manifest committed), `run_railing.py` (seeded driver). `results/` — provenance + `railing_results.json` + `RESULTS_CP2/3.md`.
@@ -403,7 +406,7 @@ Nine folders form one IVIM diffusion-MRI uncertainty program:
 - **Datum** is the benchmark layer: it freezes that ruler into a fixed task with curated baselines and a submission interface, scored over **Lattice's** cohorts (with an OSIPI DRO as external validation), so any IVIM uncertainty method can be ranked on one standard (reference numbers PROVISIONAL until Fashion's ruler locks).
 - **Minos** is the capstone: it prices the *decision* value of a calibrated error bar and supplies a label-free monitor for when calibration goes stale — its theory is done, its applied half awaits Fashion + Gauge publication.
 - **Vernier** asks whether *acquisition design* can still move calibration and decision value once the estimator and conformal correction are fixed — taking Gauge's acquisition-robust wall as given. A feasibility question under test: it either becomes a standalone paper or folds into Minos.
-- **Sextant** re-aims **Fashion** to answer the "overextended claims" critique: it promotes the assumption-free fact that conventional NLLS D\* fits *rail to a bound* on open human-abdominal data to the primary claim, demotes the calibration ruler to a scoped secondary, and replicates the railing across the full abdomen (independent liver-DWI confirmation staged). It reuses Fashion's railing computation read-only and, by default, feeds the retooled Fashion spine rather than splitting off (no salami).
+- **Sextant** re-aims **Fashion** to answer the "overextended claims" critique: it promotes the assumption-free fact that conventional NLLS D\* fits *rail to a bound* on open human-abdominal data to the primary claim, demotes the calibration ruler to a scoped secondary, and replicates the railing across the full OSIPI abdomen and an independent TCGA-LIHC liver cohort. It reuses Fashion's railing computation read-only and, by default, feeds the retooled Fashion spine rather than splitting off (no salami).
 - **Lethe** (the *Echo* portion; speculative, gated) asks the ground-truth-free question of whether a deployed interval is the right *size* — validating *precision* against test–retest repeatability, explicitly distinct from Gauge's width-rank check and provably blind to accuracy. Verdict: **Lethe** — on real data the interval is ~4× too narrow for repeatability, so width rank-tracks repeatability (Gauge) but its scale under-covers it (Echo). Result PROVISIONAL on Fashion/Gauge/Minos.
 
 ## Provenance

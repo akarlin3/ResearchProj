@@ -17,20 +17,27 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from .fashion_reuse import load_railing, load_wide
+from .seeding import GLOBAL_SEED, make_rng
 
 # Default SNR strata for the "when does it rail" characterisation.
 SNR_STRATA = [(8.0, 15.0), (15.0, 30.0), (30.0, 60.0), (60.0, np.inf)]
 
+# Cap on per-cohort NLLS fits; above it we seeded-subsample the high-SNR voxels
+# (a 40k subsample estimates the railed fraction to <0.5pp). Logged, never silent.
+MAX_HIGH_SNR = 40_000
 
-def fit_dstar(fit_signals: np.ndarray, wide: bool = False) -> np.ndarray:
-    """Return per-voxel NLLS D* estimates (mm^2/s) for the 10-pt TARGET_BVALS.
 
-    ``wide=False`` uses Fashion's tight prior-box bounds (the original analysis);
-    ``wide=True`` uses the generous wide bounds (sensitivity check that railing is
-    not merely an artefact of tight bounds).
+def fit_dstar(fit_signals: np.ndarray, bvals=None, wide: bool = False) -> np.ndarray:
+    """Return per-voxel NLLS D* estimates (mm^2/s) at the cohort's b-scheme.
+
+    ``bvals`` defaults to Fashion's 10-pt ``TARGET_BVALS`` (the OSIPI analysis);
+    pass a cohort's native scheme for other data. ``wide=False`` uses Fashion's
+    tight prior-box bounds (the original analysis); ``wide=True`` uses the generous
+    wide bounds (sensitivity check that railing is not merely an artefact of tight
+    bounds). The fit function itself is reused read-only from Fashion.
     """
     R = load_railing()
-    b = R["TARGET_BVALS"]
+    b = R["TARGET_BVALS"] if bvals is None else np.asarray(bvals, float)
     fit_signals = np.asarray(fit_signals, float)
     if wide:
         W = load_wide()
@@ -63,6 +70,8 @@ class RailingResult:
     frac_upper: float
     n_railed: int
     by_snr: list = field(default_factory=list)   # [{lo,hi,n,frac_railed,frac_lower,frac_upper}]
+    n_analyzed: int = 0          # voxels actually fit (== n_high_snr unless subsampled)
+    subsampled: bool = False     # True if high-SNR set exceeded MAX_HIGH_SNR
 
     def to_dict(self) -> dict:
         return {k: getattr(self, k) for k in self.__dataclass_fields__}
@@ -87,17 +96,30 @@ def _strata(snr_hi, railed, lower, upper, dstar_hi):
     return out
 
 
-def analyze_cohort(cohort, *, bounds: str = "tight") -> RailingResult:
-    """Compute the railing diagnostic for one cohort (see :class:`RailingResult`)."""
+def analyze_cohort(cohort, *, bounds: str = "tight",
+                   max_high_snr: int | None = MAX_HIGH_SNR,
+                   seed: int = GLOBAL_SEED) -> RailingResult:
+    """Compute the railing diagnostic for one cohort (see :class:`RailingResult`).
+
+    If the high-SNR set exceeds ``max_high_snr``, a seeded random subsample of that
+    size is analysed (recorded via ``subsampled`` / ``n_analyzed``); ``n_high_snr``
+    always reports the true high-SNR count.
+    """
     R = load_railing()
     snr_floor = float(R["SNR_FLOOR"])
     snrs = np.asarray(cohort.snrs, float)
-    roi_hi = snrs >= snr_floor
+    roi_idx = np.flatnonzero(snrs >= snr_floor)
+    n_total = int(roi_idx.size)
+
+    subsampled = False
+    if max_high_snr is not None and n_total > max_high_snr:
+        roi_idx = np.sort(make_rng(seed).choice(roi_idx, size=max_high_snr, replace=False))
+        subsampled = True
 
     wide = bounds == "wide"
-    dstar = fit_dstar(cohort.fit_signals, wide=wide)
-    dstar_hi = dstar[roi_hi]
-    snr_hi = snrs[roi_hi]
+    # Fit only the (possibly subsampled) high-SNR voxels; the rest are never used.
+    dstar_hi = fit_dstar(cohort.fit_signals[roi_idx], bvals=cohort.bvals, wide=wide)
+    snr_hi = snrs[roi_idx]
 
     if wide:
         W = load_wide()
@@ -109,11 +131,12 @@ def analyze_cohort(cohort, *, bounds: str = "tight") -> RailingResult:
 
     m, ml, mu = rail_mask(dstar_hi, lower, upper)
     res = RailingResult(
-        cohort=cohort.name, n_voxels=int(cohort.n_voxels), n_high_snr=int(roi_hi.sum()),
+        cohort=cohort.name, n_voxels=int(cohort.n_voxels), n_high_snr=n_total,
         snr_floor=snr_floor, bounds=bounds, lower_rail=lower, upper_rail=upper,
         frac_railed=float(np.mean(m)), frac_lower=float(np.mean(ml)),
         frac_upper=float(np.mean(mu)), n_railed=int(np.sum(m)),
         by_snr=_strata(snr_hi, m, lower, upper, dstar_hi),
+        n_analyzed=int(roi_idx.size), subsampled=subsampled,
     )
     # Per-voxel arrays for downstream bootstrap (not serialised by to_dict()).
     res.railed_hi = m

@@ -43,14 +43,25 @@ liver-DWI replication.
 
 | Cohort | n (high-SNR) | Railed (tight) | 95% CI | lower / upper rail | Railed (wide) | Verdict |
 |---|---:|---:|---|---:|---:|---|
-| `abdomen_homogeneous` (original ROI) | 1 618 | **54.70%** | [52.22, 57.11] | 15.6 / 39.1 | 32.14% | REPLICATES-STRONG |
-| `abdomen_full` (whole-abdomen ROI) | 19 652 | **47.81%** | [47.10, 48.51] | 4.6 / 43.2 | 27.43% | REPLICATES-STRONG |
+| `abdomen_homogeneous` (OSIPI, original ROI) | 1 618 | **54.70%** | [52.22, 57.11] | 15.6 / 39.1 | 32.14% | REPLICATES-STRONG |
+| `abdomen_full` (OSIPI, whole-abdomen ROI) | 19 652 | **47.81%** | [47.10, 48.51] | 4.6 / 43.2 | 27.43% | REPLICATES-STRONG |
+| `lihc_liver_4b` (TCGA-LIHC, b=0/50/500/800) | 648 265\* | **43.70%** | [43.21, 44.19] | 16.5 / 27.2 | 15.15% | REPLICATES-STRONG |
+| `lihc_liver_3b` (TCGA-LIHC, b=50/400/800, 3 subj.) | 1 544 999\* | **73.45%** | [73.02, 73.88] | 72.5 / 0.9 | — | REPLICATES |
+
+\*high-SNR set exceeds the 40 000-fit cap; a seeded subsample was analysed (logged).
+
+*Independent replication.* The phenomenon recurs on TCGA-LIHC liver DWI (different
+site, scanner — Siemens 1.5T, organ). The clean 4-b liver scheme rails at 43.7%
+(in the original's strong band, both bounds); the sparse 3-b scheme (no b=0) rails
+far more (73.5%, consistent across 3 subjects) and to the lower bound — fewer
+perfusion-sensitive b-values → worse D\* identifiability → more railing.
 
 *When/why it rails.* Railing persists across every SNR stratum (it is not a
-low-SNR artefact) and is dominated by the **upper** bound — the high-D\*
-identifiability wall, where the perfusion compartment is so weakly constrained the
-optimiser is pushed to the ceiling. Under generous wide bounds the rate falls but
-stays a substantial minority, so it is **not** an artefact of tight bounds.
+low-SNR artefact) and on the well-sampled cohorts is dominated by the **upper**
+bound — the high-D\* identifiability wall, where the perfusion compartment is so
+weakly constrained the optimiser is pushed to the ceiling. Under generous wide
+bounds the rate falls but stays a substantial minority, so it is **not** an
+artefact of tight bounds.
 
 ## Differentiation from Casali et al. 2026 (scoped to the data)
 
@@ -91,7 +102,8 @@ runs the seeded analysis, runs the tests, and builds the paper.
 
 The human-abdominal cohort is the OSIPI TF2.4 open data (Zenodo
 [10.5281/zenodo.14605039](https://zenodo.org/records/14605039), **CC-BY-4.0**;
-abdomen scan: Philips 3T, from the IVIMNET repository). **Clean IP:** no
-`pancData3`, no MSK clinical data — tree or history. An independent replication on
-**TCGA-LIHC** liver DWI (TCIA, CC BY 3.0) is staged pending license sign-off
-(see `results/RESULTS_CP3.md`).
+abdomen scan: Philips 3T, from the IVIMNET repository). The independent
+replication uses **TCGA-LIHC** liver DWI (TCIA, CC BY 3.0, DOI
+10.7937/K9/TCIA.2016.IMMQW8UQ), fetched via the NBIA API (`scripts/fetch_tcga_lihc.py`).
+**Clean IP:** no `pancData3`, no MSK clinical data — tree or history; all imaging is
+download-on-demand, never committed. See `results/RESULTS_CP3.md`.

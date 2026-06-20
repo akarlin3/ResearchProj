@@ -55,8 +55,11 @@ These thresholds were fixed here before `scripts/run_railing.py` was executed.
 
 | Cohort | n (high-SNR) | railed | 95% CI | verdict |
 |---|---:|---:|---|---|
-| `abdomen_homogeneous` | 1 618 | 0.5470 | [0.5222, 0.5711] | REPLICATES-STRONG |
-| `abdomen_full` | 19 652 | 0.4781 | [0.4710, 0.4851] | REPLICATES-STRONG |
+| `abdomen_homogeneous` (OSIPI) | 1 618 | 0.5470 | [0.5222, 0.5711] | REPLICATES-STRONG |
+| `abdomen_full` (OSIPI) | 19 652 | 0.4781 | [0.4710, 0.4851] | REPLICATES-STRONG |
+| `lihc_liver_4b` (TCGA-LIHC, b=0/50/500/800) | 648 265* | 0.4370 | [0.4321, 0.4419] | REPLICATES-STRONG |
+| `lihc_liver_3b` (TCGA-LIHC, b=50/400/800, 3 subj.) | 1 544 999* | 0.7345 | [0.7302, 0.7388] | REPLICATES |
 
-Both clear the registered thresholds. The independent TCGA-LIHC replication is the
-CP3 hard-halt decision (license sign-off).
+\* high-SNR set exceeds the 40 000-fit cap; a seeded subsample was analysed
+(logged via `subsampled`/`n_analyzed`). All four cohorts clear the registered
+thresholds: **CP3 verdict = REPLICATES** (signed off; TCGA-LIHC is CC BY 3.0).

@@ -29,17 +29,25 @@ class BootCI:
 
 
 def bootstrap_fraction(railed_bool, *, n_boot: int = DEFAULT_B, level: float = 0.95,
-                       seed: int = GLOBAL_SEED) -> BootCI:
-    """Percentile bootstrap CI for the mean of a boolean per-voxel array."""
-    x = np.asarray(railed_bool, bool)
+                       seed: int = GLOBAL_SEED, chunk: int = 200) -> BootCI:
+    """Percentile bootstrap CI for the mean of a boolean per-voxel array.
+
+    Resamples are drawn in chunks so peak memory is ``O(chunk * n)`` rather than
+    ``O(n_boot * n)`` (the latter is multiple GB for 50k voxels x 5000 resamples).
+    """
+    x = np.asarray(railed_bool, bool).astype(np.float64)
     n = x.size
     if n == 0:
         raise ValueError("empty railed array")
     rng = make_rng(seed)
     point = float(x.mean())
-    # vectorised resample: draw indices (n_boot, n)
-    idx = rng.integers(0, n, size=(n_boot, n))
-    means = x[idx].mean(axis=1)
+    means = np.empty(n_boot, float)
+    done = 0
+    while done < n_boot:
+        m = min(chunk, n_boot - done)
+        idx = rng.integers(0, n, size=(m, n))
+        means[done:done + m] = x[idx].mean(axis=1)
+        done += m
     a = (1.0 - level) / 2.0
     lo, hi = np.percentile(means, [100 * a, 100 * (1 - a)])
     return BootCI(point=point, lo=float(lo), hi=float(hi),
