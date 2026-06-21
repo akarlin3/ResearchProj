@@ -66,7 +66,11 @@ reproduce the main-text Figure 3 transform over the 512-point grid.
 
 The deployment-time gate was operationalized at the voxel level on the in-vivo brain dataset
 (OSIPI TF2.4 IVIM-MRI Code Collection data, Zenodo doi:10.5281/zenodo.14605039;
-$N \approx 2{,}000$ gray-matter voxels). For each voxel two deployable scores were computed
+$N \approx 2{,}000$ gray-matter voxels). This is the same gray-matter ROI and held-out-b
+partition as the $N = 500$ held-out-b coverage check in main-text Figure 4B; the larger sample
+is drawn here because a per-voxel ROC threshold requires more voxels than an aggregate coverage
+curve, and the two are overlapping random draws from the same voxel pool rather than distinct
+datasets. For each voxel two deployable scores were computed
 from the fit b-values only: the reduced $\chi^2$ of the biexponential NLLS fit (a classical,
 NPE-independent goodness-of-fit signal) and an NPE posterior-predictive self-consistency
 residual. Each was scored against the held-out-b posterior-predictive miscalibration
