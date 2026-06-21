@@ -1,117 +1,69 @@
-# CHANGES.md — friction-remediation run (`fix/friction-remediation`)
+# CHANGES.md — railing-first redraft for NMR in Biomedicine (`redraft/railing-first-nmrbiomed`)
 
-Addresses the Universal Friction Engine findings (HC1–HC6, CS1–CS4, G1–G4) on the
-Project Fashion IVIM uncertainty-quantification manuscript. Honesty-first: results
-that weakened/tempered/corrected a claim are in **ADVERSE_RESULTS.md**; open items
-in **FLAGS.md**. Built on `fix/assessor-remediation` (manuscript + frozen numbers).
+Re-spines Project Fashion to lead with the real-data boundary-railing phenomenon,
+built on the **Gnomon** clean-room reference (numeric source of truth) and integrating
+**Sextant** (cross-cohort generalization). Audit-first, run-then-write: no number
+appears in prose before it is produced by a run. Ledger dispositions are audited in
+`LEDGER_AUDIT.md`; open items in `FLAGS.md`; frozen numbers in `NUMBERS_FROZEN.txt`.
 
-One commit per checkpoint. New numbers are additive; the numbers-freeze gate
-(`paper/check_numbers.sh`) passes (no baseline count decreased).
+## CP0 — enumerate, freeze, plan
+- Imported the Gnomon CP4 clean-reference handoff package into the redraft so the paper
+  is self-contained and one-command reproducible (`Gnomon/scripts/build_handoff.py`,
+  `gnomon/reframe.py`, `handoff/CLAIMS_LEDGER.md`, `handoff/conditional_coverage.json`,
+  `RETOOL_HANDOFF.md`, `tests/test_cp4_reframe.py`).
+- Re-ran `build_handoff.py` (proteus env; OSIPI zip sha256-verified) — every keep-set and
+  reframe number reproduced to the digit; verdict PARTIAL; 17/17 Gnomon tests green.
+- Rewrote `NUMBERS_FROZEN.txt` as the railing-first frozen-targets file (was an obsolete
+  PDF number-frequency dump from the ruler-first paper).
 
-## CP0 — enumerate & diagnose
-`paper/FRICTION_DIAGNOSIS.md`: compute/data inventory (sbi installed in an isolated
-venv → NPE retrains runnable; trained `.pt` absent → retrain; in-vivo raw not local)
-and a per-item runnable-now / -with-compute / needs-data / manuscript-only table.
+## CP1 — re-spine to railing-first (KEEP K1)
+- New title and thesis: D\* weak identifiability manifests as a measurable, reproducible
+  real-data failure. Lead result (Abstract + §3.1 + Fig 1): NLLS rails D\* in
+  **54.2% [52.0,56.4]** of high-SNR OSIPI abdomen voxels.
+- Moved the amortized-NPE/CRLB-floor headline, the OOD gate, and the brain held-out-b
+  limb to a brief explicit out-of-scope note (§4).
 
-## CP1 — simulation-budget sweep (HC4/CS3)  [executed]
-`npe/run_cp1_budget_sweep.py` retrains the NPE at budgets {50k,100k,250k,500k,1M},
-recipe otherwise fixed (set/NSF/log-D*/seed 0/box prior/clinical-sparse), and
-recomputes per-SNR median D* claimed/achieved SD-to-CRLB ratios via the *identical*
-efficiency audit. Outputs `npe/cp1_budget_sweep.csv`, supplementary figure
-`figS6_budget_sweep`. Summariser validated against the frozen baseline (reproduces
-Table 2 D* 0.084/0.160/0.376/0.671 and below-floor 0.86→0.52).
-**Verdict: CONFIRMATORY — budget-invariant.** D* claimed ratio and below-floor
-fraction (~0.69 overall) are flat across the full 20× range (50k→1M); the
-overconfidence is not simulation starvation. Added as a fourth ablation
-(manuscript Limitations, Supplementary Methods S6, Figure S6).
+## CP2 — marginal → conditional coverage (REFRAME R1/R3, DROP D1)
+- Replaced the retracted marginal 0.30/0.67 everywhere with the per-true-D\*-tercile
+  conditional table (Table 1; both SD conventions; honest CRLB recommended — high-D\*
+  0.63 Laplace / 0.81 MCMC). SD convention documented in Methods §2.4; the floored
+  convention is shown only to explain the manufactured severity (pooled 0.68 / high 0.41).
+- 0.30/0.67 survive in the body only as *retired* numbers in the reframe narrative (§3.2).
 
-## CP2 — bias-aware floor (HC1/CS1)  [done]
-`npe/run_cp2_bias_aware_floor.py` + `npe/cp2_bias_aware_floor.csv`. Concedes
-(Hero & Fessler 1993) that the unbiased CRLB does not bound a biased estimator;
-re-audits the claimed D* SD against a van-Trees Bayesian floor under the actual
-log-uniform prior. Overconfidence **survives**: 78%(SNR10)→92%(SNR100) of flagged
-points stay below the bias-aware floor (58.8% of all grid pts vs 69.5% unbiased);
-prior explains 8–22%. Manuscript: Hero-Fessler cited (ref 28), unbiased-CRLB ratios
-demoted to a diagnostic, CRLB-independent evidence foregrounded. (CRLB recompute
-matches the frozen `crlb_sd` column to 1e-14.)
+## CP3 — resolution framing (KEEP K2/K3, REFRAME R2)
+- Quantile intervals restore marginal D\* coverage (0.90; Fig 3A); amortized flow beats
+  railed NLLS on coverage/ECE/sharpness (0.98/0.069/0.112 vs 0.76/0.121/0.181; all gaps'
+  CIs exclude 0; Fig 3B) — presented as the *resolution*, not the headline.
+- Kept the residual high-D\* wall (0.81) as the identifiability limit (R2).
 
-## CP3 — NLLS baseline survivorship (HC5)  [done]
-`npe/run_cp3_railing_audit.py`. Abdominal S4 D* spread now reported BOTH ways —
-railed-included (all 1618): SD 0.27 / IQR 0.21; railed-excluded (733, OLD): SD 0.41
-/ IQR 0.38. Brain N=500 NLLS coverage documented as already railed-included (failed
-fits counted not-covered). Supplement S4 caption + main-text clause updated; OLD
-numbers retained and labelled.
+## CP4 — novelty positioning (binding lever)
+- Stated up front in §1 and in both cover letters: first systematic real-data
+  quantification of D\* railing across cohorts + honest conditional-coverage
+  characterization + calibration resolution; one-sentence deltas vs known D\* instability
+  and vs Casali 2026.
 
-## CP4 — OOD gate decorrelation (HC6)  [executed]
-`npe/run_cp45_decorrelate_control.py`. Re-scores the self-consistency gate in
-simulation against independent (parameter-recovery) targets. **ADVERSE:** the
-AUC ~0.99 reproduces only against the shared-fit held-out residual; against true
-D* parameter-recovery error the AUC collapses toward chance. Gate reframed as a
-noise/abstention triage signal. [final numbers pending 500k → ADVERSE_RESULTS.md]
+## CP5 — Sextant integration
+- §3.1 + Table S1: cross-cohort generalization — full-ROI 47.8% [47.1,48.5] and
+  independent TCGA-LIHC liver 43.7% (4-b) / 73.4% (3-b), rail direction and generous-bound
+  control. Clearly labelled as the Sextant (non-Gnomon) generalization layer.
 
-## CP5 — in-silico control + RNPE (HC2/CS2)  [executed]
-`npe/run_cp45_decorrelate_control.py`. In-silico control (correct forward model,
-truth known): in-distribution parameter coverage ≈ nominal even stratified →
-**signal-domain coverage ≠ parameter calibration** (TEMPERED framing). RNPE-style
-model criticism with an SNR-matched well-specified null applied to the in-vivo
-self-consistency residuals. Real in-vivo parameter-truth gap FLAGGED as
-needs-external-data. [final numbers pending 500k]
+## CP6 — NMR Biomedicine format
+- Graphical abstract: 69-word text (≤80, 2 sentences) + a 50×60 mm figure
+  (`graphical_abstract.pdf`).
+- Single ~300-word unstructured abstract (converted from the old structured abstract).
+- Data-availability statement (repo one-command reproduction + OSIPI Zenodo 14605039 +
+  TCGA-LIHC) and a data-ethics statement for the open in-vivo data; author contributions.
+- Two cover letters to EIC John R. Griffiths: phenomenon-led and reproducibility/rigor-led.
 
-## CP6 — novelty positioning vs the graveyard (G1–G4/CS4)  [done]
-Manuscript Discussion gains a positioning paragraph conceding documented
-amortized-posterior overconfidence (Hermans 2022; Cannon 2022; Ward 2022; Frazier
-2020) and ensemble/recalibration degradation under shift (Ovadia 2019), then
-sharpens the contribution (bias-aware information-floor diagnostic in IVIM;
-aggregate-vs-pointwise in qMRI). CS4 subtle(sim)-vs-gross(in-vivo) scoping added;
-recalibration safeguard noted to inherit Ovadia's caveat. Six verified references
-(23–28) added to `manuscript.tex` and `refs.bib`; the original 21 + dataset intact.
+## CP7 — references
+- Converted to Wiley/APA author-year (inline reference list). Added OSIPI (Zenodo
+  14605039), Hero & Fessler (1993), and TCGA-LIHC (TCIA; verified DOI from provenance) +
+  the TCIA infrastructure citation. Removed 12 references orphaned by the dropped material;
+  curated `refs.bib` to the same 18-entry set. Unverifiable journal DOIs were omitted
+  rather than fabricated (see `FLAGS.md`).
 
-## Build & gates
-`tectonic manuscript.tex` and `supplement.tex` compile clean; new refs resolve.
-`paper/check_numbers.sh`: PASS (no baseline number decreased; all changes additive).
-Bibliography: 21 original + 1 dataset (osipidata, prior run) + 6 verified graveyard
-refs = 28 entries; all 6 cited inline (23–28); no fabricated identifiers.
-
-## Final disposition — NOT submission-ready
-
-This run hardened the science and the honesty of the manuscript; it did **not**
-make it submission-ready. Classifying the structural items by what the experiments
-actually did:
-
-**Genuinely downgraded by experiment**
-- **OOD self-consistency gate (CP4/HC6).** The headline AUC 0.99 is largely a
-  shared-fit/shared-noise artefact: against an independent parameter-recovery
-  target the AUC collapses to ~0.60. The gate is downgraded from "detects the
-  unobservable miscalibration" to a noise/abstention triage heuristic. This is the
-  one claim materially weakened by experiment.
-
-**Reframed / tempered (claim survived the test, framing corrected)**
-- **Bias-aware floor (CP2/HC1).** Conceptual concession (Hero & Fessler): the
-  unbiased CRLB is not a floor for a biased estimator, so the unbiased-CRLB ratios
-  are demoted to a diagnostic. But the effect **survived** the van-Trees bias-aware
-  floor (78–92% of flagged points), so the result is reframed, not downgraded.
-- **In-silico control (CP5/HC2).** In-distribution parameter calibration holds
-  (coverage ≈ nominal, even stratified), so "pointwise miscalibrated" is tempered to
-  "information-floor-inefficient and transfer-fragile," and the in-vivo limb is
-  scoped as a held-out-signal/OOD check.
-- **NLLS railing (CP3/HC5).** Both railed-included and railed-excluded spreads now
-  reported; the brain-coverage survivorship premise was corrected (already
-  railed-included).
-- **Novelty positioning (CP6).** Reframed to concede prior work and sharpen the
-  delta; no result changed.
-
-**Strengthened by experiment**
-- **Budget sweep (CP1/HC4).** Budget-invariance across 50k–1M confirms the
-  "intrinsic" claim as a fourth ablation.
-
-**Open — cannot be closed by CC (see FLAGS.md)**
-- Real in-vivo parameter ground truth (HC2/CS2): needs phantom or
-  repeated-acquisition data. The in-vivo limb remains a held-out-signal/OOD check.
-- In-vivo 3-way b-split gate decorrelation (HC6): downloadable raw data + `.pt`
-  required; only the simulation decorrelation was run.
-- Per-protocol recalibration experiment: proposed, not implemented; inherits
-  Ovadia's shift-degradation caveat.
-
-Figures 1–4 and S1–S5 were not regenerated (committed CSV numbers unchanged; new
-analyses are additive); figS6 is newly generated. A camera-ready pass should
-regenerate figures from current models and resolve the FLAGS.md typeset items.
+## Figures & build
+- New figures generated directly from frozen run outputs (`make_railing_figures.py`):
+  fig1 railing-by-cohort, fig2 conditional coverage, fig3 resolution, graphical abstract.
+- Removed the orphaned ruler-first figures (fig1–4, figS1–6) and old mockups.
+- `manuscript.tex`, `supplement.tex`, and both cover letters build clean under tectonic.

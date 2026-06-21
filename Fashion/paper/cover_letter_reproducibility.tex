@@ -1,0 +1,66 @@
+% =====================================================================
+% Cover letter VARIANT B (reproducibility/rigor-led) — NMR in Biomedicine
+% EIC: Professor John R. Griffiths
+% Built with tectonic: `tectonic cover_letter_reproducibility.tex`
+% =====================================================================
+\documentclass[11pt]{letter}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\signature{Avery Karlin, BA \\ Department of Applied Physics and Applied Mathematics,
+Columbia University \\ Department of Computer Science, University of Colorado Boulder \\
+\texttt{ak5232@columbia.edu}}
+
+\address{Avery Karlin \\ Columbia University \\ New York, NY, USA}
+
+\begin{document}
+
+\begin{letter}{Professor John R.\ Griffiths \\ Editor-in-Chief, \textit{NMR in Biomedicine}}
+
+\opening{Dear Professor Griffiths,}
+
+I am pleased to submit the manuscript ``Pseudo-diffusion is weakly identifiable in
+practice: a reproducible boundary-railing signature of $D^{*}$ in open in-vivo IVIM, and
+the shape-aware intervals that resolve it'' for consideration in \textit{NMR in
+Biomedicine}.
+
+I want to foreground how the work was done, because its method of construction is part of
+its contribution. The study was built to a strict run-then-write discipline: no number
+appears in the manuscript that was not first produced by a seeded run, and every reported
+value is frozen in a tracked file and regenerable with a single command. The entire
+quantitative core was re-derived in a clean-room reimplementation written independently
+of any prior analysis code, on openly licensed in-vivo data (OSIPI TF2.4, Zenodo
+14605039, SHA-256-verified; an independent TCGA-LIHC liver cohort via The Cancer Imaging
+Archive). A reader can reproduce the lead result --- and every figure --- from scratch.
+
+This discipline is also what makes the scientific claim trustworthy. The central result
+is a real, reproducible phenomenon: a conventional least-squares IVIM fit rails the
+pseudo-diffusion coefficient $D^{*}$ onto a parameter bound in 54.2\% (95\% CI
+52.0--56.4) of high-SNR voxels of an open abdomen scan, reproducing a previously reported
+54.7\% without using its code, and recurring at 44--73\% across independent abdominal and
+liver cohorts. Crucially, the same rigour led us to \emph{retract} a previously reported
+headline. An earlier pair of marginal $D^{*}$ coverage figures (0.30 / 0.67) did not
+reproduce; we traced the discrepancy to an undocumented standard-deviation convention,
+and we now report $D^{*}$ coverage \emph{conditionally}, per true-$D^{*}$ tercile, under
+an explicitly stated honest Cram\'er--Rao convention. The honest finding --- a
+conditional under-coverage concentrated in the high-$D^{*}$ regime (0.63), resolved by
+shape-aware quantile intervals and an amortized posterior up to an irreducible
+identifiability wall --- is less dramatic than the retracted number, and far more
+defensible. We think that trade is exactly the right one for the literature.
+
+The manuscript fits the scope of \textit{NMR in Biomedicine} in both its principal
+categories: it is (a) an original research study of an in-vivo IVIM phenomenon and (b) a
+methodological contribution to how quantitative-MR uncertainty should be measured and
+honestly reported, with a worked, convention-explicit example. The reproducibility module
+is offered to the community for benchmarking future IVIM uncertainty methods.
+
+The manuscript is original, has not been published previously, and is not under
+consideration elsewhere. The author declares no competing interests and takes full
+responsibility for the integrity of the work; a declaration of AI-assisted writing is
+included. I would be glad to suggest suitable reviewers and to answer any questions.
+
+\closing{Sincerely,}
+
+\end{letter}
+\end{document}

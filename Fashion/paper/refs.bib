@@ -1,7 +1,15 @@
-% Bibliography for "Calibration and Efficiency of Uncertainty Estimates in IVIM".
-% The 21 entries below were transcribed verbatim from the merged submission PDF and
-% audited clean. Dataset citations (Checkpoint 2) are added at the end. Do not alter the
-% original 21 entries' content.
+% Bibliography for the railing-first redraft (NMR in Biomedicine).
+% The manuscript renders references inline in APA (Wiley/APA) style; this BibTeX file is
+% kept as a coherent, orphan-free parallel record of the SAME cited set.
+% Curation log (railing-first re-spine):
+%   - REMOVED as orphaned by dropped/out-of-scope material (amortized-NPE/CRLB-floor
+%     audit, deep-ensemble construction comparison, SBI-reliability discussion):
+%     kaandorp2021, efron1993, lakshminarayanan2017, kendall2017, barbieri2020,
+%     korngut2022, zhang2019, hermans2022, cannon2022, ward2022, frazier2020, ovadia2019.
+%   - ADDED: tcga_lihc (Erickson 2016, verified DOI from TCIA provenance), clark2013 (TCIA).
+%   - DOIs: only verified / publisher-deterministic DOIs are asserted. Journal DOIs that
+%     could not be independently verified were omitted rather than fabricated (see FLAGS.md);
+%     they may be reinstated at typesetting after confirmation against the publisher.
 
 @article{lebihan1988,
   author  = {Le Bihan, D. and Breton, E. and Lallemand, D. and Aubin, M. L. and Vignaud, J. and Laval-Jeantet, M.},
@@ -30,7 +38,8 @@
   year    = {2018},
   volume  = {13},
   number  = {4},
-  pages   = {e0194590}
+  pages   = {e0194590},
+  doi     = {10.1371/journal.pone.0194590}
 }
 
 @article{lemke2011,
@@ -61,24 +70,6 @@
   volume  = {78},
   number  = {6},
   pages   = {2373--2387}
-}
-
-@article{kaandorp2021,
-  author  = {Kaandorp, M. P. and Barbieri, S. and Klaassen, R. and others},
-  title   = {Improved unsupervised physics-informed deep learning for intravoxel incoherent motion modeling and evaluation in pancreatic cancer patients},
-  journal = {Magn Reson Med},
-  year    = {2021},
-  volume  = {86},
-  number  = {4},
-  pages   = {2250--2265}
-}
-
-@book{efron1993,
-  author    = {Efron, B. and Tibshirani, R. J.},
-  title     = {An Introduction to the Bootstrap},
-  publisher = {Chapman and Hall},
-  address   = {New York},
-  year      = {1993}
 }
 
 @article{orton2014,
@@ -127,47 +118,6 @@
   year    = {2018}
 }
 
-@inproceedings{lakshminarayanan2017,
-  author    = {Lakshminarayanan, B. and Pritzel, A. and Blundell, C.},
-  title     = {Simple and scalable predictive uncertainty estimation using deep ensembles},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  year      = {2017}
-}
-
-@inproceedings{kendall2017,
-  author    = {Kendall, A. and Gal, Y.},
-  title     = {What uncertainties do we need in Bayesian deep learning for computer vision?},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  year      = {2017}
-}
-
-@article{barbieri2020,
-  author  = {Barbieri, S. and Gurney-Champion, O. J. and Klaassen, R. and Thoeny, H. C.},
-  title   = {Deep learning how to fit an intravoxel incoherent motion model to diffusion-weighted {MRI}},
-  journal = {Magn Reson Med},
-  year    = {2020},
-  volume  = {83},
-  number  = {1},
-  pages   = {312--321}
-}
-
-@inproceedings{korngut2022,
-  author    = {Korngut, N. and Rotman, E. and Afacan, O. and others},
-  title     = {{SUPER-IVIM-DC}: intra-voxel incoherent motion based fetal lung maturity assessment from limited {DWI} data using supervised learning coupled with data-consistency},
-  booktitle = {Medical Image Computing and Computer Assisted Intervention (MICCAI) 2022. Lecture Notes in Computer Science},
-  publisher = {Springer},
-  year      = {2022},
-  doi       = {10.1007/978-3-031-16434-7_71}
-}
-
-@inproceedings{zhang2019,
-  author    = {Zhang, L. and Vishnevskiy, V. and Jakab, A. and Goksel, O.},
-  title     = {Implicit modeling with uncertainty estimation for intravoxel incoherent motion imaging},
-  booktitle = {IEEE 16th International Symposium on Biomedical Imaging (ISBI)},
-  year      = {2019},
-  pages     = {1003--1007}
-}
-
 @article{casali2026,
   author  = {Casali, N. and Brusaferri, A. and Baselli, G. and others},
   title   = {A comprehensive framework for uncertainty quantification of voxel-wise supervised deep learning models in {IVIM} {MRI}},
@@ -196,63 +146,39 @@
   doi     = {10.1016/j.media.2025.103580}
 }
 
-% --- Dataset citation (added in assessor remediation, CP2) ---
-@misc{osipidata2025,
-  author = {Gurney-Champion, O. and Rashid, I. and van der Thiel, M. and Kuppens, D. and Voorter, P. and van Houdt, P. and Peterson, E. and Jalnefjord, O.},
-  title  = {Data for the OSIPI TF2.4 IVIM-MRI Code Collection (in-vivo brain and abdominal diffusion-weighted acquisitions)},
-  year   = {2025},
-  publisher = {Zenodo},
-  doi    = {10.5281/zenodo.14605039}
-}
-
-% =====================================================================
-% Friction-remediation additions (CP6): SBI/qMRI overconfidence "graveyard"
-% and biased-CRB positioning. Verified identifiers only; no fabrication.
-% =====================================================================
-
-@article{hermans2022,
-  author  = {Hermans, J. and Delaunoy, A. and Rozet, F. and Wehenkel, A. and Begy, V. and Louppe, G.},
-  title   = {A crisis in simulation-based inference? Beware, your posterior approximations can be unfaithful},
-  journal = {Transactions on Machine Learning Research (TMLR)},
-  year    = {2022},
-  note    = {arXiv:2110.06581}
-}
-
-@article{cannon2022,
-  author  = {Cannon, P. and Ward, D. and Schmon, S. M.},
-  title   = {Investigating the impact of model misspecification in neural simulation-based inference},
-  journal = {arXiv:2209.01845},
-  year    = {2022}
-}
-
-@inproceedings{ward2022,
-  author    = {Ward, D. and Cannon, P. and Beaumont, M. and Fasiolo, M. and Schmon, S.},
-  title     = {Robust neural posterior estimation and statistical model criticism},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  year      = {2022}
-}
-
-@article{frazier2020,
-  author  = {Frazier, D. T. and Robert, C. P. and Rousseau, J.},
-  title   = {Model misspecification in approximate Bayesian computation: consequences and diagnostics},
-  journal = {J R Stat Soc Series B Stat Methodol},
-  year    = {2020},
-  volume  = {82},
-  number  = {2},
-  pages   = {421--444}
-}
-
-@inproceedings{ovadia2019,
-  author    = {Ovadia, Y. and Fertig, E. and Ren, J. and Nado, Z. and Sculley, D. and Nowozin, S. and Dillon, J. V. and Lakshminarayanan, B. and Snoek, J.},
-  title     = {Can you trust your model's uncertainty? Evaluating predictive uncertainty under dataset shift},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  year      = {2019}
-}
-
 @inproceedings{herofessler1993,
   author    = {Hero, A. O. and Fessler, J. A.},
   title     = {Cram\'er--Rao lower bounds for biased image reconstruction},
   booktitle = {Proc 36th Midwest Symposium on Circuits and Systems (IEEE)},
   year      = {1993},
-  note      = {exact volume/pages to be confirmed at typeset}
+  note      = {exact volume/pages/DOI to be confirmed at typeset}
+}
+
+% --- Open dataset citations ---
+@misc{osipidata2025,
+  author    = {Gurney-Champion, O. and Rashid, I. and van der Thiel, M. and Kuppens, D. and Voorter, P. and van Houdt, P. and Peterson, E. and Jalnefjord, O.},
+  title     = {Data for the OSIPI TF2.4 IVIM-MRI Code Collection (in-vivo brain and abdominal diffusion-weighted acquisitions)},
+  year      = {2025},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.14605039}
+}
+
+@misc{tcga_lihc,
+  author    = {Erickson, B. J. and Kirk, S. and Lee, Y. and Bathe, O. and Kearns, M. and Gerdes, C. and Rieger-Christ, K. and Lemmerman, J.},
+  title     = {The Cancer Genome Atlas Liver Hepatocellular Carcinoma Collection (TCGA-LIHC)},
+  year      = {2016},
+  publisher = {The Cancer Imaging Archive},
+  note      = {Data set},
+  doi       = {10.7937/K9/TCIA.2016.IMMQW8UQ}
+}
+
+@article{clark2013,
+  author  = {Clark, K. and Vendt, B. and Smith, K. and Freymann, J. and Kirby, J. and Koppel, P. and others},
+  title   = {The Cancer Imaging Archive ({TCIA}): maintaining and operating a public information repository},
+  journal = {J Digit Imaging},
+  year    = {2013},
+  volume  = {26},
+  number  = {6},
+  pages   = {1045--1057},
+  doi     = {10.1007/s10278-013-9622-7}
 }
