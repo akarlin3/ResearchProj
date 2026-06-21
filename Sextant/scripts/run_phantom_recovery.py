@@ -82,6 +82,26 @@ def spearman(a: np.ndarray, b: np.ndarray) -> float:
     return float((ra * rb).sum() / denom) if denom > 0 else float("nan")
 
 
+def _boot_ci(point: float, stat, n: int, n_boot: int,
+             rng: np.random.Generator) -> dict:
+    """Percentile (95%) bootstrap CI for ``stat`` over resampled voxel indices.
+
+    ``stat(idx)`` returns a scalar over the voxels selected by ``idx``; we
+    resample voxels with replacement (the synthetic-ruler bootstrap convention).
+    Non-finite replicates (e.g. an empty railed subset in a resample) are dropped.
+    """
+    vals = np.empty(n_boot, float)
+    for b in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        vals[b] = stat(idx)
+    vals = vals[np.isfinite(vals)]
+    if not len(vals):
+        return {"point": float(point), "lo": float("nan"), "hi": float("nan")}
+    return {"point": float(point),
+            "lo": float(np.percentile(vals, 2.5)),
+            "hi": float(np.percentile(vals, 97.5))}
+
+
 # --------------------------------------------------------------------------- #
 def b1_brain_phantom(rng):
     gt = json.load(open(_PHANTOM_GT))
@@ -162,6 +182,104 @@ def b3_flag_validity(rng):
     return out
 
 
+# --------------------------------------------------------------------------- #
+# B4: railing as an ACTIONABLE per-voxel flag of D* unreliability.
+#
+# B3 (above) scores railing as a classifier of "above-median error" -- a balanced
+# split that, by construction, makes the flag look near-chance (AUC ~0.52-0.56).
+# B4 asks the decision-relevant questions the HC7 friction names:
+#   * Of the voxels the flag fires on, how many truly have an UNUSABLE D*?
+#     (precision at the railing operating point)
+#   * Of the truly-unusable voxels, how many does the flag catch? (recall)
+#   * Does ACTING on the flag -- excluding railed voxels -- measurably improve the
+#     pooled D* error of what remains?
+# "Unreliable D*" is defined truth-referenced and convention-free: a voxel is
+# unreliable iff its normalised D* error |D*hat - D*|/D* exceeds TAU (0.5 primary
+# = off by >50%; 1.0 reported as a sensitivity). No interval/SD convention enters.
+# --------------------------------------------------------------------------- #
+TAU_PRIMARY = 0.5
+TAU_SENS = 1.0
+N_BOOT_FLAG = 2000
+
+
+def _flag_stats(railed, unreliable, rel, idx):
+    """Precision / recall / specificity / pooled-error-exclusion on voxels ``idx``."""
+    r = railed[idx]
+    u = unreliable[idx]
+    e = rel[idx]
+    prec = float(u[r].mean()) if r.any() else float("nan")          # P(unreliable | railed)
+    rec = float(r[u].mean()) if u.any() else float("nan")           # P(railed | unreliable)
+    spec = float((~r)[~u].mean()) if (~u).any() else float("nan")   # P(not railed | reliable)
+    base = float(u.mean())
+    med_all = float(np.median(e))
+    med_kept = float(np.median(e[~r])) if (~r).any() else float("nan")
+    return prec, rec, spec, base, med_all, med_kept
+
+
+def b4_flag_utility(rng):
+    out = {}
+    for snr in (10.0, 20.0, 40.0):
+        N = 3000
+        # identical draws/seeds to B3 for snr 20/40 -> internally consistent.
+        truths = draw_truths(N, np.random.default_rng(SEED + 200 + int(snr)))
+        D, Ds, f = truths[:, 0], truths[:, 1], truths[:, 2]
+        clean = fm_biexp(TARGET_BVALS[None, :], D[:, None], Ds[:, None], f[:, None])
+        sig = add_noise(clean, snr, np.random.default_rng(SEED + 300 + int(snr)))
+        fit = fit_and_rail(sig, TARGET_BVALS)
+        rel = np.abs(fit.dstar - Ds) / Ds
+        railed = fit.railed
+        unrel = rel > TAU_PRIMARY
+        unrel1 = rel > TAU_SENS
+
+        prec, rec, spec, base, med_all, med_kept = _flag_stats(railed, unrel, rel,
+                                                               np.arange(N))
+        auc_flag = (rec + spec) / 2.0
+        lift = prec / base if base > 0 else float("nan")
+        delta_med = med_all - med_kept
+        rel_reduction = delta_med / med_all if med_all > 0 else float("nan")
+
+        brng = np.random.default_rng(SEED + 700 + int(snr))
+        ci_prec = _boot_ci(prec, lambda ix: _flag_stats(railed, unrel, rel, ix)[0],
+                           N, N_BOOT_FLAG, brng)
+        ci_rec = _boot_ci(rec, lambda ix: _flag_stats(railed, unrel, rel, ix)[1],
+                          N, N_BOOT_FLAG, brng)
+        ci_base = _boot_ci(base, lambda ix: _flag_stats(railed, unrel, rel, ix)[3],
+                           N, N_BOOT_FLAG, brng)
+
+        def _delta(ix):
+            _, _, _, _, ma, mk = _flag_stats(railed, unrel, rel, ix)
+            return ma - mk
+        ci_delta = _boot_ci(delta_med, _delta, N, N_BOOT_FLAG, brng)
+
+        out[str(int(snr))] = {
+            "n": N, "tau": TAU_PRIMARY,
+            "frac_railed": float(railed.mean()),
+            "base_rate_unreliable": base,
+            "precision": prec, "precision_ci": [ci_prec["lo"], ci_prec["hi"]],
+            "recall": rec, "recall_ci": [ci_rec["lo"], ci_rec["hi"]],
+            "specificity": spec,
+            "auc_flag": auc_flag,
+            "lift_precision_over_base": lift,
+            "base_rate_ci": [ci_base["lo"], ci_base["hi"]],
+            "median_rel_err_all": med_all,
+            "median_rel_err_kept_nonrailed": med_kept,
+            "exclusion_delta_median_rel_err": delta_med,
+            "exclusion_delta_ci": [ci_delta["lo"], ci_delta["hi"]],
+            "exclusion_rel_reduction": rel_reduction,
+            "sensitivity_tau1.0": {
+                "base_rate_unreliable": float(unrel1.mean()),
+                "precision": float(unrel1[railed].mean()) if railed.any() else None,
+                "recall": float(railed[unrel1].mean()) if unrel1.any() else None,
+            },
+        }
+        o = out[str(int(snr))]
+        print(f"  B4 SNR{int(snr):>3}  railed={o['frac_railed']:.3f} "
+              f"base(unrel)={base:.3f}  precision={prec:.3f} recall={rec:.3f} "
+              f"lift={lift:.2f}  pooled-relErr {med_all:.3f}->{med_kept:.3f} "
+              f"(Delta={delta_med:+.3f})")
+    return out
+
+
 def main():
     rng = np.random.default_rng(SEED)
     print("[phantom] B1 brain digital phantom (known truth):")
@@ -170,6 +288,8 @@ def main():
     b2 = b2_f_sweep(rng)
     print("[phantom] B3 railing-as-flag validity over the prior (known truth):")
     b3 = b3_flag_validity(rng)
+    print("[phantom] B4 railing as an actionable flag of D* unreliability (HC7):")
+    b4 = b4_flag_utility(rng)
 
     out = {
         "meta": {"seed": SEED,
@@ -180,6 +300,7 @@ def main():
         "B1_brain_phantom": b1,
         "B2_f_sweep": b2,
         "B3_flag_validity": b3,
+        "B4_flag_utility": b4,
     }
     os.makedirs(os.path.dirname(RESULTS), exist_ok=True)
     with open(RESULTS, "w") as fh:
