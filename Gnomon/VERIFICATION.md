@@ -57,8 +57,27 @@ Full verdict + divergence report: [`VERDICT.md`](VERDICT.md).
 changes how the numbers should be presented in the retool (re-frame marginal → conditional
 coverage; document the uncertainty convention). Awaiting direction.
 
-## CP4 — package for the retool  ⏸  (gated on the verdict)
+## CP4 — package for the retool  ✅  (spine-agnostic hand-off)
 
-The clean implementation + complete methods + the *reproduced* results (T1/T3c/T4) are
-ready to hand to the retool; the *divergent* results (T3a/T3b) are documented with their
-cause in [`VERDICT.md`](VERDICT.md). Proceed only on a decision about the re-framing.
+Gate: the reframe is **run** (not asserted); every Fashion claim dispositioned; methods
+complete; the hand-off builds and regenerates in one command.
+
+- [x] **CP4.1 reframe run** (`gnomon/reframe.py` → [`handoff/conditional_coverage.json`](handoff/conditional_coverage.json)):
+      per-true-D\*-tercile D\* coverage for Laplace SD & MCMC SD under **both** SD
+      conventions, bootstrap CIs. Reconstruction confirmed: honest-CRLB Laplace high-D\*
+      = 0.63; floored Laplace pooled = 0.68 (≈ Fashion's 0.67). `reconstruction_ok=True`.
+- [x] **CP4.2 claims ledger** ([`handoff/CLAIMS_LEDGER.md`](handoff/CLAIMS_LEDGER.md)):
+      KEEP 3 (K1 railing, K2 quantile, K3 flow) / REFRAME 3 / DROP 1 / OUT-OF-SCOPE 3;
+      each KEEP/REFRAME with run-evidence + CI + reworded text; primary-claim candidates
+      flagged; spine **not** fixed.
+- [x] **CP4.3 complete methods** ([`docs/METHODS.md`](docs/METHODS.md)): both SD
+      conventions documented + honest CRLB recommended/justified; §10 completeness
+      checklist maps every Huang item.
+- [x] **CP4.4 hand-off assembled** ([`RETOOL_HANDOFF.md`](RETOOL_HANDOFF.md) + `handoff/`):
+      pointer to the clean impl, ledger, reframed table (both conventions), methods,
+      divergence appendix; usable ruler-first **or** boundary-railing-first.
+- [x] **One-command regen** (`scripts/build_handoff.py`) reproduces every number; suite
+      `pytest Gnomon/tests -q` → **17/17**.
+
+**Halt:** the spine decision (ruler-first vs boundary-railing-first) and the actual
+Fashion redraft (incorporating Sextant) are the next, separate step.
