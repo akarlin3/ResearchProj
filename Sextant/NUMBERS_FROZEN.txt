@@ -48,7 +48,7 @@ C3 RNPE-style model criticism on real OSIPI abdomen  (model_criticism.json)
    -> railing co-occurs with GOOD bi-exp fit: NOT a misspecification artefact
 
 --------------------------------------------------------------------------------
-D. TRACK B — HC4/CS3 simulation-budget sweep (BANKED; research_debt/budget_sweep/)
+D. TRACK B — HC4/CS3 simulation-budget sweep (BANKED; Sextant/research_debt/budget_sweep/)
    Re-derived from cp1_budget_sweep.csv (prior sbi-venv run) via summarize_budget_sweep.py
 --------------------------------------------------------------------------------
 D* claimed SD/CRLB ratio @ SNR10, budget 50k..1M : 0.077, 0.080, 0.079, 0.084, 0.081  (span 0.007)
