@@ -102,15 +102,22 @@ result changes, **Vernier's honest-scope claim must be re-checked.**
 
 ## 4. FASHION — pinned inputs (the calibrated-ruler narrative) — PROVISIONAL
 
-**Paper status (PINNED):** in review at **MRM**; no DOI. Source: `Fashion/CITATION.cff`.
+**Paper status (PINNED):** in review at **NMR in Biomedicine** (retooled,
+boundary-railing-first; resubmitted from MRM); no DOI. Source:
+`Fashion/paper_retool/`, `Gnomon/handoff/CLAIMS_LEDGER.md`.
 
 | key | pinned value | source (file) | role for Vernier |
 |---|---|---|---|
-| `fashion.result.dstar_shape` | symmetric ±σ under-covers D\* (0.30/0.67); skew-aware MCMC-quantile interval ≈ nominal (0.94) | `Fashion/README.md` | motivates why *calibration shape*, not just precision, is the right target |
+| `fashion.result.dstar_shape` | under the **honest CRLB**, symmetric ±σ under-covers D\* *conditionally* in the **high-D\* tercile** (0.63 [0.60,0.67]); the skew-aware MCMC-quantile interval restores **marginal** coverage (0.90) with a residual high-D\* gap (0.81). The dramatic *marginal* 0.30/0.67 is **dropped**. | `Gnomon/handoff/conditional_coverage.json` | motivates why *calibration shape*, not just precision, is the right target — and the divergence Vernier measures is exactly in that conditional regime |
 
-**The Fashion assumption Vernier relies on:** that the "right *shape* of the error
-bar is what calibrates D\*" headline survives review. Used in the paper framing
-only. If it changes, **the framing is re-cast; the gate verdict is not.**
+**The Fashion assumption Vernier relies on (retooled):** that the "right *shape* of
+the error bar is what calibrates D\*" headline survives review — now as a *scoped,
+ground-truth-only* ruler reporting an honest **conditional** high-D\* under-coverage
+(not the dropped marginal severity). Used in the paper framing only. Notably,
+Vernier's `Δ_cond` **is** the high-D\*-tercile conditional-coverage range — the
+exact metric the retool retains — so the gate *aligns with* the retooled honest
+target rather than the dropped marginal one. If the framing changes, **the framing
+is re-cast; the gate verdict is not** (the gate is Caliper-only, SOLID).
 
 ---
 
