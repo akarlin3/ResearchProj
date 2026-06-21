@@ -310,28 +310,32 @@ the NPE became overconfident at essentially every grid point for all three param
 ($\sim$100\%, versus 17--69\% on the trained scheme), showing that the amortized calibration
 does not transfer across acquisitions. On the same open in-vivo brain dataset [22] ($N = 500$
 voxels), held-out-b posterior-predictive coverage collapsed to 0.03 at nominal 0.95 (NLLS
-0.90).
+0.90); both coverages are computed over all 500 sampled gray-matter voxels, with
+boundary-railed NLLS fits included and failed fits counted as not covered, so the NLLS
+reference is not survivorship-filtered.
 Because voxel-level ground truth is unavailable in vivo, this is a held-out-signal check
 rather than a parameter-recovery test, so it demonstrates that the trained NPE's
 overconfidence persists outside simulation rather than establishing it as a general property
 of amortized IVIM posteriors.
 
-\textbf{Multi-subject cohort confirmation.} To test whether this in-vivo overconfidence is
-idiosyncratic to one subject, we repeated the held-out-b check across an open multi-subject
-liver cohort ($N = 59$ patients; an independent vendor and field strength --- GE 1.5T --- and a
-different organ and b-scheme from the trained acquisition) [23]. This is therefore an
-off-scheme deployment for the amortized NPE, the multi-subject analogue of the acquisition-shift
-result above. Per patient we scored held-out-b posterior-predictive coverage for the NPE and for
-the per-voxel NLLS reference (Supplementary Figure S6). The amortized NPE under-covered held-out
-signal in \emph{every} patient relative to NLLS (59/59): cohort-mean coverage at nominal 0.95 was
-0.58 (NPE) versus 0.78 (NLLS), with the NPE below NLLS at every credibility level. As in the
-single-subject check, voxel-level ground truth is unavailable, so this compares the two
-estimators rather than either against truth; NLLS is itself below nominal in vivo (model misfit
-and inter-series noise), but the systematic NPE-below-NLLS gap across an independent cohort shows
-the amortized overconfidence is a reproducible property under acquisition shift, not a
-single-dataset artifact.
+\textbf{Signal-domain coverage is not parameter calibration.} Because the held-out-b check
+operates in signal space, an in-silico control with known parameters was added to separate
+posterior-width overconfidence from forward-model misfit (Supplementary Methods S7). On its
+training acquisition with the correct forward model, the NPE's \emph{parameter} posterior is
+in fact well-calibrated: simulation-based parameter coverage is near-nominal at every level
+(0.93--0.94 at nominal 0.95) and stays near-nominal when stratified by SNR and by weak
+identifiability (low-$f$), even though the signal-domain held-out-b coverage for the same model
+is 0.34. The in-distribution pointwise failure is therefore one of information-theoretic
+efficiency (claimed precision below the achievable floor, Figure~3) and of signal-domain
+prediction, not of in-distribution Bayesian parameter coverage; the gross in-vivo collapse
+(0.03) is an out-of-distribution transfer effect. An RNPE-style model-criticism check ---
+comparing each in-vivo voxel's posterior-predictive self-consistency residual to an
+SNR-matched well-specified simulated null --- flags 12.8\% of in-vivo voxels as misspecified
+(versus a 5\% well-specified baseline), a modest excess consistent with mild forward/noise
+misspecification atop the dominant transfer failure. A definitive in-vivo test would require
+parameter ground truth (phantom or repeated-acquisition data), which is unavailable here.
 
-A single in-vivo abdominal case from the same open collection [22] is shown in Supplementary
+A single in-vivo abdominal case from the same open collection (22) is shown in Supplementary
 Figure S4 as a qualitative illustration of the same weak-identifiability signature (the NLLS
 \Dstar{} reference
 boundary-rails in 54.7\% of high-SNR ROI voxels); it is not used for inference. Inference-time
@@ -455,7 +459,15 @@ retaining 49\% of voxels at TPR 0.97 / FPR 0.05), and gating on it monotonically
 held-out coverage --- from 0.03 toward 0.20 as the retained fraction tightens (Supplementary
 Figure S3). A classical biexponential goodness-of-fit gate, by contrast, does not recover
 calibration (AUC 0.59), confirming that the overconfidence is intrinsic to the estimator
-rather than driven by model-misfit; gating therefore provides safe triage but, consistent
+rather than driven by model-misfit. This AUC must be read with care, however: the held-out-b
+miscalibration target is computed from the same posterior fit and noise realization as the
+gate, so the two are coupled through shared noise. Scored in simulation against an
+\emph{independent} target --- the true \Dstar{} parameter-recovery error, available only where
+ground truth exists --- the gate's ranking power falls toward chance (AUC 0.60 versus 0.99 for
+the shared-fit target). The gate therefore detects residual/noise magnitude rather than
+validated parameter miscalibration, and we present it as a deployment-time abstention/triage
+heuristic, not as a calibrated detector of the unobservable parameter error. Gating thus
+provides safe triage but, consistent
 with the acquisition-shift result, full calibration still requires the per-scheme
 recalibration described next. Second, a lightweight recalibration or transfer-learning step
 on a small protocol-specific dataset (phantom or healthy-volunteer data) could adapt the
@@ -478,15 +490,50 @@ only a floor- or ceiling-referenced check detects. Aggregate coverage is necessa
 sufficient; shape-aware and information-floor-aware diagnostics are needed to detect these
 failures.
 
+\subsection*{Relation to prior work on amortized-posterior reliability}
+
+That amortized neural posteriors can be overconfident or unfaithful is established: posterior
+approximations from simulation-based inference can fail calibration diagnostics (23), and
+model misspecification degrades neural SBI posteriors in ways that dedicated error models and
+statistical model criticism are designed to catch (24,25), with parallel consequences and
+diagnostics characterised for approximate Bayesian computation (26). Independently, deep
+ensembles are known to under-cover and post-hoc recalibration is known to degrade under
+dataset shift (27). Our contribution is not to rediscover that amortized posteriors can be
+overconfident, but to localise and benchmark it in IVIM: (i) an information-floor diagnostic
+--- CRLB-relative, and read here against a bias-aware floor --- that places claimed and
+achieved precision against the physical limit, and (ii) the aggregate-versus-pointwise
+distinction in quantitative MRI, where a posterior that passes marginal coverage is
+overconfident exactly where the parameter is weakly identified. The per-protocol
+recalibration safeguard we propose inherits the shift-degradation caveat of (27):
+recalibration tuned on one protocol is not guaranteed to transfer, which is why we require
+re-auditing against the information floor after any recalibration rather than treating it as a
+one-time fix.
+
+A scope qualification follows from the two failure regimes we observe. In simulation the
+failure is \emph{subtle}: aggregate coverage is attained while pointwise calibration fails ---
+the regime the information-floor and shape-aware diagnostics are built to detect. In vivo the
+failure is \emph{gross}: held-out-b coverage collapses to 0.03, which an aggregate check would
+itself flag. The thesis that aggregate checks are insufficient therefore applies specifically
+to the subtle, in-distribution regime; the gross in-vivo collapse is detectable by aggregate
+metrics and is reported as an out-of-distribution transfer failure, not as evidence that
+aggregate checks miss it.
+
 \subsection*{Limitations and reproducibility}
 
 The analyses are simulation-based; real-tissue heterogeneity and acquisition artifacts may
 shift the rankings, and multi-acquisition validation is a natural next step. The deep-learning
-comparison covers two architectures. Three controlled ablations bracket the amortized
+comparison covers two architectures. Four controlled ablations bracket the amortized
 estimator: flow architecture (NSF versus MAF, Supplementary Figure S1), acquisition density
-(8- versus 16-point b-schemes, Supplementary Figure S2), and the prior (log-uniform versus a
-tissue-informed truncated-Normal \Dstar{} prior, Supplementary Figure S5). The below-floor
-\Dstar{} overconfidence persists across all three, which attributes it to the estimator under
+(8- versus 16-point b-schemes, Supplementary Figure S2), the prior (log-uniform versus a
+tissue-informed truncated-Normal \Dstar{} prior, Supplementary Figure S5), and the
+training-simulation budget (50,000 to 1,000,000 simulations, Supplementary Figure S6). The
+budget sweep directly tests the mundane alternative that the below-floor behaviour is
+simulation starvation rather than an intrinsic property: holding architecture, prior, seed,
+embedding and b-scheme fixed, the per-SNR median \Dstar{} claimed SD-to-CRLB ratio and the
+below-floor fraction are essentially constant across the 20-fold budget range (overall
+below-floor fraction $\approx$0.69 at every budget, claimed ratio at SNR 10 of 0.077--0.084),
+so the overconfidence is not relieved by more training data. The below-floor
+\Dstar{} overconfidence persists across all four ablations, which attributes it to the estimator under
 weak identifiability rather than to a single design choice; an informative prior legitimately
 permits posterior width below the prior-free CRLB, so the discriminating evidence is the
 persistence under the uninformative log-uniform prior, not the below-floor fraction itself.
@@ -508,8 +555,25 @@ generally exceeds the Gaussian CRLB, so the true floor lies above the value we p
 estimator's claimed SD is then even further below the true floor. A sampling-based bound
 confirms this directly: on the low-SNR subset (SNR 10--20), where the central \Dstar{} claims
 sit, replacing the Gaussian floor with a Rician-exact Fisher floor leaves the below-floor
-fraction essentially unchanged (81.4\% versus 81.2\%). The over-confidence is therefore not an
-artifact of the Gaussian noise-model approximation. All code, the calibration grid, and the
+fraction essentially unchanged (81.4\% versus 81.2\%), so the over-confidence is not an
+artifact of the Gaussian noise-model approximation. A second, deeper caveat concerns bias.
+The Cram\'er--Rao bound lower-bounds the variance of \emph{unbiased} estimators; a biased or
+prior-regularized estimator --- which the amortized posterior provably is, reverting toward
+the prior under weak identifiability --- can legitimately report or achieve a variance below
+the unbiased floor (28). Read literally, then, ``claimed SD below the unbiased CRLB'' does
+not by itself establish overconfidence, and we treat the unbiased-CRLB ratios (Figure 3,
+Table 2) as a diagnostic rather than a proof. To test the claim against this objection we
+re-audited the claimed \Dstar{} SD against a bias-aware floor: the van Trees Bayesian
+information bound under the actual log-uniform \Dstar{} prior, which credits the prior with
+all the information it carries (here the bias-aware floor is 0.005--0.5\x{} the unbiased
+CRLB). The below-floor \Dstar{} overconfidence largely survives this correction --- 78\% of
+the originally flagged grid points at SNR 10, rising to 92\% at SNR 100, remain below the
+bias-aware floor (58.8\% of all grid points, versus 69.5\% below the unbiased floor); the
+prior explains only 8--22\%. Because any error in the estimated floor lowers it, this
+surviving fraction is conservative. The load-bearing, CRLB-independent evidence is therefore
+the held-out-b coverage collapse (Figure 4), the persistence under the uninformative
+log-uniform prior, and the SBC rank check --- none of which references the unbiased bound.
+All code, the calibration grid, and the
 efficiency map are released openly as a reproducibility module, and offered to the OSIPI
 initiative, for benchmarking future methods.
 
@@ -690,10 +754,28 @@ Houdt P, Peterson E, Jalnefjord O. Data for the OSIPI TF2.4 IVIM-MRI Code Collec
 brain and abdominal diffusion-weighted acquisitions). Zenodo; 2025.
 doi:10.5281/zenodo.14605039.
 
-\bibitem{liver2020} \DJ oki\'c-Kova\v{c} J, Dakovi\'c M, Jankovi\'c A, Mitrovi\'c M, Dugali\'c V,
-Galun D, \DJ uri\'c-Stefanovi\'c A, Ma\v{s}ulovi\'c D. The role of intravoxel incoherent motion
-(IVIM) parameters in characterization of hypovascular liver lesions: the raw diffusion-weighted
-images and IVIM data. Dryad; 2020. doi:10.5061/dryad.xwdbrv1cg.
+\bibitem{hermans2022} Hermans J, Delaunoy A, Rozet F, Wehenkel A, Begy V, Louppe G. A crisis in
+simulation-based inference? Beware, your posterior approximations can be unfaithful. Trans Mach
+Learn Res (TMLR). 2022. arXiv:2110.06581.
+
+\bibitem{cannon2022} Cannon P, Ward D, Schmon SM. Investigating the impact of model
+misspecification in neural simulation-based inference. arXiv:2209.01845. 2022.
+
+\bibitem{ward2022} Ward D, Cannon P, Beaumont M, Fasiolo M, Schmon S. Robust neural posterior
+estimation and statistical model criticism. In: Advances in Neural Information Processing Systems
+(NeurIPS). 2022.
+
+\bibitem{frazier2020} Frazier DT, Robert CP, Rousseau J. Model misspecification in approximate
+Bayesian computation: consequences and diagnostics. J R Stat Soc Series B Stat Methodol.
+2020;82(2):421-444.
+
+\bibitem{ovadia2019} Ovadia Y, Fertig E, Ren J, Nado Z, Sculley D, Nowozin S, Dillon JV,
+Lakshminarayanan B, Snoek J. Can you trust your model's uncertainty? Evaluating predictive
+uncertainty under dataset shift. In: Advances in Neural Information Processing Systems (NeurIPS).
+2019.
+
+\bibitem{herofessler1993} Hero AO, Fessler JA. Cram\'er--Rao lower bounds for biased image
+reconstruction. In: Proc 36th Midwest Symposium on Circuits and Systems (IEEE). 1993.
 
 \end{thebibliography}
 
