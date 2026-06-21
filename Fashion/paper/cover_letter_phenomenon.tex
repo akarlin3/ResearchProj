@@ -1,0 +1,72 @@
+% =====================================================================
+% Cover letter VARIANT A (phenomenon-led) — NMR in Biomedicine
+% EIC: Professor John R. Griffiths
+% Built with tectonic: `tectonic cover_letter_phenomenon.tex`
+% =====================================================================
+\documentclass[11pt]{letter}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\signature{Avery Karlin, BA \\ Department of Applied Physics and Applied Mathematics,
+Columbia University \\ Department of Computer Science, University of Colorado Boulder \\
+\texttt{ak5232@columbia.edu}}
+
+\address{Avery Karlin \\ Columbia University \\ New York, NY, USA}
+
+\begin{document}
+
+\begin{letter}{Professor John R.\ Griffiths \\ Editor-in-Chief, \textit{NMR in Biomedicine}}
+
+\opening{Dear Professor Griffiths,}
+
+I am pleased to submit the manuscript ``Pseudo-diffusion is weakly identifiable in
+practice: a reproducible boundary-railing signature of $D^{*}$ in open in-vivo IVIM, and
+the shape-aware intervals that resolve it'' for consideration in \textit{NMR in
+Biomedicine}.
+
+The work begins from a concrete, real-data observation. Pseudo-diffusion ($D^{*}$) is the
+least identifiable parameter of the intravoxel incoherent motion (IVIM) model, a fact
+long known in principle from simulation. We show it has a direct, measurable fingerprint
+in real acquisitions: on the open OSIPI in-vivo abdomen scan, a conventional
+box-constrained least-squares fit drives $D^{*}$ onto a parameter bound --- it
+``rails'' --- in 54.2\% (95\% CI 52.0--56.4) of high-SNR voxels. This is not an artefact
+of one analysis pipeline: an independent, clean-room reimplementation reproduces a
+previously reported 54.7\% without using its code, and the phenomenon generalises across
+selection, scanner, and organ --- 47.8\% over the full abdominal ROI and 43.7--73.4\% in
+an independent multi-subject liver DWI cohort, the sparser b-value scheme railing more,
+exactly as identifiability predicts. Railing is an assumption-free read-out of weak
+identifiability: it needs no ground truth and no trust in a noise model, only the
+optimiser's own output.
+
+We then trace what this does to the uncertainty estimates a clinician would act on, and
+how to repair it. The calibration failure is \emph{conditional} --- symmetric Gaussian
+intervals under-cover $D^{*}$ specifically in the high-$D^{*}$ regime (central-95\%
+coverage 0.63) while remaining near-nominal elsewhere --- and is resolved by shape-aware
+posterior quantile intervals and an amortized neural posterior, up to an irreducible
+high-$D^{*}$ identifiability wall. Reporting coverage conditionally, and under an
+explicitly stated Cram\'er--Rao convention, is what makes the claim honest and
+reproducible rather than a single fragile headline.
+
+The manuscript fits the scope of \textit{NMR in Biomedicine} in both its principal
+categories: it is (a) an original research study of an in-vivo IVIM phenomenon on open
+biomedical MR data, and (b) a methodological contribution to how quantitative-MR
+uncertainty should be characterised and reported. Every reported number traces to a
+single seeded reproduction that regenerates with one command, and the primary phenomenon
+rests on openly licensed in-vivo data (OSIPI TF2.4, Zenodo 14605039; TCGA-LIHC via The
+Cancer Imaging Archive), so a reader can check it independently. To our knowledge this is
+the first systematic real-data quantification of $D^{*}$ boundary-railing across cohorts,
+paired with an honest conditional-coverage characterisation and its resolution; it is
+distinct from, and complementary to, learned-uncertainty frameworks for IVIM such as
+Casali et al.\ (2026, this journal), whose object is a particular network's internal
+uncertainty budget rather than an estimator-agnostic real-data signature.
+
+The manuscript is original, has not been published previously, and is not under
+consideration elsewhere. The author declares no competing interests and takes full
+responsibility for the integrity of the work; a declaration of AI-assisted writing is
+included. I would be glad to suggest suitable reviewers and to answer any questions.
+
+\closing{Sincerely,}
+
+\end{letter}
+\end{document}
