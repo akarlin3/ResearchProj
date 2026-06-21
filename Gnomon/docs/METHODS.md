@@ -81,33 +81,81 @@ clean-signal NLLS round-trip recovers truth; continuity `f=0 ⇒ mono-exponentia
   batch 512, seed `MASTER_SEED+5`. Inference: 1500 posterior draws/voxel → quantiles.
   Optional `[flow]` extra (torch). No sbi/nflows — written from scratch.
 
-## 5. CRLB assumption (the reviewer-flagged item) `[CP2]`
+## 5. CRLB assumption + railed-voxel SD convention (the reviewer-flagged item)
 
-The Laplace/asymptotic covariance is a **Gaussian** approximation to the posterior.
-It is **weakest exactly where D\* is most skewed** (low SNR), which is where the
-central under-coverage claim sits. Stated as a limitation; the direction of the bias
-(conservative — it *understates* how overconfident the Gaussian interval is) is noted
-so no claim rests on the approximation being tight.
+Two distinct, load-bearing modelling choices live here. Both are stated; the second is
+the one that reconstructs Fashion's marginal headline, so it is documented in full.
 
-## 6. Calibration ruler (re-derived independently) `[CP2]`
+**(a) Gaussian/CRLB approximation.** The Laplace/asymptotic covariance
+`σ²·pinv(JᵀJ)` is a Gaussian approximation to the posterior, **weakest where D\* is most
+skewed** (low SNR / high D\*) — exactly where the under-coverage sits. The MCMC results
+do **not** rely on it (the sampler targets the exact posterior under the box prior); it
+is used only for the Laplace SD interval and as the MCMC proposal scale.
+
+**(b) Railed-voxel SD convention — the headline-driving choice.** A voxel whose D\* is
+railed/unidentified carries **no local Fisher information** about D\* (the Jacobian
+column collapses; `JᵀJ` is singular). Two defensible conventions then exist, and they
+give *opposite* coverage:
+
+- **Honest CRLB (Gnomon default):** the pseudo-inverse assigns such a voxel a **wide**
+  D\* interval (SD capped at the box span). This *over-covers* railed voxels — the
+  statistically correct admission that D\* is undetermined there.
+- **Overconfident floor (Fashion-implied):** a railed voxel is instead given a small
+  **floored** D\* SD (`RAILED_SD_FLOOR = 0.003 mm²/s`), so its interval is narrow and
+  *under-covers*. This is "overconfident by design."
+
+The convention is decisive for the marginal number: flooring drops Laplace D\* coverage
+from pooled 0.80 → **0.68** (high-D\* tercile 0.63 → 0.41), and the floored pooled value
+(0.68) reconstructs Fashion's MCMC-SD claim (0.67). See `gnomon/reframe.py` /
+`handoff/conditional_coverage.json` (both conventions, per-tercile, bootstrap CIs) and
+`scripts/divergence_diagnostic.py`.
+
+**Recommended:** report under the **honest CRLB** and state the convention explicitly.
+The honest convention does not erase the finding — a real, reproducible under-coverage
+survives it in the high-D\* tercile (Laplace 0.63 [0.60, 0.67]); it only removes the
+manufactured marginal severity. The floored convention should appear, if at all, only
+as a labelled illustration of how the original 0.30/0.67 arose.
+
+## 6. Calibration ruler (re-derived independently)
 
 Coverage, ECE (mean |empirical − nominal| over a level grid), sharpness (mean
-interval width), pinball loss, interval score — from published definitions, numpy
-only, no Caliper import. Plus a D\*-tercile conditional-coverage probe.
+interval width), pinball loss, interval score — from published definitions
+(`gnomon/metrics.py`), numpy only, no Caliper import. Plus a D\*-tercile
+conditional-coverage probe (the basis of the reframe, §the conditional table).
 
-## 7. Uncertainty on the numbers `[CP2]`
+## 7. Uncertainty on the numbers
 
-Bootstrap CIs (percentile/BCa, seeded from `manifest.BOOTSTRAP`) on every
-load-bearing number; directional gaps (T4) pass only if the CI excludes 0.
+Bootstrap CIs (percentile/BCa, `gnomon/bootstrap.py`, seeded from
+`manifest.BOOTSTRAP`) on every load-bearing number; directional gaps (T4) pass only if
+the CI excludes 0; per-tercile conditional cells carry their own CIs.
 
-## 8. Reproduction & verdict `[CP3]`
+## 8. Reproduction & verdict
 
 `gnomon/reproduce.py` runs the rebuild, compares to the frozen manifest, and writes
-`results/reproduction.json` + the verdict (REPRODUCES / DOES NOT REPRODUCE). One
-command: `bash reproduce.sh`.
+`results/reproduction.json` + the verdict. `gnomon/reframe.py` writes the conditional-
+coverage table (`handoff/conditional_coverage.json`). One command regenerates the whole
+hand-off: `bash Gnomon/reproduce.sh` (gates + verdict) and
+`python -m gnomon.reframe` / `python scripts/build_handoff.py` (reframe + hand-off).
 
 ## 9. Claims scope
 
-Claims are held to what the rebuild supports. Where Fashion was read as overextending
-(e.g. single-subject in-vivo generalization), Gnomon scopes the corresponding
-statement to its evidence and records the limitation here.
+Claims are held to exactly what the rebuild supports; the disposition of each Fashion
+claim (KEEP / REFRAME / DROP) is in [`../handoff/CLAIMS_LEDGER.md`](../handoff/CLAIMS_LEDGER.md).
+Where Fashion read as overextending — the *marginal* 0.30/0.67 severity, and
+single-subject in-vivo generalization — Gnomon scopes the statement to its evidence
+(conditional per-D\* coverage; ROI-level railing rate with selection sensitivity) and
+records the limitation rather than restating the dramatic figure.
+
+## 10. Completeness checklist (the items Fashion was flagged for) — all present
+
+| Huang-flagged item | Where addressed |
+|---|---|
+| Dataset IDs | §1.1 (Lattice seed/prior), §1.2 (OSIPI Zenodo 14605039, sha256) |
+| Acquisition / b-schemes | §2 (clinical-sparse 8-b, dense 16-b, real 104-pt) |
+| Full training (NPE/MAF) | §4.4 (architecture, 80k sims, prior, epochs, seed) |
+| Full fitting (NLLS, MCMC) | §4.1 (box/init/solver/railing), §4.3 (sampler spec) |
+| CRLB assumption | §5(a) |
+| **Railed-voxel SD convention** | §5(b) — both conventions, recommendation justified |
+| Calibration ruler definitions | §6 |
+| Uncertainty / CIs | §7 |
+| Claims scope (no overclaim) | §9 + claims ledger |
