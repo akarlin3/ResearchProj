@@ -72,7 +72,7 @@ scan — hence the self-calibrating statistic is preferred and its scope disclos
 
 ## HC4/CS3 budget sweep — **CONFIRMATORY (not adverse)**
 
-`research_debt/budget_sweep/`: below-floor D\* overconfidence is flat across a 20×
+`Sextant/research_debt/budget_sweep/`: below-floor D\* overconfidence is flat across a 20×
 budget range (claimed-ratio span 0.007; below-floor span 0.004) → budget-invariant,
 not starvation. The honesty gate would have required qualifying the "intrinsic"
 reading had the effect weakened at high budget; it did not. BANKED, not in the NMR

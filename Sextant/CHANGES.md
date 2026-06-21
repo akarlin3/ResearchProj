@@ -40,7 +40,7 @@ New, truth-controlled, mostly torch-free (the railing claim is NLLS-based):
 
 ## Track B — HC4/CS3 banked (out of scope for the NMR paper)
 
-- `research_debt/budget_sweep/` banks the simulation-budget sweep (CSV, loss curves,
+- `Sextant/research_debt/budget_sweep/` banks the simulation-budget sweep (CSV, loss curves,
   figure, runnable + re-derivation scripts, verdict). Re-derived from the run CSV:
   the below-floor D\* overconfidence is **BUDGET-INVARIANT** across 50k–1M
   (claimed-ratio span 0.007; below-floor span 0.004) → not simulation starvation.

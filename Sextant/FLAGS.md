@@ -31,7 +31,7 @@ data used here.
   a prior sbi-venv run product; the trained `.pt` models were scratch/gitignored.
   This run re-derives the summary from the CSV (numpy only); a full retrain needs
   `torch`+`sbi` (absent from the CPU-only `proteus` env). Runnable script banked at
-  `research_debt/budget_sweep/run_budget_sweep.py`. 5M-budget point not run.
+  `Sextant/research_debt/budget_sweep/run_budget_sweep.py`. 5M-budget point not run.
 - **NPE-based (flow) limb of Track A.** The railing-first robustness battery is
   deliberately NLLS-based (no torch). An optional NPE/flow-vs-NLLS extension of the
   in-silico isolation would need `sbi`+`torch` and the trained `.pt` (gitignored).
@@ -46,6 +46,6 @@ data used here.
 
 ## Track separation (verified)
 
-`research_debt/` content is **absent** from `sextant.tex`/`numbers.tex` (zero
+`Sextant/research_debt/` content is **absent** from `sextant.tex`/`numbers.tex` (zero
 budget / CRLB / below-floor / starvation / research_debt tokens). The demoted
 amortized claim was **not** resurrected into the NMR paper.
