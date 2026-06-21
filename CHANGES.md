@@ -145,12 +145,6 @@ Gnomon/Sextant remain the source of truth. No value was edited, recomputed, or i
 
 ## Numbers gate
 
-The repo's `Fashion/paper/check_numbers.sh` compares PDF-extracted numeric multisets to a
-frozen baseline. **Note:** `Fashion/NUMBERS_FROZEN.txt` is a human-readable prose ledger
-from an earlier (assessor-remediation) draft, not a `freeze_numbers.sh` PDF-multiset
-snapshot, so `check_numbers.sh` does not pass on current `main` either — a pre-existing
-condition independent of this change.
-
 The applicable proof for a framing-only edit is a **freeze-before/after diff** of the PDF
 numeric multiset (`freeze_numbers.sh`), built with `tectonic`:
 
