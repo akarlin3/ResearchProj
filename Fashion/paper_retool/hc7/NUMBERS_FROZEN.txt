@@ -1,0 +1,60 @@
+NUMBERS_FROZEN — friction/hc7 (railing utility: demonstrate cheap, rescope the rest)
+=====================================================================================
+Every number below traces to a seeded run output (path given). Nothing is quoted from
+an old manuscript. Run-then-write: produced by the listed command before any prose.
+
+--------------------------------------------------------------------------------
+A. GNOMON SOURCE-OF-TRUTH (unchanged this run; re-confirmed, not edited)
+   Source: Gnomon/results/reproduction.json
+--------------------------------------------------------------------------------
+T1  NLLS D* boundary-railing, real OSIPI abdomen : 54.2%  CI [52.0, 56.4]  PASS
+    (Gnomon remains the numeric source of truth for all railing/coverage numbers
+     already in the manuscript; HC7 adds NO new Gnomon-sourced number.)
+
+--------------------------------------------------------------------------------
+B. CP1 — RAILING AS AN ACTIONABLE FLAG OF D* UNRELIABILITY  (NEW this run)
+   Source: Sextant/results/phantom_recovery.json  ->  key "B4_flag_utility"
+   Reproduce: (proteus env) KMP_DUPLICATE_LIB_OK=TRUE \
+              python Sextant/scripts/run_phantom_recovery.py   (seed 20260621)
+   Substrate: digital truth-controlled sim over the trained NPE prior, N=3000/SNR,
+              Fashion's exact bounded NLLS + rail thresholds (synthetic; NOT tissue).
+   "Unreliable D*" := truth-referenced normalised error |D*hat - D*|/D* > 0.5
+              (off by >50%); convention-free (no interval/SD convention enters).
+   Bootstrap: 2000 voxel resamples, percentile 95% CI.
+--------------------------------------------------------------------------------
+                        SNR10            SNR20            SNR40
+ frac railed            0.309            0.210            0.167
+ base rate unreliable   0.538            0.414            0.294
+ PRECISION (P unrel|railed) 0.680        0.609            0.500
+   95% CI               [0.652,0.711]    [0.570,0.648]    [0.456,0.542]
+ RECALL  (P railed|unrel)   0.391        0.309            0.284
+   95% CI               [0.367,0.416]    [0.284,0.334]    [0.255,0.315]
+ lift (precision/base)  1.27             1.47             1.70
+ auc_flag (bal. acc.)   0.589            0.584            0.583
+ pooled relErr all->kept 0.555->0.475    0.387->0.334     0.255->0.229
+ EXCLUSION delta(median) +0.081          +0.052           +0.026
+   95% CI               [0.064,0.103]    [0.038,0.064]    [0.018,0.034]
+   relative reduction   14.5%            13.6%            10.1%
+ [sensitivity tau=1.0]  prec 0.403       prec 0.330       prec 0.248
+                        rec  0.482       rec  0.361       rec  0.292
+
+VERDICT (honesty gate, CP1): NOT NULL. Railing predicts D* failure better than
+chance: precision (0.50-0.68) exceeds base rate (lift 1.27-1.70) and the exclusion
+benefit CI excludes zero at every SNR. But recall is ~0.28-0.39 -> SPECIFIC, NOT
+SENSITIVE. "Diagnostic" is earned for FLAGGING untrustworthy D* (act on a positive
+flag; exclusion improves the retained map by 10-15%); NOT earned as a complete
+detector (absence of rail does not certify a good D*) and NOT as a clinical-decision
+instrument (no outcome evidence). Reconciles with B3's near-chance above-median AUC
+(0.555/0.515): D* is weakly identified broadly, so the flag's value is in its
+precision/specificity at the positive operating point, not in its sensitivity.
+
+--------------------------------------------------------------------------------
+C. CONSISTENCY CONSTANTS used by the headline subsection (SNR 20, representative
+   of the real abdominal weak-identifiability regime)
+--------------------------------------------------------------------------------
+ flagPrecision = 0.61   flagPrecisionLo = 0.57   flagPrecisionHi = 0.65
+ flagRecall    = 0.31   flagRecallLo    = 0.28   flagRecallHi    = 0.33
+ flagBase      = 0.41   flagLift        = 1.5
+ flagExclRed   = 14     (percent; median rel-err reduction from excluding railed)
+ flagExclDelta = 0.052  flagExclDeltaLo = 0.038  flagExclDeltaHi = 0.064
+ flagAuc       = 0.58   (binary-flag balanced accuracy; specific-not-sensitive)
