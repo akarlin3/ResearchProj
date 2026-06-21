@@ -56,6 +56,12 @@ report and corroborated by an independent clean-room reimplementation
 full abdomen (\FullFrac\%), survives generous bounds and every SNR stratum, and
 replicates on liver DWI (\LihcFourFrac\% at a clean 4-$b$ scheme;
 \LihcThreeFrac\% across \LihcThreeSubj{} subjects at a sparse 3-$b$ scheme).
+On synthetic ground truth the flag is actionable but scoped: a railed voxel's
+$\Ds$ is unreliable with precision \flagPrecTwenty{} (against a \flagBaseTwenty\%
+base rate) and excluding railed voxels lowers the retained map's pooled $\Ds$
+error by \flagExclRedTwenty\%, yet the flag is specific rather than sensitive
+(recall \flagRecTwenty), so it marks where $\Ds$ is untrustworthy without
+detecting all such voxels.
 As a scoped secondary finding, under the honest CRLB symmetric Gaussian intervals
 under-cover $\Ds$ specifically in the high-$\Ds$ tercile (central-95\% coverage
 \covLapHonHigh{} [\covLapHonHighLo, \covLapHonHighHi] for the Laplace SD), and an
@@ -296,6 +302,68 @@ the low-$b$ sampling is thin the likelihood is nearly flat in $\Ds$ and the
 asymptotic (CRLB) variance --- which is exactly the curvature the optimiser
 cannot find --- diverges.
 
+\subsection{The railing flag is actionable: it flags voxels whose $\Ds$ is
+untrustworthy (synthetic ground truth)}
+\label{sec:flag}
+
+The railing \emph{rate} is a population statistic; calling the flag a
+\emph{diagnostic} earns the word only if railing, voxel by voxel, marks the fits
+whose $\Ds$ cannot be recovered. That can be checked solely where ground truth
+exists, so we test it on the same synthetic substrate used for the ruler
+(\flagN{} truths per SNR drawn over the documented prior, fit with the identical
+bounded NLLS and rail thresholds). A voxel's $\Ds$ is labelled \emph{unreliable}
+by a deliberately truth-referenced, convention-free criterion --- normalised
+recovery error $|\hat{\Ds}-\Ds|/\Ds>\flagTau$ (the point estimate off by more
+than half) --- so no interval or SD convention enters.
+
+Railing is a \emph{specific} flag. At SNR 20, representative of the
+weak-identifiability regime the real abdominal data occupy, a railed voxel's
+$\Ds$ is unreliable with precision \flagPrecTwenty{} [\flagPrecTwentyLo,
+\flagPrecTwentyHi] against a base rate of \flagBaseTwenty\% --- a
+\flagLiftTwenty$\times$ enrichment (Table~\ref{tab:flag}). Acting on the flag is
+measurably useful: \emph{excluding} railed voxels lowers the pooled median
+normalised $\Ds$ error of the retained map by \flagExclRedTwenty\% (from
+\flagErrAllTwenty{} to \flagErrKeptTwenty), and the bootstrap CI on that
+reduction excludes zero; the benefit recurs at SNR 10 and 40
+(\flagExclRedTen\% and \flagExclRedForty\%, both CI-significant).
+
+It is, deliberately stated, \emph{not} a sensitive detector. Its recall is only
+\flagRecTwenty{} [\flagRecTwentyLo, \flagRecTwentyHi]: most unreliable voxels do
+not rail, because $\Ds$ is weakly identified \emph{broadly} and a fit can carry a
+badly recovered interior $\Ds$ without the optimiser reaching a bound. As a binary
+classifier of unreliability the flag therefore sits only modestly above chance
+(balanced accuracy \flagAuc), consistent with the near-chance area-under-curve of
+railing scored against an above-median error split. The earned reading is
+precise: a \emph{positive} rail is a high-precision, actionable flag that a voxel's
+--- or, pooled, an acquisition's --- $\Ds$ is untrustworthy and should be excluded
+or down-weighted; the \emph{absence} of railing is not a clean bill of health. We
+claim ``diagnostic'' for \emph{flagging} untrustworthy $\Ds$, not for detecting
+all of it, and not as a clinical-decision rule (Section~\ref{sec:discussion}).
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{rrrlll}
+\toprule
+SNR & Railed & Unreliable & Precision [95\% CI] & Recall [95\% CI] & $\Ds$-err red.\\
+& (syn.) & base & {\footnotesize $P(\text{unrel.}\,|\,\text{railed})$} & {\footnotesize $P(\text{railed}\,|\,\text{unrel.})$} & (excl. railed)\\
+\midrule
+10 & \flagRailedTen\% & \flagBaseTen\% & \flagPrecTen{} [\flagPrecTenLo,\flagPrecTenHi] & \flagRecTen{} [\flagRecTenLo,\flagRecTenHi] & \flagExclRedTen\%\\
+20 & \flagRailedTwenty\% & \flagBaseTwenty\% & \textbf{\flagPrecTwenty{} [\flagPrecTwentyLo,\flagPrecTwentyHi]} & \flagRecTwenty{} [\flagRecTwentyLo,\flagRecTwentyHi] & \flagExclRedTwenty\%\\
+40 & \flagRailedForty\% & \flagBaseForty\% & \flagPrecForty{} [\flagPrecFortyLo,\flagPrecFortyHi] & \flagRecForty{} [\flagRecFortyLo,\flagRecFortyHi] & \flagExclRedForty\%\\
+\bottomrule
+\end{tabular}
+\caption{Railing as a per-voxel flag of an unreliable $\Ds$ on synthetic ground
+truth (\flagN{} truths per SNR; ``unreliable'' $=$ normalised $\Ds$ error
+$>\flagTau$; seed \railSeed, bootstrap CIs). Railing is \emph{specific}
+(precision well above base rate; railed voxels carry the larger error) but
+\emph{not sensitive} (recall well below one): a positive flag is actionable ---
+excluding railed voxels lowers the retained map's pooled $\Ds$ error by the last
+column --- whereas a non-railed voxel is not certified reliable.}
+\label{tab:flag}
+\end{table}
+
 \subsection{Secondary, scoped: the calibration ruler under the honest CRLB}
 \label{sec:ruler}
 
@@ -369,19 +437,36 @@ is the conditional table above, and the floored figures appear only here, with t
 convention named, to explain how a larger number can arise.
 
 \section{Discussion}
+\label{sec:discussion}
 
 \paragraph{What is and is not claimed.} The primary claim is narrow and
 assumption-free: a large, reproducible fraction of conventional NLLS IVIM fits
 rail $\Ds$ to a bound on open human-abdominal data, across ROI, bounds, SNR, and
-an independent liver cohort. The secondary claim is scoped to ground-truth data:
-under a stated honest CRLB, symmetric Gaussian intervals under-cover $\Ds$ in the
+an independent liver cohort. We further show, where ground truth permits it, that
+the flag is \emph{actionable}: railing marks voxels whose $\Ds$ is untrustworthy
+with high precision (\flagPrecTwenty{} at SNR 20 versus a \flagBaseTwenty\% base
+rate), and excluding railed voxels measurably improves the retained map's pooled
+$\Ds$ error (Section~\ref{sec:flag}). That earns the word ``diagnostic'' in a
+deliberately bounded sense: the flag is \emph{specific, not sensitive} (recall
+\flagRecTwenty), so a positive rail flags untrustworthy $\Ds$ but the absence of a
+rail does not certify a reliable one --- we claim a flag for untrustworthy $\Ds$,
+not a complete detector of it. Two scope boundaries follow and are stated
+explicitly. First, this railing flag is read off the conventional optimiser's
+output and is \emph{distinct from} an out-of-distribution self-consistency gate
+(a learned check on a posterior's own coherence); the two must not be conflated,
+and we evaluate only the former. Second, the flag's \emph{clinical} utility ---
+whether excluding or down-weighting railed voxels changes a downstream diagnosis
+or patient outcome --- requires outcome evidence that no simulation can supply and
+is therefore left to future work; we claim measurement reliability, not clinical
+decision-making. The secondary claim is scoped to ground-truth data: under a
+stated honest CRLB, symmetric Gaussian intervals under-cover $\Ds$ in the
 high-$\Ds$ regime, a quantile interval fixes the marginal but not the conditional
 gap, and an amortized posterior dominates the railed NLLS. We explicitly do
 \emph{not} claim a dramatic marginal coverage collapse: such figures are
 reconstructible only under an undocumented floored SD convention and are reported
-here solely as a labelled illustration. We also make no claim about an
-out-of-distribution self-consistency gate, estimator timing, or in-vivo brain
-held-out-$b$ recovery; those questions are outside the scope of the evidence
+here solely as a labelled illustration. We also make no claim about the
+out-of-distribution self-consistency gate above, estimator timing, or in-vivo
+brain held-out-$b$ recovery; those questions are outside the scope of the evidence
 presented and are left to future work.
 
 \paragraph{Differentiation from learned uncertainty.} Casali et
