@@ -13,7 +13,17 @@
 >
 > This gate result is **SOLID and publication-independent** (Caliper only). The
 > paper framing, decision-value-per-scan-minute numbers, and sibling citations
-> remain **PROVISIONAL** (see `ASSUMPTIONS.md`).
+> remain **PROVISIONAL** (Fashion now in review at *NMR in Biomedicine*, retooled
+> boundary-railing-first; see `ASSUMPTIONS.md`).
+>
+> **Survives the retooled ruler.** Re-running the gate against the retooled upstream
+> reproduces it **byte-identically** (Vernier uses Caliper's reference estimator +
+> conformal, which the retool did not change). Crucially, `Δ_cond` **is** the
+> high-D\*-tercile conditional-coverage range — the *exact* metric the retooled
+> Fashion retains under the honest CRLB (it dropped the marginal 0.30/0.67 severity).
+> So the cross-scheme divergence not only survives the milder coverage, it **lives in
+> the same conditional regime** the retool keeps. **Verdict: SURVIVES** — standalone
+> path stays active; no fold into Minos.
 >
 > **Key qualifier — the divergence is estimator-contingent (also SOLID).** Re-running
 > the identical gate on Caliper's efficient MAF posterior (`experiments/maf_gate.py`)
