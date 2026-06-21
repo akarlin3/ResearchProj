@@ -42,8 +42,9 @@ K1-GEN · Sextant generalization / robustness of railing  [S]  (CP5 support)
      rail direction: lower 15.6% / upper 39.1% (upper bound dominates)
      wide/generous bounds (not a tight-bound artefact): 32.14%
   OSIPI full abdomen ROI (n=19,652)      : 47.81%  CI [47.10, 48.51]
-  TCGA-LIHC liver, 4-b clean (b0/50/500/800):       43.70%  CI [43.21, 44.19]
-  TCGA-LIHC liver, 3-b sparse (b50/400/800, no b0): 73.45%  CI [73.02, 73.88]
+  TCGA-LIHC liver, 4-b clean (b0/50/500/800):       43.7% (0.43695)  CI [43.21, 44.19]
+  TCGA-LIHC liver, 3-b sparse (b50/400/800, no b0): 73.4% (0.734475) CI [73.02, 73.88]
+     rail direction: 4-b lower 16.5%/upper 27.2%; 3-b lower 72.5%/upper 0.9%
      per-subject 3-b: 0.659 / 0.744 / 0.752 (consistent)
   Pre-registered replication thresholds (point >= 0.30, CI-lower >= 0.20): CLEARED.
 
