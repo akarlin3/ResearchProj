@@ -37,7 +37,7 @@ what the project does, its headline result, and how it is laid out internally.
 | [`Anneal/`](Anneal/) | *Chimera Collapse Ages: Topology-Dependent Finite-Size Scaling in Mean-Field and Ring Oscillator Systems* | Nonlinear dynamics — chimera-state collapse, survival & finite-size scaling |
 | [`Caliper/`](Caliper/) | *(research software — no standalone paper)* IVIM uncertainty-quantification calibration toolkit | Research software |
 | [`Datum/`](Datum/) | *(research software — no standalone paper)* IVIM uncertainty-calibration **benchmark** (fixed task + curated baselines + reference numbers, on Fashion's ruler) | Research software — benchmark |
-| [`Fashion/`](Fashion/) | *Calibration and Efficiency of Uncertainty Estimates in Intravoxel Incoherent Motion Imaging: Quantile Intervals, Cross-Paradigm Comparison, and a Cramér–Rao Audit of Amortized Posteriors* | IVIM diffusion-MRI — are reported error bars trustworthy? |
+| [`Fashion/`](Fashion/) | *Boundary-railing of conventional NLLS fits as an assumption-free pseudo-diffusion identifiability diagnostic in IVIM MRI* (retooled, boundary-railing-first; in review at *NMR in Biomedicine*) | IVIM diffusion-MRI — an assumption-free identifiability signature; calibration ruler demoted to scoped secondary |
 | [`Forge/`](Forge/) | *(no manuscript — feasibility benchmark)* Monte Carlo dose-simulation timing & Electron Return Effect validation | Medical physics — MR-Linac simulation infrastructure |
 | [`Gauge/`](Gauge/) | *Distribution-Free Conformal Coverage for IVIM Parameter Maps, and the Identifiability Wall in the Pseudo-Diffusion Compartment* | IVIM diffusion-MRI — conformal coverage & the D\* identifiability limit |
 | [`Gnomon/`](Gnomon/) | *(research software — no standalone paper by default)* Clean-room **reproduce-or-refute** rebuild of Fashion's calibration ruler (independent forward model + NLLS railing + Laplace/MCMC + MAF + ruler; targets pinned before running) | Research software — independent reproduction (the hedge to the Fashion retool) |
@@ -136,9 +136,9 @@ deliverable and are PROVISIONAL by construction.
 
 ### `Fashion/` — Do IVIM fitting methods report *honest* uncertainty?
 
-*Paper:* **"Calibration and Efficiency of Uncertainty Estimates in Intravoxel
-Incoherent Motion Imaging: Quantile Intervals, Cross-Paradigm Comparison, and a
-Cramér–Rao Audit of Amortized Posteriors"** (in review at *MRM*).
+*Paper:* **"Boundary-railing of conventional NLLS fits as an assumption-free
+pseudo-diffusion identifiability diagnostic in IVIM MRI"** (retooled,
+boundary-railing-first; in review at *NMR in Biomedicine*).
 
 Fashion is an uncertainty-quantification and calibration study built on the OSIPI
 TF2.4 IVIM code collection. The question is not how accurate the point estimate is,
@@ -149,10 +149,17 @@ methods that don't natively report it and scores it all with one calibration rul
 comparing Bayesian (Laplace + MCMC), residual-bootstrap, and deep-ensemble
 paradigms.
 
-Headline result: Gaussian error bars systematically under-cover D\* because its
-posterior is skewed and bound-pinned. Across the 9-cell headline set, D\* coverage
-at nominal 0.95 is 0.30 (Laplace SD), 0.67 (MCMC SD), but 0.94 once you use the
-MCMC quantile interval from the same chain — the right *shape* fixes it.
+Headline result (retooled, boundary-railing-first): the assumption-free **primary**
+is that a box-constrained NLLS *rails* the pseudo-diffusion D\* at a fit bound on
+open in-vivo abdominal data — 54.7% of homogeneous-ROI voxels (independently
+reproduced 54.2% by **Gnomon**, replicated 47.8% full-abdomen / 43.7% TCGA-LIHC
+liver / 73.4% liver-3b by **Sextant**) — a per-voxel identifiability signature that
+needs no ground truth. The calibration ruler is demoted to a **scoped,
+ground-truth-only secondary**: under the honest CRLB the symmetric Gaussian interval
+under-covers D\* *conditionally* in the high-D\* tercile (0.63 [0.60, 0.67]), while
+the MCMC quantile interval restores near-nominal *marginal* coverage (0.90) with a
+residual high-D\* gap. The earlier dramatic *marginal* severity (0.30/0.67) is
+**dropped** as a railed-SD-convention artifact (honest vs floored CRLB; see Gnomon).
 
 - `uq/` — the analysis layer: `bayesian.py`, `bootstrap.py`, `dl_uncertainty.py`, `calib.py` (the ruler), `ivim_simulator.py`, campaign runners.
 - `src/` — **unmodified** upstream OSIPI fitting methods (see `README_upstream.md`).
@@ -430,16 +437,30 @@ downstream and are flagged **PROVISIONAL** (see `Vernier/ASSUMPTIONS.md`).
 
 Nine folders form one IVIM diffusion-MRI uncertainty program:
 
-- **Fashion** establishes *which* uncertainty paradigms actually cover D\* and pins Gaussian error bars as the culprit.
+- **Fashion** (retooled, boundary-railing-first; in review at *NMR in Biomedicine*) leads with the assumption-free fact that conventional NLLS D\* fits *rail to a bound* on open in-vivo data, and demotes the calibration ruler to a scoped, ground-truth-only secondary whose honest-CRLB under-coverage of D\* is *conditional* (high-D\* tercile), not the dropped marginal 0.30/0.67.
 - **Gauge** approaches the same problem from distribution-free conformal prediction and reveals the high-D\* under-coverage as an irreducible identifiability wall.
 - **Caliper** is the reusable toolkit that packages the calibration ruler and wraps both papers' methods under one contract (deliberately un-gated pending Minos).
 - **Gnomon** is the independent control on that ruler: a clean-room, from-scratch rebuild (sharing no code with Fashion or Caliper) whose only job is to *reproduce-or-refute* Fashion's load-bearing numbers and emit the complete methods Fashion was rejected for lacking — the hedge to the Fashion retool. Verdict pending (CP3 hard halt either way).
 - **Lattice** is the reusable *reference object* (DRO): the synthetic ground-truth cohorts and alternative-model generators the scorer and papers benchmark against — the data complement to Caliper's ruler.
 - **Datum** is the benchmark layer: it freezes that ruler into a fixed task with curated baselines and a submission interface, scored over **Lattice's** cohorts (with an OSIPI DRO as external validation), so any IVIM uncertainty method can be ranked on one standard (reference numbers PROVISIONAL until Fashion's ruler locks).
 - **Minos** is the capstone: it prices the *decision* value of a calibrated error bar and supplies a label-free monitor for when calibration goes stale — its theory is done, its applied half awaits Fashion + Gauge publication.
-- **Vernier** asks whether *acquisition design* can still move calibration and decision value once the estimator and conformal correction are fixed — taking Gauge's acquisition-robust wall as given. A feasibility question under test: it either becomes a standalone paper or folds into Minos.
+- **Vernier** asks whether *acquisition design* can still move calibration and decision value once the estimator and conformal correction are fixed — taking Gauge's acquisition-robust wall as given. Feasibility gate **PASSED** and survives the retooled ruler (Δ\_sharp 0.328, Δ\_cond 0.059, CIs exclude 0; Δ\_cond is the high-D\* conditional metric the retool retains) — standalone path active, no fold into Minos.
 - **Sextant** re-aims **Fashion** to answer the "overextended claims" critique: it promotes the assumption-free fact that conventional NLLS D\* fits *rail to a bound* on open human-abdominal data to the primary claim, demotes the calibration ruler to a scoped secondary, and replicates the railing across the full OSIPI abdomen and an independent TCGA-LIHC liver cohort. It reuses Fashion's railing computation read-only and, by default, feeds the retooled Fashion spine rather than splitting off (no salami).
 - **Lethe** (the *Echo* portion; speculative, gated) asks the ground-truth-free question of whether a deployed interval is the right *size* — validating *precision* against test–retest repeatability, explicitly distinct from Gauge's width-rank check and provably blind to accuracy. Verdict: **Lethe** — on real data the interval is ~4× too narrow for repeatability, so width rank-tracks repeatability (Gauge) but its scale under-covers it (Echo). Result PROVISIONAL on Fashion/Gauge/Minos.
+
+**Retool propagation (merged 2026-06-21).** The retooled, NMRB-resubmitted Fashion —
+boundary-railing as the assumption-free primary, the calibration ruler scoped to a
+ground-truth-only secondary, and honest-CRLB *conditional* high-D\* coverage replacing
+the dropped marginal 0.30/0.67 — has been propagated into all five downstream consumers
+and merged to `main`:
+
+- **Caliper** (#43) — ruler documented as a scoped secondary; the honest-CRLB SD convention is the default (the floored convention kept only as a labelled illustration of how the dropped severity arose); the Fashion publication gate re-pointed MRM → *NMR in Biomedicine*.
+- **Datum** (#48) — ruler re-pinned to the NMRB scoped-secondary; reference numbers regenerate **byte-identical** under the honest ruler; distinctness from Caliper/Lattice/OSIPI preserved.
+- **Minos** (#49, hard halt) — the decision-gap and label-free-monitor headlines **SURVIVE** the milder conditional coverage (regret 3.2 utility units; marginal 0.885 vs high-D\* tercile 0.795, monitor blind); they were always the conditional high-D\* story, now reinforced by the ruler's own paper. Theory half (τ\*, Theorem 2) is Fashion-independent and untouched.
+- **Vernier** (#50, hard halt) — the cross-scheme feasibility divergence **SURVIVES** byte-identically (Δ\_sharp 0.328, Δ\_cond 0.059); Δ\_cond is exactly the high-D\* conditional metric the retool retains.
+- **Lethe** (#51) — the retool's openly-owned bounded conditional limit is folded in as *reinforcing* the constrained-validation thesis, on a disjoint axis (synthetic conditional coverage vs real-data repeatability precision); no overclaim.
+
+All five remain **PROVISIONAL** (Fashion in review at NMRB; publication gates OFF until acceptance), each with one-command re-validation. The clean-room control (**Gnomon**) and the replication (**Sextant**) underwrite the railing primary.
 
 ## Provenance
 
