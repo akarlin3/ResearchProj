@@ -127,7 +127,7 @@ Gnomon/Sextant remain the source of truth. No value was edited, recomputed, or i
      the phenomenon in an entirely unrelated acquisition."
    - 3-b reframed as supporting, **limitations stated at first mention**: "A sparser
      three-b-value liver scheme rails still more — **73.4% (73.0–73.9)** — which we report
-     as supporting rather than load-bearing evidence: it omits `b=0`, is normalised by its
+     as supporting rather than load-bearing evidence: it omits `b=0`, is normalized by its
      lowest acquired `b` (an approximation), and pools only three subjects (per-subject
      rates 0.66, 0.74, 0.75 …)." Its higher rate is tied to the mechanism (thinner low-`b`
      perfusion sampling → weaker D\* identifiability), exactly as predicted.
@@ -138,7 +138,7 @@ Gnomon/Sextant remain the source of truth. No value was edited, recomputed, or i
 
 4. **Table 1 caption** (`Fashion/paper/supplement.tex`, ~line 68). Added that the 4-b liver
    cohort is the primary independent cross-organ test (REPLICATES-STRONG), while the 3-b
-   cohort is "supporting evidence only — it omits `b=0`, is normalised by its lowest
+   cohort is "supporting evidence only — it omits `b=0`, is normalized by its lowest
    acquired `b`, and pools just three subjects" (REPLICATES, no wide-bound control). Row
    order (4-b before 3-b) and verdict emphasis (REPLICATES-STRONG vs REPLICATES) were
    already correct and are unchanged.
@@ -154,12 +154,10 @@ condition independent of this change.
 The applicable proof for a framing-only edit is a **freeze-before/after diff** of the PDF
 numeric multiset (`freeze_numbers.sh`), built with `tectonic`:
 
-```
-diff numbers_pre.txt numbers_post.txt
-# Human-readable summary of the only changed token count:
-# manuscript.pdf: 10 "0" -> 14 "0"   (+4 from added b=0 wording)
-# supplement.pdf: 6 "0"  -> 8 "0"    (+2 from added b=0 wording)
-```
+Human-readable summary of `diff numbers_pre.txt numbers_post.txt`:
+
+- `manuscript.pdf`: 10 `"0"` $\rightarrow$ 14 `"0"` (+4 from added `$b=0$` wording)
+- `supplement.pdf`: 6 `"0"` $\rightarrow$ 8 `"0"` (+2 from added `$b=0$` wording)
 
 The **only** change is an *increase* in the count of the token `0`, from the six added
 `$b=0$` mentions. Every reported result token is unchanged:
