@@ -1,0 +1,6 @@
+[submodule "Caliper"]
+	path = Caliper
+	url = https://github.com/akarlin3/projCaliper
+[submodule "Lattice"]
+	path = Lattice
+	url = https://github.com/akarlin3/projLattice

@@ -503,10 +503,10 @@ Each project was imported into the monorepo with its own history preserved:
 | `Proteus/` | projProteus | full history |
 | `Sextant/` | created in-repo (re-aim of Fashion; clean synthetic-analysis history, no patient data in tree or history) | n/a |
 | `Anneal/` | annealMusic (science subtree split) | full history |
-| `Caliper/` | created in-repo | n/a |
+| `Caliper/` | **git submodule** → [`akarlin3/projCaliper`](https://github.com/akarlin3/projCaliper) (PRIVATE) | carved out of this monorepo via `git filter-repo` with full history (8 commits) preserved; now lives in its own repo |
 | `Datum/` | created in-repo (clean synthetic-only history) | own history — merged with `--allow-unrelated-histories`, mirroring the imported subrepos |
 | `Gnomon/` | created in-repo (clean synthetic/open-only history) | own history — merged with `--allow-unrelated-histories`, mirroring the imported subrepos |
-| `Lattice/` | projLattice | clean synthetic-only history (own root, merged via `--allow-unrelated-histories`) |
+| `Lattice/` | **git submodule** → [`akarlin3/projLattice`](https://github.com/akarlin3/projLattice) (PRIVATE) | carved out of this monorepo via `git filter-repo`; single-commit synthetic-only history (its only in-tree commit, PR #19); now lives in its own repo |
 | `Lethe/` | projEcho (new — synthetic/open); built as `Echo/`, renamed `Echo/`→`Lethe/` by verdict | full history (own clean history; `git log --follow -- Lethe/`) |
 | `Fashion/` | projFashion | fork — **only my own 21 commits**; upstream (`OSIPI/TF2.4_IVIM-MRI_CodeCollection`) history re-rooted to a single fork-point snapshot |
 | `Vernier/` | projVernier | full history |
@@ -514,6 +514,15 @@ Each project was imported into the monorepo with its own history preserved:
 Each imported subdirectory's history was rewritten with `git-filter-repo` and
 combined with `git merge --allow-unrelated-histories`, so `git log -- <Subfolder>/`
 shows that project's original commits, authors, and dates.
+
+**Submodules (`Caliper/`, `Lattice/`).** These two reusable, independently-citable
+tools have been carved out into standalone repositories (`akarlin3/projCaliper`,
+`akarlin3/projLattice`) — history-preserving via `git filter-repo` — and wired back
+in as **git submodules** at the same paths, so the sibling-bootstrap importers in
+Datum/Vernier/Lethe/Gnomon resolve unchanged. After cloning this monorepo, run
+`git submodule update --init` to populate them. Both repos are **PRIVATE** pending a
+manual visibility decision; inside this monorepo `git log -- Caliper/` now shows only
+submodule-pointer bumps, while each project's full commit history lives in its own repo.
 
 ## License
 
