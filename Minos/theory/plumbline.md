@@ -20,7 +20,7 @@ regret.
 
 Simulations show *that* these effects occur at the parameters tested. They do not, by themselves,
 say *why*, *how the effect scales*, or *whether the monitor's blind spot is an artefact of the
-estimator or a law*. Plumbline supplies the two missing statements:
+estimator or a law*. Plumbline supplies the missing statements:
 
 - **Theorem 1** turns the gap into a **scaling law**: `G` is, to leading order in the posterior
   skewness `γ`, linear in `γ` with a coefficient that is a pure decision-boundary quantity. The gap
@@ -29,6 +29,10 @@ estimator or a law*. Plumbline supplies the two missing statements:
   staleness is bounded-detectable (`R_obs ≤ L·δ`), and the hidden component is provably undetectable
   by any label-free monitor (best AUC = ½). Label-free monitoring has a principled limit, which is
   the argument for labeled repeatability spot-checks (Echo).
+- **Proposition 3** (§8) prices the *value* of the gap: the value of information of
+  decision-calibrating, `V = EU(τ*) − EU(τ_stat) = ½|EU″(τ*)|·G² = O(γ²)`, is **second-order** in the
+  gap — a calibrated bar changes the decision's *value* only where the gap is appreciable (the
+  "worth-it" threshold). This is the formalization scoped as *Delphi*, folded in here (§8.2).
 
 ---
 
@@ -272,6 +276,100 @@ invisible to any label-free monitor — the formal case for labeled repeatabilit
 
 ---
 
+## 8. Value of information: the gap's decision value is second-order
+
+§3 prices the gap in the **scale parameter**, `G = τ* − τ_stat = (1/6)|z*(λ)|γ`. Minos-Core's
+`voi.py` computes the **value of calibration** `VoC(τ) = EU(1) − EU(τ)` numerically. Neither states
+the *utility consequence* of acting at the coverage scale instead of the decision scale — the
+**value of information** of decision-calibrating, the quantity Minos's title asks for (*"when does a
+calibrated error bar change a decision?"*). Let `EU(τ)` be the expected decision utility of reporting
+scale `τ`, `τ* = argmax_τ EU` the decision scale, `τ_stat` the coverage scale, and `G = τ* − τ_stat`.
+
+> **Proposition 3 (the value of decision-calibration is second-order in the gap).** Where the
+> decision depends on the scale (the EU curve is non-flat at the optimum, `EU″(τ*) < 0` — the same
+> identifiability condition Theorem 1 requires), the value of decision-calibrating *over*
+> coverage-calibrating,
+>
+> ```
+> V := EU(τ*) − EU(τ_stat) = VoC(τ_stat) − VoC(τ*)  ≥ 0,
+> ```
+>
+> obeys
+>
+> ```
+> V = ½·|EU″(τ*)|·G² + O(G³) = O(γ²).
+> ```
+>
+> It is non-negative (`τ*` is the EU maximiser), vanishes **iff `EU″(τ*) = 0`** (the decision is
+> scale-insensitive — `λ = 1`, `z* = 0`), and is **one order in `γ` below the gap itself**: the gap
+> is first-order in skew (Theorem 1), its *value* is second-order.
+
+**Proof.** `EU` is smooth in `τ` (the reported rule is a threshold `μ*(τ) = t2 + τ·s·z*(λ)`, and the
+expected utility integrates a Lipschitz `U` against a smooth law) and maximised at `τ*`, so
+`EU′(τ*) = 0`. A second-order Taylor expansion about `τ*`, with `τ_stat − τ* = −G`, gives
+`EU(τ_stat) = EU(τ*) + ½ EU″(τ*) G² + O(G³)`, hence `V = −½ EU″(τ*) G² + O(G³) = ½|EU″(τ*)|G²`
+(using `EU″(τ*) ≤ 0`). Theorem 1 gives `G = (1/6)|z*(λ)|γ + O(γ^{4/3}) = O(γ)`, and `|EU″(τ*)|` tends
+to a non-zero decision-boundary constant as `γ → 0`, so `V = O(γ²)`. ∎
+
+**The scale gap is not the value gap.** At `λ = 1` the escalate boundary `μ*(τ) = t2 + τ·s·z*` has
+`z* = 0`, so the decision is **`τ`-independent**: `EU(τ)` is flat (`EU″ = 0`) and `V = 0` *exactly* —
+even though the **scale** gap `G ≠ 0` there (it is the second-order *coverage shrink* in `τ_stat`,
+§5's `−0.036`). The value tracks the EU curvature, not the raw scale displacement: a gap in the
+reported scale carries decision value **only** where the decision actually depends on the scale.
+
+**Corollary (the "worth-it" threshold).** Decision-calibration changes the decision's value by at
+least a deployment tolerance `ε` iff `G ≥ √(2ε / |EU″(τ*)|)`, equivalently
+`|z*(λ)|·γ ≥ 6·√(2ε / |EU″(τ*)|)`. Below that floor the gap is real (Theorem 1) but **not worth
+correcting**. This is the quantitative form of Minos's thesis — a calibrated error bar changes the
+*value* of the decision only where skew × cost-asymmetry clears a curvature-set floor.
+
+### 8.1 Numerical confirmation (`voi_value.py`, GATE D)
+
+Driven on the actual Minos-Core model (no fitted constant; CRN; `proteus` env, `N = 3·10⁶ × 5`
+seeds). Default cell `κ=3, λ=3, ρ=0.5` (`γ=0.667`); `EU″(τ*)` from a gap-matched local quadratic fit.
+
+| quantity | value |
+|---|---|
+| `G = τ* − τ_stat` | `0.0898` |
+| `V = EU(τ*) − EU(τ_stat)` | `0.000274` (≥ 0 ✓) |
+| `EU″(τ*)` (concave; fit R²) | `−0.0583` (R² `0.9933`) |
+| `EU′(τ*)` (stationarity) | `−3.1·10⁻⁵` (≈ 0 ✓) |
+| `½·|EU″(τ*)|·G²` (predicted `V`) | `0.000237` |
+| `V / predicted` | `1.16` (target ≈ 1) |
+| symmetric cost `λ=1` | `G=0.0362` (coverage shrink), `V=0.000000`, `EU″≈0` (flat EU) |
+
+`κ`-sweep (`γ ∈ [0.45, 0.73]`): per-cell `V / (½|EU″|G²)` median `1.05`; log-log slope of `V` vs `G`
+= `2.57` (super-linear). The cell-by-cell match `V ≈ ½|EU″|G²` *is* the quadratic law; with
+Theorem 1 (`G = O(γ)`) it gives `V = O(γ²)`. **GATE D PASS.**
+
+### 8.2 VoI-novelty — what this prices that the neighbours do not
+
+`V` is a distinct decision-theoretic object, distinct from each line Minos cites:
+
+- **vs loss-calibrated Bayes / decision calibration** (Lacoste-Julien et al. 2011; Vadera et al.
+  2021; Zhao et al. 2021): those optimise *directly* to the decision scale `τ*` and carry **no
+  coverage reference**, so they cannot express the *increment* `V` over `τ_stat`. `V` is the value of
+  **switching objectives** from coverage to decision — a quantity with no home in a single-objective
+  method.
+- **vs decision-curve analysis / net benefit** (Vickers & Elkin 2006): DCA prices one rule's net
+  benefit across threshold probabilities; it has **no posterior-scale parameter and no two-target
+  gap**, so it cannot pose `V = EU(τ*) − EU(τ_stat)`.
+- **vs population EVPI / EVPPI** (ISPOR VoI): those price *resolving a parameter*; `V` prices the
+  **error bar's scale**, not parameter resolution — `minos-core` is explicit its objects "are **not**
+  decision-curve net benefit and **not** population EVPI/EVPPI."
+- **vs Theorem 1**: Theorem 1 is the *first-order* gap in the **scale** (`G`); `V` is the
+  *second-order* gap in **utility**. Different object, different order, different consequence (the
+  worth-it threshold).
+
+**Disposition (Delphi → folded here).** This section is the formalization originally scoped as a
+separate note, *Delphi*: a formal value-of-information argument for the decision–calibration gap. On
+audit its VoI-novelty *argument* was already made in prose (§7; `minos-core/README`, `DESIGN_B`) and
+its VoI *quantities* already computed (`voi.py`), leaving exactly **one** unwritten distinct
+statement — Proposition 3, a direct second-order corollary of Theorem 1. It is therefore folded in
+here as a Plumbline sub-section rather than standing up as its own subrepo.
+
+---
+
 ### Reproduce
 
 ```
@@ -279,6 +377,7 @@ invisible to any label-free monitor — the formal case for labeled repeatabilit
 .venv-theory/bin/python theory/detectability.py       # Theorem 2(ii) — bound, L, GATE 2
 .venv-theory/bin/python theory/impossibility_check.py # Theorem 2(i) — invariance + AUC=1/2, GATE 2(i)
 .venv-theory/bin/python theory/confirm.py             # CP3 — theory vs v2/v3, GATE 3 (HALT-able)
+.venv-theory/bin/python theory/voi_value.py           # Prop. 3 — VoI second-order law, GATE D
 ```
 
 `THEORY_MODEL.md` — the locked model + GATE 0. `impossibility.md` — Theorem 2(i), **proved and
