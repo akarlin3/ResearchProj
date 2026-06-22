@@ -5,6 +5,10 @@ shadows them. This is the single chokepoint for the dependency graph:
 
   * ``Caliper`` -- the calibration ruler + conformal modules (``caliper.metrics``,
     ``caliper.conformal``). MIT, in-tree, stable. SOLID dependency.
+  * ``Lattice`` -- the UQ-calibration digital reference object: synthetic ground-truth
+    IVIM cohorts + clean-room generators. A *resource*, not a research result, so it is a
+    SOLID dependency (publication-independent). Used read-only by Reverb
+    (``echo_repeat.reverb``) for the constructive precision-vs-coverage counterexample.
   * ``Gauge``   -- the in-vivo fetch/provenance template and the published
     width-tracks-repeatability baseline Echo is measured against. PROVISIONAL (in review).
   * ``Fashion`` -- the calibrated IVIM posterior / ruler the conformal widths derive from.
@@ -28,6 +32,7 @@ ECHO = LETHE                                     # back-compat alias (Echo == th
 REPO = LETHE.parent                             # researchProj (repo root)
 
 CALIPER = REPO / "Caliper"                      # SOLID dependency (MIT, in-tree)
+LATTICE = REPO / "Lattice"                      # SOLID dependency (synthetic DRO, publication-independent)
 GAUGE = REPO / "Gauge"                          # PROVISIONAL (in review)
 FASHION = REPO / "Fashion"                      # PROVISIONAL (in review)
 MINOS = REPO / "Minos"                          # PROVISIONAL (in review)
@@ -45,6 +50,13 @@ def add_caliper() -> str:
     if not (CALIPER / "caliper" / "__init__.py").exists():
         raise FileNotFoundError(f"Caliper package not found at {CALIPER}")
     return _prepend(CALIPER)
+
+
+def add_lattice() -> str:
+    """Make ``import lattice`` resolve to the synthetic-DRO package (read-only, SOLID)."""
+    if not (LATTICE / "lattice" / "__init__.py").exists():
+        raise FileNotFoundError(f"Lattice package not found at {LATTICE}")
+    return _prepend(LATTICE)
 
 
 def add_gauge() -> str:
@@ -65,10 +77,15 @@ def caliper_available() -> bool:
     return (CALIPER / "caliper" / "__init__.py").exists()
 
 
+def lattice_available() -> bool:
+    return (LATTICE / "lattice" / "__init__.py").exists()
+
+
 def add_all(strict: bool = False) -> dict[str, str]:
     """Wire what is present; return resolved paths. ``strict`` re-raises on any miss."""
     out: dict[str, str] = {}
-    for name, fn in (("caliper", add_caliper), ("gauge", add_gauge), ("fashion", add_fashion)):
+    for name, fn in (("caliper", add_caliper), ("lattice", add_lattice),
+                     ("gauge", add_gauge), ("fashion", add_fashion)):
         try:
             out[name] = fn()
         except FileNotFoundError as e:

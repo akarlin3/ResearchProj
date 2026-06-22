@@ -50,20 +50,43 @@ If on real data the coverage signal collapsed to Gauge's rank check, saturated (
 content), or under-scaled, Echo routes to **Lethe** (honest-limitation regime) — a valid
 verdict. See `VERIFICATION.md` for the locked PASS/FAIL thresholds.
 
+## Reverb — the constructive counterexample (SOLID)
+
+On real data, "precision ≠ coverage" can only be **argued** (no ground truth). **Reverb**
+(`echo_repeat/reverb.py`) *shows* it on synthetic ground truth. It is **SOLID** — built only on
+**Lattice** (synthetic ground-truth IVIM cohorts, read-only) and **Caliper** (estimator +
+conformal ruler, read-only); it depends on no upstream paper.
+
+Reverb draws a Lattice cohort, acquires it **twice from one truth** (test–retest), reduces each to
+a whole-tumor **ROI-mean** (Lethe's region level; the √n_vox precision boost), fits bi-exp, and
+deploys a bi-exp-calibrated conformal interval. Because the truth is known it measures *both*
+repeatability and coverage-of-truth per true-D\* regime. The headline: under realistic
+perfusion-model mismatch (dispersed perfusion fit as bi-exp), the perfusion fraction **f at low
+D\*** is **excellently repeatable yet badly under-covers the truth** (coverage ≈0.61 [BCa
+0.57, 0.64] vs a matched correctly-specified control at ≈0.80, with **identical** repeatability) —
+precision blind to a structural bias, visible only because truth is known. A matched bi-exp
+control and a family×ROI sensitivity surface show the divergence is the *mismatch*, not IVIM per se.
+
+**Scope (load-bearing):** a synthetic *possibility-and-mechanism* proof — the divergence *can*
+occur in IVIM and here is *why*; it does **not** quantify any real-world miscalibration magnitude.
+Run `python scripts/run_reverb.py`; the `consistency.py` gate enforces the counterexample.
+
 ## Layout
 
 ```
 echo_repeat/
   statistic.py    the core: test-retest coverage, standardized-residual scale check,
                   analytic reference, Spearman (for contrast), numpy-only BCa bootstrap
-  harness.py      synthetic test-retest generator + the CP1 method self-test
-                  (also the Reverb fallback spec)
+  harness.py      synthetic test-retest generator + the CP1 method self-test (abstract scalar)
+  reverb.py       the constructive precision-vs-coverage counterexample (SOLID): region-level
+                  test-retest on Lattice + Caliper conformal, repeatability vs known-truth coverage
   invivo.py       IVIM forward + segmented plug-in fit + Caliper-conformal deployer +
                   real test-retest signal loader
   provenance.py   download-on-demand provenance manifest writer (mirrors Gauge's posture)
-  _paths.py       read-only import chokepoint (Caliper SOLID; Gauge/Fashion/Minos PROVISIONAL)
+  _paths.py       read-only import chokepoint (Caliper, Lattice SOLID; Gauge/Fashion/Minos PROVISIONAL)
 scripts/
   run_harness.py     CP1 method self-test (SOLID) -> results/RESULTS_HARNESS.*
+  run_reverb.py      Reverb constructive counterexample (SOLID) -> results/RESULTS_REVERB.*
   fetch_invivo.py    CP2 download-on-demand fetch (reuses Gauge's data-handling template)
   run_validation.py  CP3 real-data validation, locked gate -> results/RESULTS_VALIDATION.*
 paper/            CP4 manuscript (ebgaramond + microtype), built PASS-only

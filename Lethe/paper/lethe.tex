@@ -95,8 +95,12 @@ what it can license. We define a single ground-truth-free statistic on a deploye
 interval --- whether it is correctly \emph{sized} to scan--rescan variation --- prove that
 it is invariant to bias by construction, prove that it is mathematically independent of the
 existing width-\emph{ordering} check, validate it on controlled synthetic data, and then
-apply it to real test--retest IVIM. The verdict is negative and sharply scoped, which is
-why this work lives in \textbf{Lethe}, the project's home for honest-limitation results.
+apply it to real test--retest IVIM. We additionally exhibit, on synthetic ground truth, a
+\emph{constructive counterexample} (\S\ref{sec:reverb}, SOLID) in which a region-level estimate is
+excellently repeatable yet its interval covers the \emph{true} parameter far below nominal ---
+turning the precision~$\ne$~coverage limitation from asserted into shown. The verdict is negative
+and sharply scoped, which is why this work lives in \textbf{Lethe}, the project's home for
+honest-limitation results.
 
 \section{Background and positioning}\label{sec:bg}
 Three companion efforts frame this note; all are in review, so every claim that leans on
@@ -171,6 +175,56 @@ moving coverage ($\numCovRescBefore\!\to\!\numCovRescAfter$) --- the distinctnes
 demonstrated at the unit level. The statistic is therefore a working, correctly-calibrated,
 distinct validator before it ever touches real data.
 
+\section{Constructive counterexample: precision without coverage (SOLID)}\label{sec:reverb}
+The self-test proves the \emph{statistic} behaves as derived; the real-data section
+(\S\ref{sec:real}) can only \emph{argue} that repeatability and coverage diverge, because in
+vivo there is no ground truth to measure coverage against. This section closes that gap with a
+controlled synthetic demonstration that \emph{shows} the divergence with known truth. It is
+\textbf{SOLID}: it consumes only \textbf{Lattice} (synthetic ground-truth IVIM cohorts; a
+publication-independent resource) and \textbf{Caliper} (in-tree estimator + conformal ruler);
+it depends on no upstream paper.
+
+\paragraph{Construction.} We draw a Lattice cohort with known $(D,\Dstar,f)$, acquire it
+\emph{twice} from one truth (two independent Rician draws), reduce each to a whole-tumor
+ROI-mean over $\numReverbROI$ voxels (Lethe's region-level posture; the $\sqrt{n_{\mathrm{vox}}}$
+precision boost), and fit both with Caliper's segmented bi-exponential estimator at single-voxel
+SNR $\numReverbSNR$. A split-conformal interval is calibrated on a separate bi-exponential cohort
+--- the \emph{believed} model --- exactly Lethe's posture of calibrating on a synthetic model and
+deploying on reality. Because the truth is known we then measure \emph{both} repeatability
+(test--retest within-subject CV and ICC of the point estimate) and \emph{coverage} of the true
+parameter, marginally and conditionally on the true-$\Dstar$ tercile.
+
+\paragraph{The counterexample.} Deploying on dispersed-perfusion reality (a velocity-dispersion
+truth, \texttt{\numReverbFamily}, fit by the bi-exponential model --- real perfusion is dispersed)
+produces a structural mismatch bias that ROI-averaging makes \emph{precise} but cannot remove. The
+perfusion fraction $f$ in the low-$\Dstar$ regime is the clean precise-but-broken cell: it is
+highly repeatable (wCV $=\numReverbWcvMis$, ICC $=\numReverbIccMis$), yet its bi-exponential-
+calibrated $90\%$ interval covers the \emph{true} $f$ only $\numReverbCovMis$
+(BCa $95\%$ $[\numReverbCovMisLo,\numReverbCovMisHi]$). The matched control --- the same model
+correctly specified (bi-exponential truth) --- is equally repeatable (wCV $=\numReverbWcvCtrl$) but
+\emph{not} broken (coverage $\numReverbCovCtrl$). Precision is held fixed while coverage falls by
+$\numReverbDrop$; repeatability is, numerically, blind to the bias. The break is also hidden
+marginally --- pooled $f$ coverage looks acceptable in both arms ($\numReverbMargCtrl$ control /
+$\numReverbMargMis$ mismatch) --- and is visible only because the truth is known. This is
+precision $\ne$ coverage turned from asserted into shown.
+
+\paragraph{Where, and why not the obvious place.} The cell is $f$ at \emph{low} $\Dstar$, where
+dispersed perfusion most biases the bi-exponential fraction. Notably it is \emph{not} the
+high-$\Dstar$ identifiability wall: there the fit loses \emph{precision} as well as accuracy
+(its repeatability fails the bar), so the wall yields an imprecise-and-biased cell, not a
+precise-but-biased one. A clean counterexample therefore requires a mechanism that biases
+\emph{without} destroying precision --- model mis-specification plus region-level averaging --- and
+the effect grows monotonically with ROI size and SNR (better measurement \emph{exposes}, not hides,
+the structural error). The matched bi-exponential and tri-exponential controls never break; the
+divergence is the mismatch, not IVIM \emph{per se}.
+
+\paragraph{Scope (load-bearing).} This is a synthetic \emph{possibility-and-mechanism} proof: it
+shows the divergence \emph{can} occur in IVIM and \emph{why}. It does \textbf{not} quantify the
+magnitude of any real-world miscalibration; the construction is a controlled demonstration, not an
+estimate of how mis-sized real IVIM intervals are. Read every number here as ``this divergence can
+occur, and here is the mechanism,'' never as ``this is how miscalibrated real IVIM is.'' All
+numbers regenerate from a fixed seed via \texttt{run\_reverb.py}.
+
 \section{Real-data result (PROVISIONAL)}\label{sec:real}
 We fetch the genuine same-day test--retest arm of ACRIN-6698 / I-SPY2 breast DWI
 (TrT0/TrT1, CC-BY-4.0) on demand, reduce each repeat to a whole-tumor ROI-mean signal, and
@@ -240,6 +294,11 @@ voxel (unregistered repeats), and inherits all Fashion/Gauge/Minos provisional c
 \section{Conclusion}
 Test--retest repeatability is a legitimate but strictly bounded validator: it certifies
 precision, never accuracy, and it can order an interval's width without endorsing its size.
+Its bias-blindness is not merely argued: on synthetic ground truth (\S\ref{sec:reverb}, SOLID) we
+construct a region-level estimate that is excellently repeatable yet whose interval covers the
+\emph{true} parameter far below nominal, with a matched correctly-specified control that does not
+break --- the precision~$\ne$~coverage limitation, shown rather than asserted, with the caveat that
+it is a possibility-and-mechanism proof and not a real-world magnitude.
 Applied to conventionally-calibrated conformal IVIM intervals, it returns a sharply-scoped
 negative --- the interval for $D$ is about four times too narrow for real scan--rescan
 variation --- which we record, honestly, as a Lethe result. On publication of Fashion,

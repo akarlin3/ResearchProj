@@ -25,15 +25,19 @@ run_stage() {
 echo "=== Echo re-validation (CP1 -> CP4) ==="
 run_stage "CP1 method self-test (SOLID)" "$PY" "$HERE/scripts/run_harness.py" --n "$N_SELFTEST"
 
+# Reverb: the constructive precision-vs-coverage counterexample (SOLID, synthetic via Lattice +
+# Caliper; no upstream paper). Shows the precision!=coverage gap on known truth.
+run_stage "Reverb constructive counterexample (SOLID)" "$PY" "$HERE/scripts/run_reverb.py"
+
 echo ">>> CP2 data check"
 "$PY" "$HERE/scripts/fetch_invivo.py" --check || true
 
 # CP3 renders a VERDICT (PASS or LETHE) -- both are valid outcomes, so exit 0 = rendered,
-# 3 = data gate unsatisfied (-> use Reverb/run_harness), 1 = error. Report the verdict.
+# 3 = data gate unsatisfied (the SOLID synthetic results above still stand), 1 = error.
 echo ">>> CP3 real-data validation (PROVISIONAL): running"
 "$PY" "$HERE/scripts/run_validation.py"; cp3=$?
 if [ "$cp3" = "3" ]; then
-  echo ">>> CP3: SKIP (data gate not satisfied -> Reverb: scripts/run_harness.py)"
+  echo ">>> CP3: SKIP (data gate not satisfied; SOLID synthetic self-test + Reverb already ran)"
 elif [ "$cp3" = "0" ]; then
   V=$("$PY" -c "import json,sys;print(json.load(open('$HERE/results/RESULTS_VALIDATION.json'))['gate']['VERDICT'])" 2>/dev/null || echo "?")
   echo ">>> CP3: VERDICT RENDERED = $V"
