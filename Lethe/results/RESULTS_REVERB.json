@@ -1,0 +1,886 @@
+{
+  "kind": "constructive-counterexample",
+  "provisional": false,
+  "solid": true,
+  "seed": 20260622,
+  "headline_config": {
+    "control_family": "biexp",
+    "mismatch_family": "stretched",
+    "cal_family": "biexp",
+    "region_size": 200,
+    "snr": 40.0,
+    "n_eval": 2000,
+    "n_cal": 2000,
+    "n_boot": 2000,
+    "bars": {
+      "wcv_bar": 0.2,
+      "icc_bar": 0.75,
+      "coverage_broken": 0.65,
+      "nominal": 0.9
+    }
+  },
+  "control": {
+    "manifest": {
+      "n_cal": 2000,
+      "n_eval": 2000,
+      "region_size": 200,
+      "cal_family": "biexp",
+      "truth_family": "biexp",
+      "model_mismatch": false,
+      "bvalues": [
+        0.0,
+        10.0,
+        20.0,
+        30.0,
+        50.0,
+        80.0,
+        120.0,
+        200.0,
+        400.0,
+        600.0,
+        800.0
+      ],
+      "levels": [
+        0.05,
+        0.25,
+        0.5,
+        0.75,
+        0.95
+      ],
+      "snr": 40.0,
+      "seed": 20260622,
+      "param_names": [
+        "D",
+        "f",
+        "Dstar"
+      ],
+      "param_units": "Caliper space: (D, f, D*); D,D* in 1e-3 mm^2/s"
+    },
+    "f_lo": {
+      "param": "f",
+      "stratum": 0,
+      "stratum_name": "D*-lo",
+      "n": 667,
+      "wcv": 0.028586665053839794,
+      "wcv_ci": [
+        0.02612542884757952,
+        0.03142387314786401
+      ],
+      "icc": 0.9961643285580375,
+      "icc_ci": [
+        0.9955448133072367,
+        0.9966399036067024
+      ],
+      "repeatable": true,
+      "cov_raw": 0.9265367316341829,
+      "cov_split": 0.7961019490254873,
+      "cov_split_ci": [
+        0.7646176911544228,
+        0.8275862068965517
+      ],
+      "cov_mondrian": 0.8905547226386806,
+      "width_split": 0.03964467274884298,
+      "width_mondrian": 0.05532291150777824,
+      "coverage_broken": false,
+      "true_abs_err": 0.012258002137137044,
+      "rail_frac": 0.0,
+      "counterexample": false
+    },
+    "marginal_f_split": 0.895,
+    "counterexample_found": false,
+    "rows": [
+      {
+        "param": "D",
+        "stratum": 0,
+        "stratum_name": "D*-lo",
+        "n": 667,
+        "wcv": 0.010925490531073506,
+        "wcv_ci": [
+          0.01036155479629771,
+          0.01159490726898932
+        ],
+        "icc": 0.9989699224929075,
+        "icc_ci": [
+          0.9987679350036445,
+          0.9991174697612978
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9955022488755623,
+        "cov_split": 0.8665667166416792,
+        "cov_split_ci": [
+          0.8380809595202399,
+          0.8905547226386806
+        ],
+        "cov_mondrian": 0.881559220389805,
+        "width_split": 0.1566983230640578,
+        "width_mondrian": 0.16739049214572618,
+        "coverage_broken": false,
+        "true_abs_err": 0.03567678860539517,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "D",
+        "stratum": 1,
+        "stratum_name": "D*-mid",
+        "n": 666,
+        "wcv": 0.01021604713586184,
+        "wcv_ci": [
+          0.00964206165144275,
+          0.010904582387645448
+        ],
+        "icc": 0.9990886530177463,
+        "icc_ci": [
+          0.9989207034538526,
+          0.999227591808953
+        ],
+        "repeatable": true,
+        "cov_raw": 0.996996996996997,
+        "cov_split": 0.8948948948948949,
+        "cov_split_ci": [
+          0.8693693693693694,
+          0.9159159159159159
+        ],
+        "cov_mondrian": 0.9054054054054054,
+        "width_split": 0.15669832306405782,
+        "width_mondrian": 0.16366988754410813,
+        "coverage_broken": false,
+        "true_abs_err": 0.02991399689026666,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "D",
+        "stratum": 2,
+        "stratum_name": "D*-hi",
+        "n": 667,
+        "wcv": 0.010075352627593574,
+        "wcv_ci": [
+          0.009486208632794757,
+          0.01067464386380717
+        ],
+        "icc": 0.9992945178162147,
+        "icc_ci": [
+          0.999169485087213,
+          0.9993973441597988
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9985007496251874,
+        "cov_split": 0.9250374812593704,
+        "cov_split_ci": [
+          0.9025487256371814,
+          0.9415292353823088
+        ],
+        "cov_mondrian": 0.904047976011994,
+        "width_split": 0.15669832306405782,
+        "width_mondrian": 0.13533420051654152,
+        "coverage_broken": false,
+        "true_abs_err": 0.024006181764654546,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "f",
+        "stratum": 0,
+        "stratum_name": "D*-lo",
+        "n": 667,
+        "wcv": 0.028586665053839794,
+        "wcv_ci": [
+          0.02612542884757952,
+          0.03142387314786401
+        ],
+        "icc": 0.9961643285580375,
+        "icc_ci": [
+          0.9955448133072367,
+          0.9966399036067024
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9265367316341829,
+        "cov_split": 0.7961019490254873,
+        "cov_split_ci": [
+          0.7646176911544228,
+          0.8275862068965517
+        ],
+        "cov_mondrian": 0.8905547226386806,
+        "width_split": 0.03964467274884298,
+        "width_mondrian": 0.05532291150777824,
+        "coverage_broken": false,
+        "true_abs_err": 0.012258002137137044,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "f",
+        "stratum": 1,
+        "stratum_name": "D*-mid",
+        "n": 666,
+        "wcv": 0.03338473038042272,
+        "wcv_ci": [
+          0.030661220610368453,
+          0.036992615980360424
+        ],
+        "icc": 0.9967649928839067,
+        "icc_ci": [
+          0.9961925734604238,
+          0.997209943187983
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9984984984984985,
+        "cov_split": 0.9309309309309309,
+        "cov_split_ci": [
+          0.9084084084084084,
+          0.9474474474474475
+        ],
+        "cov_mondrian": 0.9144144144144144,
+        "width_split": 0.03964467274884298,
+        "width_mondrian": 0.03457461504486081,
+        "coverage_broken": false,
+        "true_abs_err": 0.0064525156815808,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "f",
+        "stratum": 2,
+        "stratum_name": "D*-hi",
+        "n": 667,
+        "wcv": 0.03751191518253276,
+        "wcv_ci": [
+          0.034340177540023054,
+          0.041718073086146425
+        ],
+        "icc": 0.9966762182084337,
+        "icc_ci": [
+          0.9960503842562517,
+          0.9971756661356858
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9985007496251874,
+        "cov_split": 0.9580209895052474,
+        "cov_split_ci": [
+          0.9385307346326837,
+          0.9700149925037481
+        ],
+        "cov_mondrian": 0.8905547226386806,
+        "width_split": 0.03964467274884298,
+        "width_mondrian": 0.028797863090025858,
+        "coverage_broken": false,
+        "true_abs_err": 0.005880461271762795,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "Dstar",
+        "stratum": 0,
+        "stratum_name": "D*-lo",
+        "n": 667,
+        "wcv": 0.058756118259441575,
+        "wcv_ci": [
+          0.05394812811170459,
+          0.06494854167495556
+        ],
+        "icc": 0.9561676804272096,
+        "icc_ci": [
+          0.9422760333997257,
+          0.9645439200960991
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9955022488755623,
+        "cov_split": 1.0,
+        "cov_split_ci": [
+          1.0,
+          1.0
+        ],
+        "cov_mondrian": 0.8875562218890555,
+        "width_split": 78.50960957278329,
+        "width_mondrian": 6.684351321893614,
+        "coverage_broken": false,
+        "true_abs_err": 1.631500182806652,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "Dstar",
+        "stratum": 1,
+        "stratum_name": "D*-mid",
+        "n": 666,
+        "wcv": 0.17723891132917152,
+        "wcv_ci": [
+          0.1612602808943714,
+          0.19725875260532655
+        ],
+        "icc": 0.4825766177168078,
+        "icc_ci": [
+          0.37755441448071353,
+          0.6021675313571622
+        ],
+        "repeatable": false,
+        "cov_raw": 0.7297297297297297,
+        "cov_split": 0.9744744744744744,
+        "cov_split_ci": [
+          0.9579579579579579,
+          0.9834834834834835
+        ],
+        "cov_mondrian": 0.9024024024024024,
+        "width_split": 78.5096095727833,
+        "width_mondrian": 36.62772924987252,
+        "coverage_broken": false,
+        "true_abs_err": 8.679002205488024,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "Dstar",
+        "stratum": 2,
+        "stratum_name": "D*-hi",
+        "n": 667,
+        "wcv": 0.35215973815868123,
+        "wcv_ci": [
+          0.33309191832796603,
+          0.37335327809608243
+        ],
+        "icc": 0.1647877313208398,
+        "icc_ci": [
+          0.08129013034040815,
+          0.240664343536275
+        ],
+        "repeatable": false,
+        "cov_raw": 0.22338830584707647,
+        "cov_split": 0.7061469265367316,
+        "cov_split_ci": [
+          0.6701649175412294,
+          0.7406296851574213
+        ],
+        "cov_mondrian": 0.8710644677661169,
+        "width_split": 78.50960957278329,
+        "width_mondrian": 126.31376335709724,
+        "coverage_broken": false,
+        "true_abs_err": 30.52025422961332,
+        "rail_frac": 0.0,
+        "counterexample": false
+      }
+    ]
+  },
+  "mismatch": {
+    "manifest": {
+      "n_cal": 2000,
+      "n_eval": 2000,
+      "region_size": 200,
+      "cal_family": "biexp",
+      "truth_family": "stretched",
+      "model_mismatch": true,
+      "bvalues": [
+        0.0,
+        10.0,
+        20.0,
+        30.0,
+        50.0,
+        80.0,
+        120.0,
+        200.0,
+        400.0,
+        600.0,
+        800.0
+      ],
+      "levels": [
+        0.05,
+        0.25,
+        0.5,
+        0.75,
+        0.95
+      ],
+      "snr": 40.0,
+      "seed": 20260622,
+      "param_names": [
+        "D",
+        "f",
+        "Dstar"
+      ],
+      "param_units": "Caliper space: (D, f, D*); D,D* in 1e-3 mm^2/s"
+    },
+    "f_lo": {
+      "param": "f",
+      "stratum": 0,
+      "stratum_name": "D*-lo",
+      "n": 667,
+      "wcv": 0.03170772510727332,
+      "wcv_ci": [
+        0.029001974770065563,
+        0.03485876837298762
+      ],
+      "icc": 0.9953975533508271,
+      "icc_ci": [
+        0.9946214382181412,
+        0.9959876466097338
+      ],
+      "repeatable": true,
+      "cov_raw": 0.7556221889055472,
+      "cov_split": 0.6056971514242878,
+      "cov_split_ci": [
+        0.568215892053973,
+        0.6416791604197901
+      ],
+      "cov_mondrian": 0.7016491754122939,
+      "width_split": 0.03964467274884298,
+      "width_mondrian": 0.05532291150777824,
+      "coverage_broken": true,
+      "true_abs_err": 0.025775783702347687,
+      "rail_frac": 0.0,
+      "counterexample": true
+    },
+    "marginal_f_split": 0.84,
+    "counterexample_found": true,
+    "rows": [
+      {
+        "param": "D",
+        "stratum": 0,
+        "stratum_name": "D*-lo",
+        "n": 667,
+        "wcv": 0.010617789174781171,
+        "wcv_ci": [
+          0.01007106327721785,
+          0.011253553191438835
+        ],
+        "icc": 0.9990062269201367,
+        "icc_ci": [
+          0.9988159174654561,
+          0.9991487003946643
+        ],
+        "repeatable": true,
+        "cov_raw": 0.992503748125937,
+        "cov_split": 0.8260869565217391,
+        "cov_split_ci": [
+          0.7931034482758621,
+          0.8515742128935532
+        ],
+        "cov_mondrian": 0.8395802098950524,
+        "width_split": 0.1566983230640578,
+        "width_mondrian": 0.16739049214572618,
+        "coverage_broken": false,
+        "true_abs_err": 0.04177949424849086,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "D",
+        "stratum": 1,
+        "stratum_name": "D*-mid",
+        "n": 666,
+        "wcv": 0.010181301564994106,
+        "wcv_ci": [
+          0.009616012176078936,
+          0.010876243902880736
+        ],
+        "icc": 0.9990924394989495,
+        "icc_ci": [
+          0.9989249458397258,
+          0.9992310062336962
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9984984984984985,
+        "cov_split": 0.9174174174174174,
+        "cov_split_ci": [
+          0.8948948948948949,
+          0.9354354354354354
+        ],
+        "cov_mondrian": 0.924924924924925,
+        "width_split": 0.15669832306405782,
+        "width_mondrian": 0.16366988754410813,
+        "coverage_broken": false,
+        "true_abs_err": 0.02720839002959377,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "D",
+        "stratum": 2,
+        "stratum_name": "D*-hi",
+        "n": 667,
+        "wcv": 0.010070930733609849,
+        "wcv_ci": [
+          0.00948246137229147,
+          0.010669827725199348
+        ],
+        "icc": 0.9992948844141513,
+        "icc_ci": [
+          0.99916984192212,
+          0.9993976665761086
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9985007496251874,
+        "cov_split": 0.9325337331334332,
+        "cov_split_ci": [
+          0.9115442278860569,
+          0.9475262368815592
+        ],
+        "cov_mondrian": 0.904047976011994,
+        "width_split": 0.15669832306405782,
+        "width_mondrian": 0.13533420051654152,
+        "coverage_broken": false,
+        "true_abs_err": 0.023697817005896578,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "f",
+        "stratum": 0,
+        "stratum_name": "D*-lo",
+        "n": 667,
+        "wcv": 0.03170772510727332,
+        "wcv_ci": [
+          0.029001974770065563,
+          0.03485876837298762
+        ],
+        "icc": 0.9953975533508271,
+        "icc_ci": [
+          0.9946214382181412,
+          0.9959876466097338
+        ],
+        "repeatable": true,
+        "cov_raw": 0.7556221889055472,
+        "cov_split": 0.6056971514242878,
+        "cov_split_ci": [
+          0.568215892053973,
+          0.6416791604197901
+        ],
+        "cov_mondrian": 0.7016491754122939,
+        "width_split": 0.03964467274884298,
+        "width_mondrian": 0.05532291150777824,
+        "coverage_broken": true,
+        "true_abs_err": 0.025775783702347687,
+        "rail_frac": 0.0,
+        "counterexample": true
+      },
+      {
+        "param": "f",
+        "stratum": 1,
+        "stratum_name": "D*-mid",
+        "n": 666,
+        "wcv": 0.033756716851657084,
+        "wcv_ci": [
+          0.030986182111964203,
+          0.03739911128282132
+        ],
+        "icc": 0.9966751254517272,
+        "icc_ci": [
+          0.9960890526846636,
+          0.9971334066299135
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9984984984984985,
+        "cov_split": 0.954954954954955,
+        "cov_split_ci": [
+          0.9354354354354354,
+          0.9684684684684685
+        ],
+        "cov_mondrian": 0.9354354354354354,
+        "width_split": 0.03964467274884298,
+        "width_mondrian": 0.03457461504486081,
+        "coverage_broken": false,
+        "true_abs_err": 0.005736528882517097,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "f",
+        "stratum": 2,
+        "stratum_name": "D*-hi",
+        "n": 667,
+        "wcv": 0.03755898652470872,
+        "wcv_ci": [
+          0.03438401010537018,
+          0.04177055580882364
+        ],
+        "icc": 0.996663999986407,
+        "icc_ci": [
+          0.9960362084569798,
+          0.9971653193663012
+        ],
+        "repeatable": true,
+        "cov_raw": 0.9985007496251874,
+        "cov_split": 0.95952023988006,
+        "cov_split_ci": [
+          0.9385307346326837,
+          0.9715142428785607
+        ],
+        "cov_mondrian": 0.8935532233883059,
+        "width_split": 0.03964467274884298,
+        "width_mondrian": 0.028797863090025858,
+        "coverage_broken": false,
+        "true_abs_err": 0.005784141956679454,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "Dstar",
+        "stratum": 0,
+        "stratum_name": "D*-lo",
+        "n": 667,
+        "wcv": 0.06887020171024502,
+        "wcv_ci": [
+          0.06331667744937267,
+          0.07751466488098961
+        ],
+        "icc": 0.8418712303306541,
+        "icc_ci": [
+          0.807483476558481,
+          0.868222842146657
+        ],
+        "repeatable": true,
+        "cov_raw": 0.8710644677661169,
+        "cov_split": 1.0,
+        "cov_split_ci": [
+          1.0,
+          1.0
+        ],
+        "cov_mondrian": 0.32983508245877063,
+        "width_split": 78.50960957278329,
+        "width_mondrian": 6.684351321893614,
+        "coverage_broken": false,
+        "true_abs_err": 5.3340912590230465,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "Dstar",
+        "stratum": 1,
+        "stratum_name": "D*-mid",
+        "n": 666,
+        "wcv": 0.12204740802326076,
+        "wcv_ci": [
+          0.1110281624918623,
+          0.13942740361334094
+        ],
+        "icc": 0.4019286680460211,
+        "icc_ci": [
+          0.2401026161178477,
+          0.5151424735969566
+        ],
+        "repeatable": false,
+        "cov_raw": 0.03903903903903904,
+        "cov_split": 0.9924924924924925,
+        "cov_split_ci": [
+          0.981936736989636,
+          0.996996996996997
+        ],
+        "cov_mondrian": 0.3978978978978979,
+        "width_split": 78.5096095727833,
+        "width_mondrian": 36.627729249872516,
+        "coverage_broken": false,
+        "true_abs_err": 20.84286923839942,
+        "rail_frac": 0.0,
+        "counterexample": false
+      },
+      {
+        "param": "Dstar",
+        "stratum": 2,
+        "stratum_name": "D*-hi",
+        "n": 667,
+        "wcv": 0.24261350437333887,
+        "wcv_ci": [
+          0.22293617574858757,
+          0.26747183907649447
+        ],
+        "icc": 0.14279432237485004,
+        "icc_ci": [
+          0.03297366182853419,
+          0.3096081383509489
+        ],
+        "repeatable": false,
+        "cov_raw": 0.010494752623688156,
+        "cov_split": 0.4587706146926537,
+        "cov_split_ci": [
+          0.4197901049475262,
+          0.4962518740629685
+        ],
+        "cov_mondrian": 0.9685157421289355,
+        "width_split": 78.50960957278329,
+        "width_mondrian": 126.31376335709724,
+        "coverage_broken": true,
+        "true_abs_err": 40.8478768477913,
+        "rail_frac": 0.0,
+        "counterexample": false
+      }
+    ]
+  },
+  "sensitivity": {
+    "param": "f",
+    "stratum": 0,
+    "stratum_name": "D*-lo",
+    "snr": 40.0,
+    "n": 1500,
+    "families": [
+      "biexp",
+      "dispersion_gamma",
+      "dispersion_lognormal",
+      "stretched",
+      "triexp"
+    ],
+    "region_sizes": [
+      50,
+      100,
+      200,
+      400
+    ],
+    "grid": {
+      "biexp": {
+        "50": {
+          "wcv": 0.06075507505281925,
+          "cov_split": 0.852,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "100": {
+          "wcv": 0.043796376629957535,
+          "cov_split": 0.828,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "200": {
+          "wcv": 0.02765100458618192,
+          "cov_split": 0.83,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "400": {
+          "wcv": 0.02374654224229616,
+          "cov_split": 0.788,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        }
+      },
+      "dispersion_gamma": {
+        "50": {
+          "wcv": 0.06616827992837997,
+          "cov_split": 0.712,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "100": {
+          "wcv": 0.04752553796521659,
+          "cov_split": 0.658,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "200": {
+          "wcv": 0.03030032544781959,
+          "cov_split": 0.672,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "400": {
+          "wcv": 0.025620726113096282,
+          "cov_split": 0.648,
+          "repeatable": true,
+          "broken": true,
+          "counterexample": true
+        }
+      },
+      "dispersion_lognormal": {
+        "50": {
+          "wcv": 0.0651891164046271,
+          "cov_split": 0.738,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "100": {
+          "wcv": 0.04682499620279829,
+          "cov_split": 0.686,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "200": {
+          "wcv": 0.029859165226217094,
+          "cov_split": 0.706,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "400": {
+          "wcv": 0.02526419528417453,
+          "cov_split": 0.68,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        }
+      },
+      "stretched": {
+        "50": {
+          "wcv": 0.06730626174856547,
+          "cov_split": 0.68,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "100": {
+          "wcv": 0.048295127120438805,
+          "cov_split": 0.618,
+          "repeatable": true,
+          "broken": true,
+          "counterexample": true
+        },
+        "200": {
+          "wcv": 0.030824310341445945,
+          "cov_split": 0.638,
+          "repeatable": true,
+          "broken": true,
+          "counterexample": true
+        },
+        "400": {
+          "wcv": 0.025975282263999363,
+          "cov_split": 0.614,
+          "repeatable": true,
+          "broken": true,
+          "counterexample": true
+        }
+      },
+      "triexp": {
+        "50": {
+          "wcv": 0.05970163854241598,
+          "cov_split": 0.896,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "100": {
+          "wcv": 0.04308740013362761,
+          "cov_split": 0.864,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "200": {
+          "wcv": 0.027067849480915576,
+          "cov_split": 0.87,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        },
+        "400": {
+          "wcv": 0.02336697579205738,
+          "cov_split": 0.844,
+          "repeatable": true,
+          "broken": false,
+          "counterexample": false
+        }
+      }
+    }
+  },
+  "verdict": {
+    "counterexample_found": true,
+    "control_tracks": true,
+    "precision_blind": true,
+    "coverage_drop": 0.19040479760119944,
+    "control_f_lo_cov": 0.7961019490254873,
+    "mismatch_f_lo_cov": 0.6056971514242878
+  }
+}

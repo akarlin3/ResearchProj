@@ -28,15 +28,20 @@ What becomes the honest-limitation / constrained-validation note:
   using the synthetic harness as the controlled demonstration. Choose this if the negative
   result is itself instructive beyond Gauge.
 
-## C. On Reverb-fold (CP2 data gate fails — data unsuitable)
-The synthetic test–retest harness (`echo_repeat/harness.py`) is the deliverable: a
-controlled-truth demonstration that the scale statistic recovers known measurement
-dispersion, detects mis-scaling, and is bias-invariant. Spec: the generator
-(`harness.simulate`), the analytic reference (`statistic.analytic_repeat_coverage`), and the
-locked self-test (`harness.self_test`). This is a constrained validation regime — honest
-about lacking real-data confirmation — pending suitable public repeatability data.
+## C. Reverb — the constructive counterexample (DELIVERED, SOLID)
+Reverb's old identity (an unfired "data-gate fails" fallback) is **retired**; it now has a
+standing job: *show* precision ≠ coverage on synthetic ground truth, the strongest form of the
+limitation claim. `echo_repeat/reverb.py` + `scripts/run_reverb.py` build a region-level
+test–retest experiment on **Lattice** ground truth, deploy a **Caliper** conformal interval, and
+measure repeatability against known-truth coverage per regime. The delivered result: under
+realistic perfusion-model mismatch, f at low D\* is excellently repeatable yet badly under-covers
+the truth, with a matched correctly-specified control that does not break. It is **SOLID** (Lattice
++ Caliper only) and is folded into `paper/lethe.tex` §"Constructive counterexample" and enforced by
+`paper/consistency.py`. **Scope:** a possibility-and-mechanism proof, **not** a real-world
+magnitude (an over-read into magnitude is the one thing to guard against).
 
 ## What always stays put
-- The SOLID half (the statistic + the method self-test) — never depended on the assumption.
+- The SOLID half — the statistic, the method self-test, **and Reverb** (the constructive
+  counterexample) — never depended on the Fashion/Gauge/Minos assumption.
 - This `PROMOTION.md` and the final `ASSUMPTIONS.md` snapshot — the record of how the
   speculative build was discharged.

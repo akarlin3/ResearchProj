@@ -23,9 +23,15 @@ def _load(name):
     return json.loads((RESULTS / name).read_text())
 
 
+def _load_optional(name):
+    p = RESULTS / name
+    return json.loads(p.read_text()) if p.exists() else None
+
+
 def build_numbers():
     val = _load("RESULTS_VALIDATION.json")
     har = _load("RESULTS_HARNESS.json")["checks"]
+    rev = _load_optional("RESULTS_REVERB.json")  # SOLID constructive counterexample (Reverb)
     hD = val["headline"]["D"]; hDs = val["headline"]["Dstar"]; hF = val["headline"]["f"]
     sw = val["sensitivity_single_voxel_snr"]
     gb = val["gauge_baseline"]
@@ -63,7 +69,28 @@ def build_numbers():
         "CovRescBefore": (f"{dg['coverage_before']:.3f}", "self-test: coverage before rescale"),
         "CovRescAfter": (f"{dg['coverage_after_rescale']:.3f}", "self-test: coverage after rescale"),
     }
-    return nums, val, har
+
+    # --- SOLID constructive counterexample (Reverb): precision != coverage shown ---
+    if rev is not None:
+        cfg = rev["headline_config"]; fc = rev["control"]["f_lo"]; fm = rev["mismatch"]["f_lo"]
+        vr = rev["verdict"]
+        nums.update({
+            "ReverbFamily": (cfg["mismatch_family"], "Reverb mismatch truth family"),
+            "ReverbROI": (f"{cfg['region_size']}", "Reverb ROI voxel count"),
+            "ReverbSNR": (f"{cfg['snr']:.0f}", "Reverb single-voxel SNR"),
+            "ReverbWcvCtrl": (f"{fc['wcv']:.3f}", "Reverb wCV f@D*-lo, matched control"),
+            "ReverbWcvMis": (f"{fm['wcv']:.3f}", "Reverb wCV f@D*-lo, mismatch"),
+            "ReverbIccMis": (f"{fm['icc']:.3f}", "Reverb ICC f@D*-lo, mismatch"),
+            "ReverbCovCtrl": (f"{fc['cov_split']:.3f}", "Reverb true-coverage f@D*-lo, control"),
+            "ReverbCovMis": (f"{fm['cov_split']:.3f}", "Reverb true-coverage f@D*-lo, mismatch"),
+            "ReverbCovMisLo": (f"{fm['cov_split_ci'][0]:.3f}", "Reverb coverage BCa lo, mismatch"),
+            "ReverbCovMisHi": (f"{fm['cov_split_ci'][1]:.3f}", "Reverb coverage BCa hi, mismatch"),
+            "ReverbDrop": (f"{vr['coverage_drop']:.3f}", "Reverb coverage drop (control - mismatch)"),
+            "ReverbMargCtrl": (f"{rev['control']['marginal_f_split']:.3f}", "Reverb marginal f cov, control"),
+            "ReverbMargMis": (f"{rev['mismatch']['marginal_f_split']:.3f}", "Reverb marginal f cov, mismatch"),
+        })
+
+    return nums, val, har, rev
 
 
 def write_numbers(nums):
@@ -75,7 +102,7 @@ def write_numbers(nums):
     NUMBERS.write_text("\n".join(lines) + "\n")
 
 
-def verify(nums, val, har):
+def verify(nums, val, har, rev=None):
     ok = True
     # 1. every \num* in the tex is defined
     if TEX.exists():
@@ -101,6 +128,18 @@ def verify(nums, val, har):
          abs(har["distinct_from_gauge"]["coverage_before"]
              - har["distinct_from_gauge"]["coverage_after_rescale"]) > 0.05),
     ]
+    # 3. SOLID constructive counterexample (Reverb) load-bearing asserts
+    if rev is not None:
+        fc = rev["control"]["f_lo"]; fm = rev["mismatch"]["f_lo"]; vr = rev["verdict"]
+        asserts += [
+            ("reverb: counterexample found", bool(vr["counterexample_found"])),
+            ("reverb: matched control tracks (f@D*-lo not broken)", not fc["coverage_broken"]),
+            ("reverb: mismatch precise (f@D*-lo repeatable)", bool(fm["repeatable"])),
+            ("reverb: mismatch coverage broken (<0.65)", bool(fm["coverage_broken"])),
+            ("reverb: precision blind (wCV ~equal control vs mismatch)",
+             abs(fm["wcv"] - fc["wcv"]) < 0.02),
+            ("reverb: coverage drops >=0.10 under mismatch", vr["coverage_drop"] >= 0.10),
+        ]
     for name, cond in asserts:
         print(f"  assert {name}: {'PASS' if cond else 'FAIL'}")
         ok = ok and bool(cond)
@@ -108,10 +147,10 @@ def verify(nums, val, har):
 
 
 def main():
-    nums, val, har = build_numbers()
+    nums, val, har, rev = build_numbers()
     write_numbers(nums)
     print(f"wrote {NUMBERS} ({len(nums)} macros)")
-    ok = verify(nums, val, har)
+    ok = verify(nums, val, har, rev)
     print("CP4 consistency gate:", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 

@@ -29,6 +29,13 @@ assumption**, not an artifact of the headline choice. No tuning was applied.
 - **Could not (accuracy):** Echo is provably blind to accuracy/bias (Δ cancels common bias).
   The real D estimates are themselves biased low by the high-b Rician floor — Echo neither
   sees nor corrects this, by construction. Echo makes **no ground-truth coverage claim**.
+- **Shown, not just argued (Reverb, SOLID):** that bias-blindness is demonstrated constructively
+  on synthetic ground truth (`reverb.py`, `run_reverb.py`; Lattice + Caliper, read-only). Under
+  realistic perfusion-model mismatch at the region level, the perfusion fraction **f at low D\***
+  is excellently repeatable (wCV ≈ 0.03) yet covers the *true* f only ≈0.61 [BCa 0.57, 0.64] — vs
+  a matched correctly-specified control at ≈0.80 with **identical** repeatability. Precision ≠
+  coverage, turned from asserted into shown. *Scope:* a possibility-and-mechanism proof, **not** a
+  real-world magnitude. See `paper/lethe.tex` §"Constructive counterexample".
 - **The negative result itself:** real same-day test–retest variation of ROI-mean D
   (σ_repeat ≈ 2.0×10⁻⁴ mm²/s; within-subject CV ≈ 54%) vastly exceeds the thermal-noise scale
   a conformal interval is calibrated to (σ_implied ≈ 0.5×10⁻⁴). I.e. **real repeatability is
@@ -61,9 +68,10 @@ Two honest homes; both are documented in `PROMOTION.md`.
    controlled positive control and ACRIN-6698 as the negative real-data case.
 
 ## Solid-now vs assumption-dependent
-- **Solid now:** the method (statistic + BCa + self-test), the embedding, the real-data
-  pipeline, and the *direction and robustness* of the negative result (under-scaled across
-  the whole SNR grid).
+- **Solid now:** the method (statistic + BCa + self-test), the **Reverb constructive
+  counterexample** (precision ≠ coverage shown on Lattice ground truth; Lattice + Caliper only,
+  no upstream paper), the embedding, the real-data pipeline, and the *direction and robustness* of
+  the negative result (under-scaled across the whole SNR grid).
 - **Assumption-dependent (PROVISIONAL):** the framing/citations of Fashion (the ruler the
   widths derive from), Gauge (the §4.2.2 baseline), and Minos (the decision lens). The exact
   coverage number also depends on the pinned synthetic-calibration noise model (Gaussian,

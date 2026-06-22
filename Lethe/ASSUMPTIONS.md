@@ -11,6 +11,7 @@ pins every such input and states what becomes invalid if it changes.
 |---|---|---|
 | The statistic (`statistic.py`) + analytic reference | No — self-contained, machine-checked | **SOLID** |
 | Method self-test (`run_harness.py`, CP1) | No — pure synthetic | **SOLID** |
+| Constructive counterexample (`reverb.py`, `run_reverb.py`) | No — Lattice + Caliper only, both in-tree | **SOLID** |
 | Conformal deployer (`invivo.py`, via Caliper) | Caliper only (MIT, in-tree, stable) | **SOLID** (ruler) |
 | Real-data validation (`run_validation.py`, CP3) | Yes — Caliper ruler on real signals; Gauge fetch/baseline | **PROVISIONAL** |
 | Manuscript (`paper/echo.tex`, CP4) | Yes | **PROVISIONAL** (caveated inline) |
@@ -29,6 +30,21 @@ risk. If Caliper's conformal offset definition changed, the deployed interval *w
 would change and CP3 would need a re-run — `invivo.build_deployer` carries a numpy-only
 fallback equal to the textbook split-conformal offset so the method is never silently
 different.
+
+## 1b. LATTICE (SOLID — the synthetic ground-truth DRO, Reverb only)
+
+| key | pinned value | source | role for Echo |
+|---|---|---|---|
+| `lattice.version` | 0.1.0 | `Lattice/pyproject.toml` | package version |
+| `lattice.license` | MIT | `Lattice/LICENSE` | clean reuse |
+| `lattice.api.cohort` | `lattice.make_cohort(family, n, snr, seed, prior, noise, bvalues)` | `Lattice/lattice/cohort.py` | seeded ground-truth `(D, D*, f)` cohorts |
+| `lattice.api.noise` | `lattice.generators.add_rician_noise(clean, snr, rng)` | `Lattice/lattice/generators.py` | the test–retest second noise draw (reused, not reimplemented) |
+
+Lattice is a **resource**, not a research result: synthetic cohorts + clean-room generators that
+depend on no publication. It is therefore **SOLID**, like Caliper. Reverb (`reverb.py`) uses it
+**read-only** — a thin test–retest + analysis layer, no duplicated generator. If Lattice's cohort
+schema or Rician model changed, only Reverb's synthetic numbers move (re-run `run_reverb.py`);
+nothing in the real-data verdict depends on it.
 
 ## 2. GAUGE (PROVISIONAL — baseline + data template)
 
@@ -86,7 +102,8 @@ cites it to motivate the trust claim, not to derive a number.
 
 ## 5. DATA SOURCE
 
-- **Synthetic** (`harness.py`, `invivo.synthetic_cohort`) — seeded, open; the SOLID half.
+- **Synthetic** (`harness.py`, `reverb.py` via Lattice, `invivo.synthetic_cohort`) — seeded,
+  open; the SOLID half.
 - **Real** ACRIN-6698 / I-SPY2 breast DWI, same-day test–retest (TrT0/TrT1, n≈76) —
   CC-BY-4.0, download-on-demand, **provenance manifest only** (`results/invivo_provenance.json`),
   pixel/array data git-ignored. No `pancData3` / MSK / clinical data in tree or history.
@@ -97,8 +114,8 @@ cites it to motivate the trust claim, not to derive a number.
 
 When Fashion / Minos / Gauge publish (or revise to final):
 1. Update the `*.version` / `*.zenodo` / DOI / baseline rows above to the published artifact.
-2. Run `bash reproduce.sh` (one command): CP1 self-test, CP2 data check, CP3 validation,
-   CP4 consistency.
+2. Run `bash reproduce.sh` (one command): CP1 self-test, Reverb counterexample (both SOLID),
+   CP2 data check, CP3 validation, CP4 consistency.
 3. If all green, PROVISIONAL flags may be cleared (see `PROMOTION.md`). If any fails, the
    dependent result is invalidated — fix it before clearing.
 
