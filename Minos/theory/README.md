@@ -12,7 +12,8 @@ are untouched.
 | `impossibility.md` | **Theorem 2(i)** — hidden channel undetectable (AUC = ½); full data-processing proof + finite-sample statement | **proved** (see `impossibility_check.py`) |
 | `impossibility_check.py` | **Theorem 2(i)** machine check — exact pathwise invariance of `O`/`M` across the sweep; fresh-vs-stale AUC = ½ (bootstrap CI `[0.5,0.5]`) | **GATE 2(i)** (PASS) |
 | `confirm.py` | **CP3** — theory vs v2/v3 for every compared quantity; halts if it does not reproduce | **GATE 3** (PASS, halt-able) |
-| `plumbline.md` | the note: intro → Thm 1 + proof → Thm 2 → confirmation table → discussion → positioning | **GATE 4** |
+| `voi_value.py` | **Proposition 3** (Delphi, folded in) — the value of information of decision-calibration `V = EU(τ*)−EU(τ_stat) = ½\|EU″(τ*)\|·G² = O(γ²)` is second-order in the gap; confirmed on the Minos-Core model (no fitted constant) | **GATE D** (PASS) |
+| `plumbline.md` | the note: intro → Thm 1 + proof → Thm 2 → confirmation table → discussion → positioning → §8 VoI second-order law | **GATE 4** |
 
 ## Reproduce
 
@@ -22,6 +23,7 @@ python3 -m venv .venv-theory && .venv-theory/bin/pip install numpy scipy sympy m
 .venv-theory/bin/python theory/detectability.py       # GATE 2 — bound + L, ~20 s
 .venv-theory/bin/python theory/impossibility_check.py # GATE 2(i) — invariance + AUC=1/2, ~30 s (MINOS_FAST=1)
 .venv-theory/bin/python theory/confirm.py             # GATE 3 — theory vs v2/v3, ~30 s (MINOS_FAST=1 to shrink)
+.venv-theory/bin/python theory/voi_value.py           # GATE D — VoI second-order law (MINOS_FAST=1 to shrink)
 ```
 
 Scripts import the v3 model from `../minos-core/minos` (added to `sys.path`). Deterministic (seeded);
@@ -36,3 +38,8 @@ nothing is fit to the simulation.
 - **Theorem 2:** observable staleness is bounded-detectable (`R_obs ≤ k_under·W₁`), hidden staleness
   is undetectable by any label-free monitor (AUC = ½) — the principled case for labeled repeatability
   spot-checks. Matches v3 (AUC obs `1.00`, hidden `0.50`; `corr(M,R)=+0.96`).
+- **Proposition 3 (VoI, Delphi folded in):** the value of decision-calibrating, `V = EU(τ*)−EU(τ_stat)
+  = ½|EU″(τ*)|·G² = O(γ²)`, is **second-order** in the gap — so a calibrated bar changes the
+  decision's *value* only above a curvature-set "worth-it" floor. Confirmed on the Minos-Core model
+  (default cell `V/pred=1.16`, R²`0.99`; sweep slope `V`-vs-`G` `2.6`); `V=0` at `λ=1` (flat EU) even
+  though the scale gap `G≠0` there. The value tracks `EU″`, not the raw scale gap.
