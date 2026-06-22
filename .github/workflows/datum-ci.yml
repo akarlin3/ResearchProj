@@ -20,6 +20,13 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Caliper/ and Lattice/ are git submodules (akarlin3/projCaliper, projLattice).
+          # Datum imports them via sibling bootstrap, so they must be checked out.
+          # While those repos are PRIVATE, the default GITHUB_TOKEN cannot clone them:
+          # add `token: ${{ secrets.SUBMODULE_PAT }}` (a PAT with repo scope) here, or
+          # make the submodule repos public, for this job to pass.
+          submodules: recursive
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -41,6 +48,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Caliper/ and Lattice/ are git submodules (akarlin3/projCaliper, projLattice).
+          # Datum imports them via sibling bootstrap, so they must be checked out.
+          # While those repos are PRIVATE, the default GITHUB_TOKEN cannot clone them:
+          # add `token: ${{ secrets.SUBMODULE_PAT }}` (a PAT with repo scope) here, or
+          # make the submodule repos public, for this job to pass.
+          submodules: recursive
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
