@@ -69,12 +69,12 @@ algorithm registry accurate while still being fully reproducible.
 - [ ] `code_contributions_record.csv` row — intentionally omitted (N/A; not a fit
       algorithm).
 - [ ] `OsipiBase` wrapper — intentionally omitted (N/A; no new fit algorithm).
-- [ ] Publication DOI — pending; manuscript in submission to Magnetic Resonance in Medicine (placeholder in `release/README.md` only, to update on acceptance).
+- [ ] Publication DOI — pending; manuscript in review at NMR in Biomedicine (Wiley) (placeholder in `release/README.md` only, to update on acceptance).
 
 ## Links
 
-- Related manuscript: **in submission to *Magnetic Resonance in Medicine*
-  (MRM)**; no preprint. Citation is a placeholder to be updated on acceptance
+- Related manuscript: **in review at *NMR in Biomedicine* (Wiley)**; no
+  preprint. Citation is a placeholder to be updated on acceptance
   (see `release/README.md`).
 - Module README and full reproduction table: `release/README.md`.
 - Reproduction entry points:
