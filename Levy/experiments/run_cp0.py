@@ -11,6 +11,7 @@ Usage:  <proteus python> experiments/run_cp0.py            # FAST (smoke; defaul
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -24,6 +25,7 @@ from levy import fisher, forward, identifiability, noise, seeding, wall  # noqa:
 
 FULL = "--full" in sys.argv
 RESULTS = HERE.parent / "results" / "RESULTS_CP0.md"
+RESULTS_JSON = HERE.parent / "results" / "RESULTS_CP0.json"
 FIGDIR = HERE.parent / "figures"
 
 
@@ -127,10 +129,42 @@ def main() -> int:
         print("      recoverable only with dense multi-b research acquisition. Refute survived.")
 
     _write_results(rep, sigma_cache)
+    _write_json(rep)
     _save_figure(rep)
-    print(f"\n  results -> {RESULTS}")
+    print(f"\n  results -> {RESULTS}\n  anchors -> {RESULTS_JSON}")
     print("CP0 PASS" if not rep.refuted else "CP0 REFUTED")
     return 0
+
+
+def _write_json(rep):
+    """Seeded machine anchors for the manuscript consistency gate (mirror of RESULTS_CP0.md)."""
+    h = rep.headline
+    lo, hi = wall.REALISTIC_SNR_BAND
+    rho_aD = fisher.crlb(wall.default_b_design(b_max=3000.0, n_b=4),
+                         np.array([1.0, wall.HEADLINE["D"], 0.85]), 30, "rician").rho_alpha_D
+    data = {
+        "forward_model": "S(b)=S0*exp(-(bD)^alpha) stretched-exponential lead lane",
+        "headline": {
+            "n_b": wall.HEADLINE["n_b"], "b_max": wall.HEADLINE["b_max"],
+            "alpha": wall.HEADLINE["alpha"], "D": wall.HEADLINE["D"],
+            "cv_threshold": wall.CV_THRESHOLD,
+            "wall_snr_analytic": float(h.wall_snr), "wall_snr_emp": float(h.wall_snr_emp),
+            "wall_ci": [float(h.wall_ci[0]), float(h.wall_ci[1])],
+            "band": [lo, hi],
+        },
+        "rho_alpha_D_nb4_bmax3000_snr30": float(rho_aD),
+        "surface": {
+            "n_b": list(rep.surface_n_b), "b_max": list(rep.surface_b_max),
+            "wall": [[(None if not np.isfinite(v) else float(v)) for v in row]
+                     for row in rep.surface_wall],
+        },
+        "alpha_curve": {"alpha": rep.alpha_grid.tolist(), "wall_snr": rep.alpha_wall.tolist()},
+        "verdict": {"wall_stands": bool(rep.wall_stands), "refuted": bool(rep.refuted),
+                    "clinical_wall_in_band": bool(rep.clinical_wall_in_band),
+                    "research_recovers": bool(rep.research_recovers)},
+    }
+    RESULTS_JSON.parent.mkdir(exist_ok=True)
+    RESULTS_JSON.write_text(json.dumps(data, indent=2) + "\n")
 
 
 def _write_results(rep, sigma_cache):
