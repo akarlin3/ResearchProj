@@ -66,25 +66,21 @@ def test_manuscript_vanhoudt_quote_uses_source_faithful_hyphen():
     assert "test–retest" not in _tex_quotes(PHI)["vanhoudt2021qib"]
 
 
-def test_unflagged_quotes_match_ledger_exactly():
-    """Three of the four verbatim quotes are character-identical to the CITATIONS.md
-    re-pull. (vanhoudt2021qib is the one flagged discrepancy; see the test below.)"""
+def test_all_quotes_match_ledger_exactly():
+    """All four verbatim quotes are character-identical between the manuscript and the
+    CITATIONS.md re-pull. (The pre-existing vanhoudt2021qib en-dash was corrected to a
+    source-faithful hyphen at GATE D, with author sign-off.)"""
     phi, led = _tex_quotes(PHI), _ledger_quotes(LEDGER)
-    for k in ("koo2016", "blandaltman1986", "ling2000"):
+    for k in QUOTE_KEYS:
         assert phi[k] == led[k], f"manuscript/ledger quote mismatch for {k!r}"
 
 
-def test_vanhoudt_ledger_discrepancy_is_only_the_known_endash():
-    """FLAGGED, pre-existing (commit 8d680bd, independent of the reformat): the
-    CITATIONS.md 'verbatim' re-pull of vanhoudt2021qib writes 'test–retest' with an
-    en-dash, where the manuscript (and the published source) use a plain hyphen. This
-    test bounds the discrepancy to exactly that one character — any *other* drift fails.
-    Resolution (1-char ledger fix to match source) is deferred to author sign-off."""
-    phi, led = _tex_quotes(PHI)["vanhoudt2021qib"], _ledger_quotes(LEDGER)["vanhoudt2021qib"]
-    assert phi != led, "ledger discrepancy unexpectedly gone — update this flag/test"
-    assert led.replace("test–retest", "test-retest") == phi, (
-        "vanhoudt ledger differs from the manuscript by MORE than the known en-dash"
-    )
+def test_ledger_vanhoudt_uses_source_faithful_hyphen():
+    """Regression guard: the corrected ledger re-pull uses a plain hyphen 'test-retest'
+    (matching the published source), not the former en-dash."""
+    led = _ledger_quotes(LEDGER)["vanhoudt2021qib"]
+    assert "in vivo test-retest data" in led
+    assert "test–retest" not in led
 
 
 def test_phiro_cite_set_equals_iop():
