@@ -72,4 +72,7 @@ portfolio (Ouroboros's phantom "Sun et al."; Augur's mis-quoted "r≈0.39"). The
 
 Four entries (`koo2016`, `blandaltman1986`, `ling2000`, `vanhoudt2021qib`) carry **thesis-level**
 claims (the paper's title/abstract-evident thesis) rather than a quoted number; any verbatim
-number from these must be re-pulled from the PDF before use. Flagged in `CITATIONS.md`.
+number from these must be re-pulled from the PDF before use. **Resolved at CP3 (2026-06-22):** all
+four were re-pulled **verbatim** from the published abstract (NCBI PubMed / Europe PMC) and recorded
+with locators in `CITATIONS.md` (*Verbatim re-pulls*); the survey uses each only as a faithful
+paraphrase with no load-bearing number.

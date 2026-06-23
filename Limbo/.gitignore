@@ -2,3 +2,12 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .DS_Store
+
+# LaTeX build intermediates (the committed artifact is limbo.pdf; orcid.pdf is a vendored asset)
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+limbo.txt
