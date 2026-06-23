@@ -10,10 +10,15 @@
 >
 > **Quote status.** Most rows carry a verbatim abstract sentence (held in the per-bucket subagent
 > verification logs). Four rows are marked **[thesis-level]**: the claim is the paper's central,
-> title/abstract-evident thesis, but a load-bearing *number* from these is not quoted here and must
-> be re-pulled from the PDF before any verbatim use — `koo2016`, `blandaltman1986` (publisher pages
-> blocked direct abstract fetch; DOI resolves and bibliographic metadata confirmed via Crossref),
-> and `ling2000`, `vanhoudt2021qib` (abstract sentence surfaced only as a fragment).
+> title/abstract-evident thesis. These four were flagged at CP1 because a load-bearing *number*
+> from them was not quoted and the abstract had not been pulled verbatim — `koo2016`,
+> `blandaltman1986`, `ling2000`, `vanhoudt2021qib`.
+>
+> **Resolved at CP3 (2026-06-22).** All four were re-pulled **verbatim** from the published
+> abstract via NCBI PubMed/Europe PMC and are recorded with locators in the *Verbatim re-pulls*
+> section below. The survey uses each only as a paraphrased thesis-level claim (no load-bearing
+> number), and each paraphrase was confirmed faithful to the verbatim source. No approximation was
+> used; no source was unreachable.
 
 ## A — Parameter estimation for quantitative/diffusion body MRI and its uncertainty
 
@@ -98,6 +103,38 @@
 | `vanhoudt2021qib` | doi:10.1016/j.ejca.2021.04.041 | **[thesis-level]** Quantitative imaging biomarkers on MR-linacs require technical validation (repeatability/reproducibility) before they can drive clinical decisions, because the integrated scanner differs from conventional diagnostic MRI. |
 | `leibfarth2018` | doi:10.1016/j.ctro.2018.09.002 | Diffusion-weighted MRI shows promise as a radiotherapy biomarker for outcome prediction, response assessment, and tumour delineation, but faces geometric-accuracy and quantification challenges. |
 | `hall2022` | doi:10.3322/caac.21707 | MR guidance presents a strong opportunity to bring adaptive radiation therapy into routine radiation-oncology clinical practice. |
+
+## Verbatim re-pulls of the four thesis-level entries (CP3, 2026-06-22)
+
+Each sentence below is reproduced **verbatim** from the published abstract of the named source
+(retrieved via NCBI PubMed / Europe PMC), with its locator. The survey paraphrases each at thesis
+level and uses no load-bearing number from any of them; the paraphrase was checked against the
+verbatim text and found faithful. These resolve the `% TODO-QUOTE-n` markers in `limbo.tex`.
+
+- **`koo2016`** — Koo TK, Li MY. *J Chiropr Med.* 2016 Jun;15(2):155–163. Abstract (Conclusion);
+  PMID 27330520. Verbatim: "This article provides a practical guideline for clinical researchers
+  to choose the correct form of ICC and suggests the best practice of reporting ICC parameters in
+  scientific publications."
+
+- **`blandaltman1986`** — Bland JM, Altman DG. *Lancet.* 1986 Feb 8;1(8476):307–310. Abstract;
+  PMID 2868172. Verbatim: "Such investigations are often analysed inappropriately, notably by
+  using correlation coefficients. The use of correlation is misleading. An alternative approach,
+  based on graphical techniques and simple calculations, is described, together with the relation
+  between this analysis and the assessment of repeatability."
+
+- **`ling2000`** — Ling CC, Humm J, Larson S, et al. *Int J Radiat Oncol Biol Phys.* 2000 Jun
+  1;47(3):551–560. Abstract (Results); PMID 10837935. Verbatim: "Incremental to the concept of
+  gross, clinical, and planning target volumes (GTV, CTV, and PTV), we propose the concept of
+  'biological target volume' (BTV) and hypothesize that BTV can be derived from biological images
+  and that their use may incrementally improve target delineation and dose delivery."
+
+- **`vanhoudt2021qib`** — van Houdt PJ, Saeed H, Thorwarth D, et al. *Eur J Cancer.* 2021
+  Aug;153:64–71. Abstract; PMID 34144436 (open access PMC8340311). Verbatim: "As the integrated
+  MRI scanner differs from traditional MRI scanners, technical validation is an important aspect
+  of this roadmap. We propose to integrate technical validation with clinical trials by the
+  addition of a quality assurance procedure at the start of a trial, the acquisition of in vivo
+  test–retest data to assess the repeatability, as well as a comparison between QIBs from MRIgRT
+  systems and diagnostic MRI systems to assess the reproducibility."
 
 ## In-portfolio cross-references (NOT external citations; not part of the survey body)
 

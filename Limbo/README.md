@@ -1,6 +1,12 @@
 # Limbo — a field review of trustworthy UQ for quantitative body MRI and its use in adaptive RT
 
-**Status: PROVISIONAL · CP1 complete (taxonomy + verified citation base + hard gate) · not publish-gated.**
+**Status: PROVISIONAL · submission-ready compiled manuscript (CP0–CP3 complete) · not publish-gated.**
+
+The manuscript [`limbo.tex`](limbo.tex) → [`limbo.pdf`](limbo.pdf) is typeset for **Physics in
+Medicine & Biology** (Topical Review) with IOP's `iopjournal` class; it compiles clean with
+`tectonic` (gated on the citation gate), the survey cites all 59 verified entries with zero phantom
+prose-cites, and the four thesis-level entries have been re-pulled **verbatim** from source (see
+[`CITATIONS.md`](CITATIONS.md), *Verbatim re-pulls*).
 
 Limbo is a **broad field review** — a survey of *the literature's* work on trustworthy uncertainty
 quantification (UQ) for **quantitative/diffusion body MRI** (IVIM, DWI/ADC, DKI, DCE perfusion,
@@ -44,20 +50,25 @@ non-existent "Sun et al."; Augur's mis-quoted "r≈0.39"). Limbo makes that mech
 
 ```
 python3 verify_citations.py           # offline gate: 59 entries, zero unverifiable -> exit 0
-python3 verify_citations.py --online  # also confirm each DOI/arXiv resolves (network; CP3)
-./reproduce.sh                        # gate + tests
+python3 verify_citations.py --online  # also confirm each DOI/arXiv resolves (network)
+./build.sh                            # citation gate -> compile limbo.tex (tectonic) -> limbo.pdf
+./reproduce.sh                        # gate + tests + manuscript compile (green == submission-ready)
 ```
 
 ## Layout
 
 | file | purpose |
 |---|---|
+| `limbo.tex` / `limbo.pdf` | the compiled manuscript (IOP `iopjournal`; target *Phys. Med. Biol.*) |
 | `TAXONOMY.md` | the trust → VoI → action survey axis (+ foundations + gap-map seams) |
+| `SURVEY.md` | the markdown survey draft the manuscript prose was ported from |
 | `limbo.bib` | the verified citation base (59 entries) |
-| `CITATIONS.md` | per-citekey verified claim + resolvable identifier (the ledger the gate checks) |
-| `verify_citations.py` | the citation gate (offline; `--online` for resolvability) |
+| `CITATIONS.md` | per-citekey verified claim + resolvable identifier (+ the 4 verbatim re-pulls) |
+| `verify_citations.py` | the citation gate (offline; `--online` for resolvability; scans `limbo.tex`) |
 | `ASSUMPTIONS.md` | scope boundary, distinctness-from-Augur, clean-IP, status pins |
-| `reproduce.sh` | one-command re-validation (gate + pytest) |
+| `build.sh` | gate → compile the manuscript with tectonic |
+| `reproduce.sh` | one-command re-validation (gate + pytest + compile) |
+| `iopjournal.cls`, `orcid.pdf` | vendored IOP class + asset (LPPL; see `IOP_CLASS_PROVENANCE.md`) |
 | `tests/` | gate assertions (zero-unverifiable, bucket coverage, distinctness documented) |
 
 ## Checkpoints
@@ -65,9 +76,11 @@ python3 verify_citations.py --online  # also confirm each DOI/arXiv resolves (ne
 - **CP0 — audit + scope + distinctness (HALT, cleared).** Embedding confirmed (top-level subrepo,
   Augur-minimal pattern); scope boundary set; trust→VoI→action taxonomy fixed; distinctness from
   Augur proven (separable); venue taken as input (PMB).
-- **CP1 — framework + verified citation base (this commit).** Taxonomy built; 59-entry `.bib`, each
-  with a resolvable id + verified claim; gate passes with **zero unverifiable entries**.
-- **CP2 — survey + gap map (pending).** Draft the survey by axis and the open-problems map; every
-  claim cites a verified entry.
-- **CP3 — honest-scope + final citation gate (pending).** `--online` re-verification, no-drift pass,
-  honest-scope section (synthesis + gaps, no new results); update root README; stage PR (no auto-merge).
+- **CP1 — framework + verified citation base.** Taxonomy built; 59-entry `.bib`, each with a
+  resolvable id + verified claim; gate passes with **zero unverifiable entries**.
+- **CP2 — survey + gap map.** Survey drafted by axis with the open-problems map (G1–G4); every claim
+  cites a verified entry.
+- **CP3 — honest-scope + final citation gate + compiled manuscript.** `--online` re-verification
+  (all 59 resolve live), no-drift pass, honest-scope section; **`limbo.tex` typeset for PMB
+  (`iopjournal`) and compiled to `limbo.pdf`**; the four thesis-level entries re-pulled verbatim
+  from source; Buttress absorbed into the discussion/gap map. Staged for review (no auto-merge).

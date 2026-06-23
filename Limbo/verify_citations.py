@@ -33,7 +33,10 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent
 BIB = ROOT / "limbo.bib"
 LEDGER = ROOT / "CITATIONS.md"
-SURVEY = ROOT / "SURVEY.md"
+# Prose sources whose \cite{} keys must all resolve to a bib entry (GATE 5).
+# Both the markdown survey draft and the compiled manuscript are checked so a
+# phantom citation cannot slip into the document of record (limbo.tex).
+PROSE_SOURCES = (ROOT / "SURVEY.md", ROOT / "limbo.tex")
 
 DOI_RE = re.compile(r"^10\.\d{4,9}/\S+$")
 ARXIV_RE = re.compile(r"^\d{4}\.\d{4,5}(v\d+)?$")
@@ -122,10 +125,13 @@ def check_online(kind: str, value: str) -> bool:
     # "< > ; ( )" that break a raw URL. Try doi.org, then fall back to the Crossref REST
     # API, which is bot-friendly and authoritative — many publishers (SAGE, RSNA, Wiley)
     # 403 a bare HEAD even for a valid DOI, which would otherwise be a false negative.
+    # The fallback queries the main /works/{doi} record (authoritative existence check):
+    # the /works/{doi}/agency endpoint 404s for some valid Wiley SICI DOIs even though the
+    # record itself resolves (observed for tofts1999, 10.1002/(SICI)1522-2586...).
     enc = urllib.parse.quote(value, safe="")
     if _fetch_ok(f"https://doi.org/{enc}"):
         return True
-    return _fetch_ok(f"https://api.crossref.org/works/{enc}/agency")
+    return _fetch_ok(f"https://api.crossref.org/works/{enc}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -161,13 +167,16 @@ def main(argv: list[str] | None = None) -> int:
         if not ledger[key].strip():
             failures.append(f"[empty-claim] {key}: verified claim is blank")
 
-    # GATE 5 (prose citations): every \cite{key} in the survey draft resolves to a bib entry.
-    if SURVEY.exists():
+    # GATE 5 (prose citations): every \cite{key} in a prose source (the survey draft
+    # and the compiled manuscript) resolves to a bib entry.
+    for src in PROSE_SOURCES:
+        if not src.exists():
+            continue
         cited: set[str] = set()
-        for m in re.finditer(r"\\cite\{([^}]*)\}", SURVEY.read_text()):
+        for m in re.finditer(r"\\cite\{([^}]*)\}", src.read_text()):
             cited.update(k.strip() for k in m.group(1).split(",") if k.strip())
         for key in sorted(cited - bib_keys):
-            failures.append(f"[phantom-prose-cite] {key}: \\cite in SURVEY.md but no entry in limbo.bib")
+            failures.append(f"[phantom-prose-cite] {key}: \\cite in {src.name} but no entry in limbo.bib")
 
     # Optional GATE 4: network resolvability.
     if args.online:
