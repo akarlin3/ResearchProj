@@ -1,0 +1,4 @@
+SUBMISSION_HOLD: ACTIVE
+HELD -- awaiting Gauge publication (the distinctness anchor).
+Unmet release conditions: GAUGE_PUBLISHED.
+The manuscript is COMPLETE and reproduces green (reproduce.sh); only SUBMISSION is held. The author may override to submit-now via release_config.json.

@@ -64,8 +64,21 @@ pip install -e .            # numpy, scipy
 # Lattice DRO must be importable: pip install -e ../../Lattice,
 # or `git submodule update --init Lattice`, or set LATTICE_PATH.
 pytest                      # gate tests (CP0 separation, boundaries, diagnostic)
-python experiments/run_cp0.py        # the headline numbers (-> RESULTS.md)
+
+# one-touch reproduction: regenerate every gate number + rebuild the manuscript
+bash reproduce.sh
+
+# or the gate drivers individually (-> results/phase{1,2,3}_*.json):
+python experiments/run_cp0.py        # the original CP0 separation table
+python experiments/run_phase1.py 8   # GATE B: apples-to-apples Gauge separation
+python experiments/run_phase2.py 8   # GATE C: diagnostic reach (honest scope)
+python experiments/run_phase3.py 8   # GATE D: robustness envelope (+16-seed headline)
+bash paper/build.sh                  # consistency gate -> numbers.tex -> compile PDF
+python release_gate.py               # submission HOLD (keyed on Gauge; author-armed)
 ```
+
+The hardened, load-bearing numbers (GATE B/C/D) are in `RESULTS.md`; the manuscript
+is `paper/procrustes.pdf`.
 
 ## Sanity gates (must hold)
 
@@ -80,16 +93,33 @@ python experiments/run_cp0.py        # the headline numbers (-> RESULTS.md)
 ```
 procrustes-core/
   procrustes/
-    deps.py         locate the Lattice DRO (env / submodule / dev fallback)
-    seeding.py      GLOBAL_SEED, make_rng
-    config.py       ProcrustesConfig + the three DepartureFamily definitions
-    generators.py   Lattice cohorts + bi-exp NLLS fit + residual features
-    conformal.py    split-conformal radius / coverage / splits
-    separation.py   the CP0 three-part separation (a)/(b)/(c) + bias + R2
-    diagnostic.py   observable misspecification diagnostic (AUC, |D-err| rank corr)
-  experiments/run_cp0.py   seeded multi-seed driver -> RESULTS.md
-  tests/          gate tests encoding the refute conditions
-  POSITIONING.md  novelty gate: what this is NOT (vs Gauge, Lei, Barber, ASL-MCRB)
+    deps.py             locate the Lattice DRO (env / submodule / dev fallback)
+    seeding.py          GLOBAL_SEED, make_rng
+    config.py           ProcrustesConfig + the three DepartureFamily definitions
+    generators.py       Lattice cohorts + bi-exp NLLS fit + residual features
+    conformal.py        split-conformal radius / coverage / splits
+    separation.py       the three-part separation + Gauge-exact D* partition + detail
+    diagnostic.py       observable misspecification diagnostic (AUC, |D-err| rank corr)
+    baseline_monitor.py the naive drift-monitor baseline (computed, not asserted)
+    bootstrap.py        across-seed + two-level cluster-bootstrap CIs for the gaps
+  experiments/
+    run_cp0.py          original CP0 separation table
+    run_phase1.py       GATE B: apples-to-apples Gauge separation
+    run_phase2.py       GATE C: diagnostic reach (honest scope)
+    run_phase3.py       GATE D: robustness envelope (+16-seed headline)
+  paper/
+    procrustes.tex      the manuscript (house style; numbers.tex auto-generated)
+    refs.bib            bibliography (no fabricated DOIs; Gauge/Lattice forward-cited)
+    consistency.py      regenerates numbers.tex from results/*.json + checks invariants
+    verify_citations.py DOIs resolve; Gauge forward-cite + finalization checklist
+    build.sh            consistency gate -> figures -> tectonic compile
+    figures/            make_figures.py + the two manuscript figures
+  results/            phase{1,2,3}_*.json (seeded gate outputs; the number source)
+  reproduce.sh        one-touch: tests + all gates + manuscript + release posture
+  release_gate.py     submission HOLD keyed on Gauge (author-armed) + release_config.json
+  tests/              gate tests encoding the refute conditions
+  POSITIONING.md      novelty gate: what this is NOT (vs Gauge, Lei, Barber, ASL-MCRB)
+  RESULTS.md          the hardened load-bearing numbers (GATE B/C/D)
 ```
 
 ## Dependency

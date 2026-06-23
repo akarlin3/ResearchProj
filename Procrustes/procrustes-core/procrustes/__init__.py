@@ -23,8 +23,9 @@ from .config import (
     TRIEXP,
 )
 from .seeding import GLOBAL_SEED, make_rng
-from .separation import SeparationResult, run_separation
+from .separation import SeparationResult, run_separation, separation_detail
 from .diagnostic import diagnose, auc, spearman, STATS
+from .bootstrap import across_seed_ci, cluster_bootstrap_gap
 
 __version__ = "0.1.0"
 
@@ -40,8 +41,11 @@ __all__ = [
     "make_rng",
     "SeparationResult",
     "run_separation",
+    "separation_detail",
     "diagnose",
     "auc",
     "spearman",
     "STATS",
+    "across_seed_ci",
+    "cluster_bootstrap_gap",
 ]
