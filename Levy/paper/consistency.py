@@ -96,6 +96,11 @@ def build_numbers():
         "AlphaPhysHi": (f"{w4['alpha'][-1]:.2f}", "physiological alpha range high"),
         "WallAlphaLo": (f"{w4['wall_min']:.1f}", "min wall SNR* across alpha (n_b=4)"),
         "WallAlphaHi": (f"{w4['wall_max']:.1f}", "max wall SNR* across alpha (n_b=4)"),
+        # representative bootstrap CIs on the wall SNR*(alpha) curve (n_b=4)
+        "WallCIaMidLo": (f"{cp2['wall_ci_nb4']['0.85'][0]:.1f}", "wall SNR* 95% CI low at alpha=0.85"),
+        "WallCIaMidHi": (f"{cp2['wall_ci_nb4']['0.85'][1]:.1f}", "wall SNR* 95% CI high at alpha=0.85"),
+        "WallCIaLowLo": (f"{cp2['wall_ci_nb4']['0.60'][0]:.1f}", "wall SNR* 95% CI low at alpha=0.60"),
+        "WallCIaLowHi": (f"{cp2['wall_ci_nb4']['0.60'][1]:.1f}", "wall SNR* 95% CI high at alpha=0.60"),
     }
     return nums, cp0, cp1, cp2
 
