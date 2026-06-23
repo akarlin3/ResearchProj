@@ -2,6 +2,18 @@
 
 **Status: PROVISIONAL · submission-ready compiled manuscript (CP0–CP3 complete) · not publish-gated.**
 
+> **phiRO retarget (in progress).** The manuscript has been reformatted from the IOP `iopjournal`
+> class (the old *Phys. Med. Biol.* target) to **Elsevier `elsarticle`** for submission to
+> **Physics and Imaging in Radiation Oncology (phiRO)** — open access, via Editorial Manager. The
+> phiRO manuscript is [`limbo_phiro.tex`](limbo_phiro.tex) → `limbo_phiro.pdf`; the original
+> [`limbo.tex`](limbo.tex) (IOP) is retained as the **content-identity reference**. The reformat
+> changed **zero content**: body prose, all 59 references, and the four verbatim quotes are
+> byte-identical (proven by diff; enforced by `tests/test_phiro_format.py`). Author-confirmed
+> metadata (corresponding email, declarations) is pending at GATE D before the submission package
+> is finalized. One flagged pre-existing item: the `CITATIONS.md` verbatim re-pull of
+> `vanhoudt2021qib` writes "test–retest" with an en-dash where the manuscript and the published
+> source use a plain hyphen — see GATE D.
+
 The manuscript [`limbo.tex`](limbo.tex) → [`limbo.pdf`](limbo.pdf) is typeset for **Physics in
 Medicine & Biology** (Topical Review) with IOP's `iopjournal` class; it compiles clean with
 `tectonic` (gated on the citation gate), the survey cites all 59 verified entries with zero phantom
