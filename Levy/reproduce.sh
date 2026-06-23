@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# One-command re-validation of the projLevy build.
+# One-command re-validation of the Levy build.
 #
 # Runs, in order: CP0 (the fractional-order identifiability object + the kill test).
 # Each stage is a gate; the script stops at the first failure. Stages not yet built are
 # reported as PENDING (not failures) -- CP1+ (joint (alpha,beta) degeneracy; manuscript)
 # are Phase-3 / later and appear once built.
 #
-# Usage:  bash projLevy/reproduce.sh            # FAST (smoke; default)
-#         FULL=1 bash projLevy/reproduce.sh     # full-N bootstrap CIs
+# Usage:  bash Levy/reproduce.sh            # FAST (smoke; default)
+#         FULL=1 bash Levy/reproduce.sh     # full-N bootstrap CIs
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

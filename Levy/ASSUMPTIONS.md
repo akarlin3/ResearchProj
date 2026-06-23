@@ -1,4 +1,4 @@
-# ASSUMPTIONS — projLevy
+# ASSUMPTIONS — Levy
 
 Pinned dependencies, regime scoping, and the clean-IP gate. Mirrors `Minos/future/ASSUMPTIONS.md`.
 

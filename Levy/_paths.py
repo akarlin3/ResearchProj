@@ -1,6 +1,6 @@
-"""Read-only path wiring for projLevy.
+"""Read-only path wiring for Levy.
 
-Single chokepoint for the dependency graph. projLevy depends on its own ``levy-core``
+Single chokepoint for the dependency graph. Levy depends on its own ``levy-core``
 package and, READ-ONLY, on the upstream ``Ouroboros`` repo (for the Grunwald-Letnikov
 operators and the A(alpha) noise-amplification law -- see levy/glreuse.py provenance and
 POSITIONING.md). It NEVER copies, edits, or shadows Ouroboros; it only puts paths on
@@ -14,7 +14,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-_HERE = Path(__file__).resolve().parent       # projLevy
+_HERE = Path(__file__).resolve().parent       # Levy
 LEVY_CORE = _HERE / "levy-core"
 REPO = _HERE.parent                           # researchProj (repo root)
 OUROBOROS = REPO / "Ouroboros"                # READ-ONLY reuse source
