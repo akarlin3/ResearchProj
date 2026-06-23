@@ -1,4 +1,4 @@
-# projLevy — identifiability of the fractional order in diffusion-MRI
+# Levy — identifiability of the fractional order in diffusion-MRI
 
 **Clean-room subrepo.** Levy asks a single question: *can you even recover the fractional order*
 of anomalous diffusion — the stretched-exponential α (Phase 3: the joint CTRW / fractional
@@ -22,7 +22,7 @@ data-rich idealization; **walls out under the realistic clinical forward model.*
 
 ## Layout (mirrors Minos)
 ```
-projLevy/
+Levy/
   _paths.py            read-only wiring (levy-core; Ouroboros for cross-check provenance)
   pytest.ini           test config
   reproduce.sh         CP gate harness (FAST default; FULL=1 for full-N bootstrap)
@@ -49,10 +49,10 @@ projLevy/
 
 ## Reproduce
 ```bash
-bash projLevy/reproduce.sh           # FAST smoke (CP0 gate green)
-FULL=1 bash projLevy/reproduce.sh    # full-N bootstrap CIs
+bash Levy/reproduce.sh           # FAST smoke (CP0 gate green)
+FULL=1 bash Levy/reproduce.sh    # full-N bootstrap CIs
 # or directly:
-/opt/homebrew/Caskroom/miniforge/base/envs/proteus/bin/python projLevy/experiments/run_cp0.py --full
+/opt/homebrew/Caskroom/miniforge/base/envs/proteus/bin/python Levy/experiments/run_cp0.py --full
 ```
 
 ## Clean-IP
