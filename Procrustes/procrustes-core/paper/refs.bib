@@ -1,0 +1,82 @@
+% Procrustes bibliography. Discipline (house rule): NO fabricated DOIs or quotes.
+% External literature is taken from the author's verified entries (Gauge/Augur refs.bib);
+% an entry whose DOI the author has not yet verified carries no DOI and a TODO-AUTHORS marker
+% to be resolved at finalization. In-program companions (Gauge, Lattice) are forward-cited
+% honestly as unpublished -- no invented journal DOI -- and swapped to the published reference
+% on each at finalization (see ../release_config.json).
+
+% ---------------------------------------------------------------------------------------------
+% External, verified (carried verbatim from the author's Gauge/Augur bibliographies)
+% ---------------------------------------------------------------------------------------------
+@article{lei2018,
+  title     = {Distribution-free predictive inference for regression},
+  author    = {Lei, Jing and G'Sell, Max and Rinaldo, Alessandro and Tibshirani, Ryan J and Wasserman, Larry},
+  journal   = {Journal of the American Statistical Association},
+  volume    = {113}, number = {523}, pages = {1094--1111}, year = {2018},
+  publisher = {Taylor \& Francis},
+  doi       = {10.1080/01621459.2017.1307116}
+}
+
+@book{vovk2005,
+  title     = {Algorithmic Learning in a Random World},
+  author    = {Vovk, Vladimir and Gammerman, Alexander and Shafer, Glenn},
+  year      = {2005}, publisher = {Springer},
+  doi       = {10.1007/b106715}
+}
+
+@article{barber2021,
+  author  = {Barber, Rina Foygel and Cand{\`e}s, Emmanuel J. and Ramdas, Aaditya and Tibshirani, Ryan J.},
+  title   = {The limits of distribution-free conditional predictive inference},
+  journal = {Information and Inference}, volume = {10}, number = {2}, pages = {455--482}, year = {2021},
+  doi     = {10.1093/imaiai/iaaa017}
+}
+
+@article{lebihan1988,
+  title     = {Separation of diffusion and perfusion in intravoxel incoherent motion {MR} imaging},
+  author    = {Le Bihan, Denis and Breton, Eric and Lallemand, Denis and Aubin, M-L and Vignaud, J and Laval-Jeantet, M},
+  journal   = {Radiology}, volume = {168}, number = {2}, pages = {497--505}, year = {1988},
+  publisher = {Radiological Society of North America},
+  doi       = {10.1148/radiology.168.2.3393671}
+}
+
+@article{casali2026,
+  title   = {A Comprehensive Framework for Uncertainty Quantification of Voxel-wise Supervised
+             Models in {IVIM} {MRI}},
+  author  = {Casali, M. and others},
+  journal = {NMR in Biomedicine}, year = {2026},
+  note    = {arXiv:2508.04588}
+}
+
+% Prior-art neighbour named in POSITIONING.md (qMRI misspecification, ASL). The author has not
+% yet verified its bibliographic details; carried WITHOUT a DOI and flagged for finalization so
+% no attribution/DOI is fabricated here.
+@misc{wangtamirbush2026,
+  author = {Wang and Tamir and Bush},
+  title  = {Misspecified Cram\'er--Rao analysis and a two-subset variance-consistency test for
+            arterial spin labeling ({ASL})},
+  year   = {2026},
+  note   = {TODO-AUTHORS: verify authors, title, venue, and DOI at finalization (cited as the
+            qMRI-misspecification neighbour per POSITIONING.md; no DOI asserted)}
+}
+
+% ---------------------------------------------------------------------------------------------
+% In-program companions -- FORWARD-CITED (unpublished; no invented DOI). See ../release_config.json.
+% ---------------------------------------------------------------------------------------------
+@unpublished{gauge,
+  author = {Karlin, Avery},
+  title  = {Distribution-free conformal coverage for {IVIM} parameter maps, and the
+            identifiability wall in the pseudo-diffusion compartment},
+  note   = {In review / manuscript assembled; target Magnetic Resonance in Medicine. The
+            load-bearing distinctness anchor for this work -- swap to the published DOI at
+            finalization (release\_config.json).},
+  year   = {2026}
+}
+
+@unpublished{lattice,
+  author = {Karlin, Avery},
+  title  = {Lattice: a clean-room, seed-generated {IVIM} digital reference object with
+            non-bi-exponential perfusion families},
+  note   = {In-program synthetic ground-truth tool (no data files). Swap to the published /
+            archived reference at finalization.},
+  year   = {2026}
+}

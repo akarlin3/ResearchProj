@@ -1,0 +1,13 @@
+{
+  "_about": "Procrustes release-gate configuration. The manuscript is COMPLETE and reproduces green, but the DISTINCTNESS-FROM-GAUGE claim -- the load-bearing novelty -- forward-cites Gauge, which is unpublished. This gate is keyed on GAUGE: it reports HELD until Gauge is PUBLISHED (published=true AND a real DOI). LATTICE (the synthetic substrate) is a recommended secondary anchor. ARMING THE HOLD IS THE AUTHOR'S CALL (GATE G): the author may instead choose to SUBMIT NOW, forward-citing Gauge as in-review. Never set published=true without a real DOI.",
+  "anchors": {
+    "GAUGE": {"published": false, "doi": null, "load_bearing": true,  "role": "distinctness anchor (the identifiability wall this work is shown distinct from)", "status": "in review / manuscript assembled; target Magnetic Resonance in Medicine"},
+    "LATTICE": {"published": false, "doi": null, "load_bearing": false, "role": "synthetic ground-truth substrate (digital reference object)", "status": "in-program tool; archive/DOI at finalization"}
+  },
+  "author_decision": {
+    "_note": "Set by the author at GATE G. mode = 'hold' (wait for Gauge to publish, then submit) or 'submit_now' (submit forward-citing Gauge as in-review). Default 'hold' until the author decides.",
+    "mode": "hold",
+    "venue": "TODO-VENUE",
+    "author_list": "TODO-AUTHORS"
+  }
+}

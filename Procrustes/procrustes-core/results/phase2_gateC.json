@@ -1,0 +1,167 @@
+{
+  "config": {
+    "n": 1000,
+    "snr": 50.0,
+    "n_seeds": 8,
+    "seeds": [
+      20240517,
+      20241526,
+      20242535,
+      20243544,
+      20244553,
+      20245562,
+      20246571,
+      20247580
+    ],
+    "diagnostic_auc_min": 0.6
+  },
+  "families": {
+    "stretched": {
+      "label": "stretched-exp (beta)",
+      "expect": "break",
+      "auc_chi2_red": {
+        "point": 0.6700495,
+        "lo": 0.6644336553038211,
+        "hi": 0.6756653446961788
+      },
+      "auc_ac1": {
+        "point": 0.6722699999999999,
+        "lo": 0.6664642389516618,
+        "hi": 0.678075761048338
+      },
+      "auc_longrun": {
+        "point": 0.6785635000000001,
+        "lo": 0.6649896309007491,
+        "hi": 0.692137369099251
+      },
+      "auc_structure": {
+        "point": 0.6824075000000001,
+        "lo": 0.671184768223592,
+        "hi": 0.6936302317764081
+      },
+      "auc_best": {
+        "point": 0.683511,
+        "lo": 0.6729539367034199,
+        "hi": 0.6940680632965801
+      },
+      "rho_best": {
+        "point": 0.16904041616166465,
+        "lo": 0.14222447153744747,
+        "hi": 0.19585636078588184
+      },
+      "auc_monitor_shape": {
+        "point": 0.503069,
+        "lo": 0.4934600895124993,
+        "hi": 0.5126779104875007
+      },
+      "auc_monitor_full": {
+        "point": 0.5497025,
+        "lo": 0.5432178832463282,
+        "hi": 0.5561871167536717
+      }
+    },
+    "dispersion_lognormal": {
+      "label": "log-normal dispersion (cv)",
+      "expect": "weak",
+      "auc_chi2_red": {
+        "point": 0.5214345,
+        "lo": 0.5191105529939778,
+        "hi": 0.5237584470060223
+      },
+      "auc_ac1": {
+        "point": 0.528016,
+        "lo": 0.5255695489384008,
+        "hi": 0.5304624510615993
+      },
+      "auc_longrun": {
+        "point": 0.577823,
+        "lo": 0.5740862979466914,
+        "hi": 0.5815597020533085
+      },
+      "auc_structure": {
+        "point": 0.577823,
+        "lo": 0.5740862979466914,
+        "hi": 0.5815597020533085
+      },
+      "auc_best": {
+        "point": 0.577823,
+        "lo": 0.5740862979466914,
+        "hi": 0.5815597020533085
+      },
+      "rho_best": {
+        "point": 0.04769697478789915,
+        "lo": 0.0349181070954624,
+        "hi": 0.060475842480335905
+      },
+      "auc_monitor_shape": {
+        "point": 0.4364635,
+        "lo": 0.4327056914010956,
+        "hi": 0.4402213085989044
+      },
+      "auc_monitor_full": {
+        "point": 0.445225,
+        "lo": 0.4417691061393613,
+        "hi": 0.44868089386063864
+      }
+    },
+    "triexp": {
+      "label": "tri-exponential third pool (g)",
+      "expect": "null",
+      "auc_chi2_red": {
+        "point": 0.5859970000000001,
+        "lo": 0.5813997140387399,
+        "hi": 0.5905942859612603
+      },
+      "auc_ac1": {
+        "point": 0.600178,
+        "lo": 0.5969771206798131,
+        "hi": 0.6033788793201869
+      },
+      "auc_longrun": {
+        "point": 0.626815,
+        "lo": 0.6165711647025345,
+        "hi": 0.6370588352974655
+      },
+      "auc_structure": {
+        "point": 0.626815,
+        "lo": 0.6165711647025345,
+        "hi": 0.6370588352974655
+      },
+      "auc_best": {
+        "point": 0.626815,
+        "lo": 0.6165711647025345,
+        "hi": 0.6370588352974655
+      },
+      "rho_best": {
+        "point": 0.043104928419713674,
+        "lo": 0.02783162318049252,
+        "hi": 0.058378233658934825
+      },
+      "auc_monitor_shape": {
+        "point": 0.5547685,
+        "lo": 0.5488559253485981,
+        "hi": 0.5606810746514019
+      },
+      "auc_monitor_full": {
+        "point": 0.550526,
+        "lo": 0.5467243090145567,
+        "hi": 0.5543276909854432
+      }
+    }
+  },
+  "gate_c": {
+    "detected": {
+      "stretched": true,
+      "dispersion_lognormal": false,
+      "triexp": true
+    },
+    "beats_naive_monitor": {
+      "stretched": true,
+      "dispersion_lognormal": true,
+      "triexp": true
+    },
+    "scope": "heavy-tail misspecification detector (clears the pre-registered AUC>=0.60 floor only for: stretched; pure dispersion stays a near-hidden channel -- dispersion_lognormal below the floor, consistent with the naive monitor also failing there)",
+    "detected_all_nonnull": false,
+    "floor": 0.6
+  }
+}

@@ -46,6 +46,10 @@ class SeparationResult:
     within: dict                    # value -> within-departure recalibrated coverage
     bias: dict                      # value -> signed mean bias of D-hat
     radius: float
+    cond_lo: dict = None            # value -> coverage in strict bottom-D* tercile
+    cond_hi: dict = None            # value -> coverage in top-D* tercile (Gauge's wall)
+    n_wellid: int = 0               # voxels in the well-ID (bottom-2-tercile) subset
+    n_lo: int = 0                   # voxels in the strict bottom tercile
 
     @property
     def worst(self) -> float:
@@ -58,6 +62,17 @@ class SeparationResult:
     @property
     def wellid_gap(self) -> float:
         return self.cond_wellid[self.limit] - self.cond_wellid[self.worst]
+
+    @property
+    def lo_gap(self) -> float:
+        """Conditional gap in the STRICT bottom-D* tercile (deepest in Gauge's
+        identifiable region; the strongest form of refute R2)."""
+        return self.cond_lo[self.limit] - self.cond_lo[self.worst]
+
+    @property
+    def hi_gap(self) -> float:
+        """Conditional gap in the TOP-D* tercile -- Gauge's own ill-posed wall."""
+        return self.cond_hi[self.limit] - self.cond_hi[self.worst]
 
     @property
     def bias_ratio(self) -> float:
@@ -98,11 +113,82 @@ def run_separation(family_cfg, cfg, seed: int | None = None) -> SeparationResult
         rv = conformal_radius(np.abs(Dhat[v][calib] - truth[calib]), cfg.alpha)
         within[v] = coverage(np.abs(Dhat[v][test] - truth[test]), rv)
 
-    # (c) well-identified D* subset (bottom-2 terciles): does the gap survive?
-    cut = np.quantile(Dstar, cfg.wellid_quantile)
+    # (c) well-identified D* subset: does the gap SURVIVE inside Gauge's
+    # identifiable region?  Use Gauge's EXACT partition of the latent axis --
+    # true-D* terciles via np.quantile([1/3, 2/3]) + np.digitize (see
+    # Gauge/gauge/conditional.py:157-159 and conditional_attack._regime_from_true):
+    #   regime 0 = lo D*, 1 = mid D*, 2 = hi D* (Gauge's ill-posed wall).
+    # Gauge's identifiable region (where it says "trust D") is the bottom-2
+    # terciles {0, 1}; the strict bottom tercile {0} is the deepest interior of
+    # it (the strongest refute-R2 test).
+    edges = np.quantile(Dstar, [1.0 / 3.0, 2.0 / 3.0])
+    regime = np.digitize(Dstar, edges)              # 0=lo, 1=mid, 2=hi (Gauge)
     tmask = np.zeros(cfg.n, bool); tmask[test] = True
-    sub = tmask & (Dstar <= cut)
+    sub = tmask & (regime <= 1)                      # well-ID = bottom-2 terciles
+    sub_lo = tmask & (regime == 0)                   # strict bottom tercile
+    sub_hi = tmask & (regime == 2)                   # Gauge's high-D* wall
     cond_wellid = {v: coverage(np.abs(Dhat[v][sub] - truth[sub]), radius) for v in values}
+    cond_lo = {v: coverage(np.abs(Dhat[v][sub_lo] - truth[sub_lo]), radius) for v in values}
+    cond_hi = {v: coverage(np.abs(Dhat[v][sub_hi] - truth[sub_hi]), radius) for v in values}
 
     return SeparationResult(fam, knob, values, limit, marginal,
-                            cond, cond_wellid, within, bias, radius)
+                            cond, cond_wellid, within, bias, radius,
+                            cond_lo=cond_lo, cond_hi=cond_hi,
+                            n_wellid=int(sub.sum()), n_lo=int(sub_lo.sum()))
+
+
+def separation_detail(family_cfg, cfg, seed: int | None = None) -> dict:
+    """Per-voxel material for bootstrap CIs of the separation gaps.
+
+    Same computation as :func:`run_separation` but returns the raw TEST-voxel
+    absolute errors at the placebo (limit) and worst-departure knobs, the fixed
+    departure-blind conformal radius, and the Gauge-exact D*-regime masks
+    (well-ID = bottom-2 terciles; lo = strict bottom tercile; hi = Gauge's
+    high-D* wall) -- all aligned to the test-voxel order so a paired voxel
+    bootstrap can resample them jointly.
+    """
+    seed = cfg.seed if seed is None else seed
+    fam, knob, values, limit = (family_cfg.lattice_family, family_cfg.knob,
+                                family_cfg.values, family_cfg.limit)
+    ti = cfg.target_index
+    worst = values[-1] if values[-1] != limit else values[0]
+
+    cohorts = {v: cohort_at(fam, knob, v, cfg) for v in (limit, worst)}
+    ref = cohorts[limit]
+    truth = ref.params[:, ti].copy()
+    Dstar = ref.Dstar.copy()
+    fits = {v: fit_cohort(cohorts[v], cfg.snr) for v in (limit, worst)}
+    Dhat = {v: fits[v]["Dhat"] for v in (limit, worst)}
+
+    calib, test = split_indices(cfg.n, make_rng(seed))
+    # departure-blind radius from BOTH knobs' calibration residuals (marginal recipe)
+    radius = conformal_radius(
+        np.concatenate([np.abs(Dhat[v][calib] - truth[calib]) for v in (limit, worst)]),
+        cfg.alpha)
+
+    signed_limit = Dhat[limit][test] - truth[test]
+    signed_worst = Dhat[worst][test] - truth[test]
+    err_limit = np.abs(signed_limit)
+    err_worst = np.abs(signed_worst)
+    # signed-bias mechanism: heavy-tail perfusion aliases into the high-b tissue
+    # slope and biases D-hat; the bias grows from placebo to worst departure.
+    bias_limit = float(np.mean(signed_limit))
+    bias_worst = float(np.mean(signed_worst))
+    bias_ratio = abs(bias_worst) / (abs(bias_limit) + 1e-9)
+    # marginal coverage under the SAME departure-blind radius (placebo+worst
+    # pooled) -- so the marginal claim and the gaps share one radius recipe.
+    marginal = coverage(np.concatenate([err_limit, err_worst]), radius)
+
+    edges = np.quantile(Dstar, [1.0 / 3.0, 2.0 / 3.0])
+    regime = np.digitize(Dstar, edges)
+    reg_test = regime[test]
+    return {
+        "family": fam, "knob": knob, "limit": limit, "worst": worst,
+        "radius": float(radius), "marginal": float(marginal),
+        "bias_limit": bias_limit, "bias_worst": bias_worst, "bias_ratio": bias_ratio,
+        "err_limit": err_limit, "err_worst": err_worst,
+        "wellid": reg_test <= 1, "lo": reg_test == 0, "hi": reg_test == 2,
+        "all": np.ones(len(test), bool),
+        "n_test": len(test),
+        "n_wellid": int((reg_test <= 1).sum()), "n_lo": int((reg_test == 0).sum()),
+    }

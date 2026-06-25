@@ -28,9 +28,15 @@ def _biexp(b: np.ndarray, theta) -> np.ndarray:
 
 
 def cohort_at(family: str, knob: str, value: float, cfg) -> "object":
-    """A Lattice cohort for ``family`` with departure ``knob=value``."""
+    """A Lattice cohort for ``family`` with departure ``knob=value``.
+
+    The acquisition b-scheme is ``cfg.bvalues`` when set (robustness sweeps),
+    else Lattice's default 22-point scheme.
+    """
+    bvals = None if getattr(cfg, "bvalues", None) is None else np.asarray(cfg.bvalues, float)
     return make_cohort(family=family, n=cfg.n, snr=cfg.snr, seed=cfg.seed,
-                       prior=cfg.prior, noise=cfg.noise, extra={knob: value})
+                       prior=cfg.prior, noise=cfg.noise, extra={knob: value},
+                       bvalues=bvals)
 
 
 def fit_cohort(cohort, snr: float) -> dict:

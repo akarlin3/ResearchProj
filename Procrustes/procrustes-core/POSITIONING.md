@@ -40,13 +40,26 @@ the durable record of the novelty gate; the gate tests enforce its claims.
 not located in prior art. The binding constraint was internal (Gauge); the
 repositioned axis clears it.
 
-## What hardening established (8-seed probe)
+## What hardening established (Phases 1–3; GATE B/C/D, see RESULTS.md)
 
-- **Heavy-tail (stretched) — survives, tight CIs:** marginal 0.894 [0.885,0.903];
-  conditional gap 0.126 [0.116,0.136]; **well-ID-D\* gap 0.172 [0.162,0.183]**
-  (larger than marginal); bias 7.4×; diagnostic AUC **0.67** (vs Gauge's 0.501).
-- **Tri-exp — null:** gap −0.008 [−0.021,0.005] (faster pool decays off high-b).
-- **Log-normal — weak break, hidden diagnostic:** gap 0.046; AUC ≈ 0.52.
+The CP0 probe was hardened under three pre-registered gates. The well-identified-D\*
+subset was **re-defined to match Gauge's identifiable region exactly** (true-D\*
+terciles via `np.quantile([1/3,2/3])` + `np.digitize`); load-bearing gaps carry
+two-level cluster-bootstrap CIs (16-seed headline).
+
+- **GATE B (distinctness) — PASS.** Marginal holds 0.909 [0.900,0.919]; conditional
+  gap 0.105 [0.093,0.117]; **well-ID-D\* gap 0.148 [0.131,0.164]**, intensifying to
+  0.196 [0.170,0.220] in the strict bottom tercile — while Gauge's OWN high-D\* wall
+  shows gap 0.014 [0.001,0.027]. The gradient is **opposite** to Gauge's
+  identifiability wall (gap largest where Gauge says "trust D", near zero in Gauge's
+  ill-posed regime). Bias 7.7× [5.8,9.5] (high-b aliasing).
+- **GATE C (diagnostic scope) — heavy-tail DETECTOR, not universal.** Heavy-tail AUC
+  0.684 [0.673,0.694] beats the naive drift monitor 0.550 [0.543,0.556]; pure
+  dispersion 0.578 is **below the pre-registered 0.60 floor** (near-hidden, like the
+  monitor); tri-exp 0.627 is detectable-but-harmless.
+- **GATE D (robustness) — PASS with one honest boundary.** Survives 11/12 conditions
+  (SNR 35–100, intensifying with SNR; n 300–2000; b-schemes). **Fails at SNR 25**
+  (noise-dominated) — reported, not buried.
 
 → the wedge is **mechanism-specific (high-b aliasing)**, not generic.
 
@@ -59,12 +72,15 @@ repositioned axis clears it.
 
 ## Honest open risk
 
-The **diagnostic** is moderate (AUC ≈ 0.67) and **family-dependent** — strong for
-the heavy-tail channel, hidden for pure dispersion. Procrustes' contribution is
-the *coverage-failure* characterisation + a *first* working IVIM misspecification
-diagnostic that beats the hidden-channel baseline, **not** a universal detector.
-Pushing the diagnostic (structured-residual GLR, multi-segment consistency)
-is future work, not claimed here.
+The **diagnostic** is moderate (AUC ≈ 0.684) and **family-dependent** — strong for
+the heavy-tail channel (beats the naive monitor 0.550), near-hidden for pure
+dispersion (0.578, below the pre-registered 0.60 floor). Procrustes' contribution
+is the *coverage-failure* characterisation + a working IVIM misspecification
+diagnostic that beats the hidden-channel baseline for the heavy-tail channel,
+**not** a universal detector. The separation also has a stated **SNR boundary**:
+it fails at SNR 25 (noise-dominated), holding for SNR ≥ 35. Pushing the diagnostic
+(structured-residual GLR, multi-segment consistency) and an in-vivo demonstration
+are future work, not claimed here.
 
 ## IP / clean-room
 

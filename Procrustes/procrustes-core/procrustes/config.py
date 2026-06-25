@@ -48,6 +48,7 @@ class ProcrustesConfig:
     target_param: str = "D"     # the *well-identified* tissue-diffusion map
     target_index: int = 0       # column of (D, Dstar, f)
     wellid_quantile: float = 2 / 3   # bottom-2-tercile D* = well-identified regime
+    bvalues: tuple = None       # acquisition b-scheme; None => Lattice default (22-pt)
 
     # pre-registered gate thresholds (see POSITIONING.md, refute conditions)
     marginal_tol: float = 0.03       # |marginal - (1-alpha)| must stay within this
